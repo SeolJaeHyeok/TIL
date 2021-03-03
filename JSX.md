@@ -2,7 +2,39 @@
 
 ## 2.1 코드 이해하기
 
-![스크린샷 2021-03-03 오후 8.38.28](/Users/seoljaehyeok/Library/Application Support/typora-user-images/스크린샷 2021-03-03 오후 8.38.28.png)
+```react
+import React from "react";
+import logo from "./logo.svg";
+import "./App.css";
+
+function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.js</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+```
+
+리액트 프로젝트를 생성했을 때 만들어지는 여러 파일 중 src/App.js의 전체 코드이다.
+
+위 전체 코드를 분리하여 설명을 해보자면 
 
 ```react
 import React from 'react';
@@ -97,7 +129,20 @@ function App(){
    - JSX에서는 우리가 알고 있는 div나 span 같은 HTML 태그를 사용할 수 있을 뿐만 아니라, 앞으로 만들  Component도 JSX 안에서 작성할 수 있다. 
    - 아래 코드를 보면 App Component를 마치 HTML 태그 쓰듯이 그냥 작성하는 것을 볼 수 있다.
 
-![스크린샷 2021-03-03 오후 9.16.34](/Users/seoljaehyeok/Library/Application Support/typora-user-images/스크린샷 2021-03-03 오후 9.16.34.png)
+``` react
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+```
 
 > 💬 
 >
