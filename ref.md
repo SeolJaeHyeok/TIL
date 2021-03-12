@@ -1,4 +1,4 @@
-# ref: DOM에 이름 달기
+# tref: DOM에 이름 달기
 
 일반 HTML에서 DOM 요소에 이름을 달 때는 id를 사용한다.
 
@@ -231,4 +231,157 @@ this.input이 컴포넌트 내부의 input 요소를 가리키고 있으니, 일
 결과를 보게 되면 아래와 같이 포커스가 옮겨진 것을 확인 할 수 있다.
 
 <img src="./images/ref_03.png" />
+
+## 5.3 컴포넌트에 ref 달기
+
+리액트에서는 컴포넌트에도 ref를 달 수 있다. 이 방법은 주로 컴포넌트 내부에 있는 DOM을 컴포넌트 외부에서 사용할 때 쓴다. 컴포넌트에 ref를 다는 방법은 DOM에 ref를 다는 방법과 똑같다.
+
+#### 5.3.1 사용법
+
+```react
+<MyComponent
+  ref={(ref) => {this.myComponent = ref}}
+/>
+```
+
+이렇게 하면 MyComponent 내부의 메서드 및 멤버 변수에도 접근할 수 있게된다. 
+
+즉, 내부의 ref에도 접근할 수 있다.(ex: myComponent.handleClick, myComponent.input 등)
+
+이번에는 스크롤 박스가 있는 컴포넌트를 만들고 스크롤바를 아래로 내리는 작업을 부모 컴포넌트에서 실행해보는 실습을 해본다.
+
+실습은 다음과 같은 흐름으로 진행이 된다.
+
+>ScrollBox 컴포넌트 만들기 → 컴포넌트에 ref 달기 → ref를 이용하여 컴포넌트 내부 메서드 호출하기
+
+#### 5.3.2 컴포넌트 초기 설정
+
+```react
+import React, { Component } from "react";
+
+class ScrollBox extends Component {
+  render() {
+    const style = {
+      border: "1px solid black",
+      height: "300px",
+      width: "300px",
+      overflow: "auto",
+      position: "relative",
+    };
+
+    const innerStyle = {
+      width: "100%",
+      height: "650px",
+      background: "linear-gradient(white, black)",
+    };
+
+    return (
+      <div
+        style={style}
+        ref={(ref) => {
+          this.box = ref;
+        }}
+      >
+        <div style={innerStyle} />
+      </div>
+    );
+  }
+}
+
+export default ScrollBox;
+```
+
+위와 같이 ScrollBox 컴포넌트를 만들고  JSX의 인라인 스타일링 문법으로 스크롤 박스를 만들고 최상위 DOM에 ref를 달아줬다. 
+
+그런 다음 App 컴포넌트에서 렌더링을 시켜주면 
+
+<img src="./images/ref_04.png" />
+
+위와 같이 렌더링이 잘 된 것을 확인할 수 있다. 모든 준비는 끝났고 다음으로는 컴포넌트에 메서드 생성하는 것으로 넘어가보자.
+
+#### 5.3.3 컴포넌트에 메서드 생성
+
+컴포넌트에 스크롤바를 맨 아래쪽으로 내리는 메서드를 만들어보자. 자바스크립트로 스크롤바를 내릴 때는 DOM 노드가 가진 다음 값들을 사용한다.
+
+- scrollTop : 세로 스크롤바 위치 (0 ~ 350)
+- scrollHeight : 스크롤이 있는 박스 안의 div 높이(650)
+- clientHeight : 스크롤이 있는 박스의 높이(300) 
+
+스크롤바를 맨 아래쪽으로 내리려면 scrollHeight에서 clientHeight 높이를 빼면 구할 수 있다.
+
+```react
+import React, { Component } from "react";
+
+class ScrollBox extends Component {
+  scrollToBottom = () => {
+    const {scrollHeight, clientHeight} = this.box;
+    /* 위 코드는 비구조화 할당 문법을 사용했고
+    	 다음 코드와 같은 의미다.
+    	 const scrollHeight = this.box.scrollHeight;
+    	 const clientHeight = this.box.clientHeight;
+    */
+    this.box.scrollTop = scrollHeight - clientHeight;
+  }
+  
+  render() {
+  	(...)  
+  }
+}
+
+export default ScrollBox;
+```
+
+이렇게 만든 메서드는 부모 컴포넌트인 App 컴포넌트에서 ScrollBox에 ref를 달면 사용할 수 있다.
+
+#### 5.3.4 컴포넌트에 ref 달고 내부 메서드 사용
+
+App 컴포넌트에서 ScrollBox에 ref를 달고 버튼을 만들어 누르면 ScrollBox 컴포넌트의 scrollToBottom 메서드를 실행하도록 코드를 작성해보자.
+
+```react
+import React, { Component } from "react";
+import ScrollBox from "./ScrollBox";
+
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <ScrollBox ref={(ref) => (this.scrollBox = ref)} />
+        <button onClick={() => this.scrollBox.scrollToBottom()}>
+          맨 밑으로
+        </button>
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+> ❗️ 
+>
+> 지금까지 App 컴포넌트를 함수형 컴포넌트로 사용했었는데 "Cannot set property 'scrollBox' of undefined" 오류가 발생했다.
+>
+> 근데 클래스형 컴포넌트로 바꾸니까 정상적으로 작동했다.
+
+<img src="./images/ref_05.png" />
+
+버튼을 누르면 스크롤바가 맨 밑으로 내려오는 것을 확인할 수 있다.
+
+## 5.4 정리
+
+컴포넌트 내부에서 DOM에 직접 접근해야할 때는 ref를 사용한다. 
+
+하지만 ref를 사용할 때는 ref를 사용하지 않고도 원하는 기능을 구현할 수 있는지 반드시 고려한 후 활용하는 것이 좋다.
+
+쉽게 오해할 수 있는 부분이 있는데, 서로 다른 컴포넌트끼리 데이터를 교류할 때 ref를 사용한다면 이는 잘못 사용된 것이다. 
+
+물론 이런 식으로 코드를 작성할 수는 있다. 컴포넌트에 ref를 달고 그 ref를 다른 컴포넌트로 전달하고 다른 컴포넌트에서 ref로 전달받은 컴포넌트의 메서드를 실행하고.... 이런 식으로 작성을 하게 되면 리액트 사상에 어긋난 설계가 된다. 
+
+앱 규모가 커지면 마치 스파게티처럼 구조가 꼬여 버려서 유지 보수가 불가능한 상태가 되버린다.
+
+컴포넌트끼리 데이터를 교류할 때는 언제나 데이터를 부모 ↔️ 자식 흐름으로 교류해야만 한다. 
+
+함수형 컴포넌트에서 ref를 사용하는 것은 useRef라는 Hook 함수를 사용하는데 사용법은 이 장에서 배운 React.createRef()와 유사하다.
+
+관련된 내용은 Hooks를 배울 때 자세히 알아보도록 하자.
 
