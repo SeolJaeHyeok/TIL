@@ -1,4 +1,4 @@
-# tref: DOM에 이름 달기
+# ref: DOM에 이름 달기
 
 일반 HTML에서 DOM 요소에 이름을 달 때는 id를 사용한다.
 
