@@ -1,7 +1,15 @@
 import "./App.css";
+import ToDoInsert from "./components/ToDoInsert";
+import ToDoLIst from "./components/ToDoList";
+import ToDoTemplate from "./components/ToDoTemplate";
 
 const App = () => {
-  return <div>ToDo App을 만들자!</div>;
+  return (
+    <ToDoTemplate>
+      <ToDoInsert />
+      <ToDoLIst />
+    </ToDoTemplate>
+  );
 };
 
 export default App;
