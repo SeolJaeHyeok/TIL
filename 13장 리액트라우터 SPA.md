@@ -178,3 +178,6 @@ export default App;
 페이지 상단에 있는 링크를 눌러보면 페이지가 정상적으로 전환되는 것을 확인할 수 있다.
 
 <img src="./images/13_04.png" />
+
+## 13.3 Route 하나에 여러 개의 path 설정하기
+
