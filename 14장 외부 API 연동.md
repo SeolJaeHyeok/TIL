@@ -300,3 +300,129 @@ API 키는 외부에 노출시키지 않는 것이 좋은데 만약에 나의 AP
 
 ## 14.4 뉴스 뷰어 UI 만들기
 
+styled-Component를 사용하여 뉴스 정보를 보여 줄 컴포넌트를 만들어 보자
+
+Src 디렉터리 안에 components를 만들고 그 안에 NewsItem.js와 NewsList.js 파일을 만들어 준다. NewsItem은 각 뉴스 정보를 보여 주는 컴포넌트이고, NewsList는 API를 요청하고 뉴스 데이터가 들어 있는 배열을 컴포넌트 배열로 변환하여 렌더링해 주는 컴포넌트다.
+
+#### 14.4.1 NewsItem
+
+NewsItem을 만들기 전에 각 뉴스 데이터에 어떤 필드가 있는지 확인해보는 것이 필요하다. 위의 첨부된 이미지를 보면 전체 뉴스 API를 호출했을 때 받아오는 JSON 데이터인데 내가 사용할 데이터는 아래와 같다.
+
+- title: 제목
+- description: 내용
+- url: 링크
+- urlToImage: 뉴스 이미지
+
+NewsItem 컴포넌트는 article이라는 객체를 props로. 통째로 받아 와서 사용한다. NewsItem 컴포넌트를 아래와 같이 작성해줬다.
+
+```react
+import React from "react";
+import styled from "styled-components";
+
+const NewItemBlock = styled.div`
+  display: flex;
+  .thumbnail {
+    margin-right: 1rem;
+    img {
+      display: block;
+      width: 160px;
+      height: 100px;
+      object-fit: cover;
+    }
+  }
+  .contents {
+    h2 {
+      margin: 0;
+      a {
+        color: black;
+      }
+    }
+    p {
+      margin: 0;
+      line-height: 1.5;
+      margin-top: 0.5rem;
+      white-space: normal;
+    }
+  }
+  & + & {
+    margin-top: 3rem;
+  }
+`;
+
+const NewsItem = ({ article }) => {
+  const { title, description, url, urlToImage } = article;
+  return (
+    <NewItemBlock>
+      {urlToImage && (
+        <div className="thumbnail">
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            <img src={urlToImage} atl="thumbnail" />
+          </a>
+        </div>
+      )}
+      <div className="contents">
+        <h2>
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            {title}
+          </a>
+        </h2>
+        <p>{description}</p>
+      </div>
+    </NewItemBlock>
+  );
+};
+
+export default NewsItem;
+```
+
+#### 14.4.2 NewsList
+
+이 컴포넌트에서 API 요청을 하게 될텐데 아직 데이터를 불러오지 않고 있으니 sampleArticle이라는 객체에 미리 예시 데이터(Mock Data)를 넣은 후 각 컴포넌트에 전달하여 가짜 내용을 보이게 해줬다.
+
+```react
+import React from "react";
+import styled from "styled-components";
+import NewsItem from "./NewsItem";
+
+const NewsListBlock = styled.div`
+  box-sizing: border-box;
+  padding-bottom: 3rem;
+  width: 768px;
+  margin: 0 auto;
+  margin-top: 2rem;
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+`;
+
+const sampleArticle = {
+  title: "제목",
+  description: "내용",
+  url: "https://google.com",
+  urlToImage: "https://via.placeholder.com/160",
+};
+
+const NewsList = () => {
+  return (
+    <NewsListBlock>
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+      <NewsItem article={sampleArticle} />
+    </NewsListBlock>
+  );
+};
+
+export default NewsList;
+```
+
+그런 다음 App 컴포넌트를 다 지우고 NewsList를 렌더링 해주면 다음과 같은 화면이 나타나게 된다.
+
+<img src="./images/14_03.png" />
+
