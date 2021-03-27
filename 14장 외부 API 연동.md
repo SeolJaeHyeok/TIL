@@ -276,3 +276,27 @@ export default App;
 
 ## 14.3 newsapi API 키 발급 받기
 
+이번 프로젝트에서는 newsapi에서 제공하는 API를 사용하여 최신 뉴스를 불러온 후 보여 줄 것이다. 이를 수행하기 위해선 사전에 newsapi에서 API 키를 발급받아야 한다. API 키는 https://newsapi.org/register에 가입하면 발급받을 수 있다. 
+
+7f503bc4b6d64e3baa9f7b4593d8e279
+
+API 키는 외부에 노출시키지 않는 것이 좋은데 만약에 나의 API 키를 사용해서 API를 요청하는 사람들이 많다고 가정한다면 사이트 측에서 block을 걸어 버릴 수도 있다. 그렇기에 API키는 나만 알 수 있는 곳에 안전하게 저장을 해두는 습관이 필요하다.
+
+발급받은 API 키는 추후 API를 요청할 때 API 주소의 쿼리 파라미터로 넣어서 사용하면 된다. 우리가 사용할 API에 대해서 알아보자. https://newsapi.org/s/south-korea-news-api 링크에 들어가면 한국 뉴스를 가져오는 API에 대한 설명서가 있다.
+
+사용할 API 주소는 두 가지 형태다.
+
+1. 전체 뉴스 불러오기
+
+   GET https://newsapi.org/v2/top-headlines?country=kr&apiKey=7f503bc4b6d64e3baa9f7b4593d8e279
+
+2. 특정 카테고리 뉴스 불러오기
+
+   GET https://newsapi.org/v2/top-headlines?country=kr&category=technology&apiKey=7f503bc4b6d64e3baa9f7b4593d8e279
+
+이제 기존 리액트 프로젝트에서 사용해던 JSONPlacholder 가짜 API를 전체 뉴스를 불러오는 API로 대체하면 다음과 같이 전체 뉴스를 정상적으로 불러오는 것을 확인할 수 있다.
+
+<img src="./images/14_02.png" />
+
+## 14.4 뉴스 뷰어 UI 만들기
+
