@@ -426,3 +426,76 @@ export default NewsList;
 
 <img src="./images/14_03.png" />
 
+## 14.5 데이터 연동하기
+
+NewsList 컴포넌트에서 이전에 연습 삼아 사용했던 API를 호출해 보도록 하자. 컴포넌트가 화면에 보이는 시점에 API를 요청하게 될텐데, useEffect를 사용해서 컴포넌트가 처음 렌더링되는 시점에 API를 요청하면 된다. 여기서 주의할 점은 useEffect에 등록하는 함수에 async를 붙이면 안된다는 것이다. useEffect에서 반환해야 하는 값은 뒷정리 함수이기 때문이다. 따라서 내부에서 async/await를 사용하고 싶다면, 함수 내부에 async 키워드가 붙은 또다른 함수를 만들어서 사용해줘야 한다.
+
+ 추가로 loading이라는 state도 관리해서 API요청이 대기 중인지 판별하도록 할 것이다. 요청이 대기 중일때는 true, 요청이 끝나면 false가 되어야 한다.
+
+```react
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import NewsItem from "./NewsItem";
+import axios from "axios";
+
+const NewsListBlock = styled.div`
+  box-sizing: border-box;
+  padding-bottom: 3rem;
+  width: 768px;
+  margin: 0 auto;
+  margin-top: 2rem;
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+`;
+
+const NewsList = () => {
+  const [articles, setArticles] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // async를 사용하는 함수 따로 선언
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(
+          "https://newsapi.org/v2/top-headlines?country=kr&apiKey=7f503bc4b6d64e3baa9f7b4593d8e279"
+        );
+        setArticles(response.data.articles);
+      } catch (e) {
+        console.log(e);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  // 대기 중일 때
+  if (loading) {
+    return <NewsListBlock>대기 중...</NewsListBlock>;
+  }
+  // Articles 값이 설정되지 않았을 때
+  if (!articles) {
+    return null;
+  }
+
+  return (
+    <NewsListBlock>
+      {articles.map((article) => (
+        <NewsItem article={article} />
+      ))}
+    </NewsListBlock>
+  );
+};
+
+export default NewsList;
+```
+
+데이터를 불러와서 뉴스 데이터 배열을 map 함수를 이요해서 컴포넌트 배열로 변활할 때 신경 써야 할 부분이 있다. Map 함수를 사용하기 전에 꼭 !articles를 조회하여 해당 값이 현재 null이 아닌지 검사해야 한다. 이 작업을 하지 않으면, 아직 데이터가 없을 때 null 에는 map 함수가 없기 때문에 렌더링 과정에서 오류가 발생하고 화면에는 흰 페이지만 나오게 된다.
+
+저장하고 화면을 보면 정상적으로 뉴스 데이터를 받아와 화면에서 출력하는 것을 볼 수 있다.
+
+<img src="./images/14_04.png" />
+
