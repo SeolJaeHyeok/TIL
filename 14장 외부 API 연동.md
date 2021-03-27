@@ -499,3 +499,285 @@ export default NewsList;
 
 <img src="./images/14_04.png" />
 
+## 14.6 카테고리 기능 구현
+
+뉴스의 카테고리는 총 6개이며 다음과 같이 영어로 되어 있다.
+
+- Business(비즈니스) 	
+- Science(과학)
+- Entertainment(연예) 
+- Sports(스포츠)
+- Health(건강)
+- Technology(기술)
+
+화면에 카테고리를 보여 줄 때는 영어로 된 값을 그대로 보여 주지 않고, 한글로 보여 준 뒤 클릭했을 때 영어로 된 카테고리 값을 사용하도록 구현할 예정이다.
+
+#### 14.6.1 카테고리 선택 UI 만들기
+
+Categories.js 파일을 만들어 다음과 같이 작성해준다.
+
+```react
+import React from "react";
+import styled from "styled-components";
+
+const categories = [
+  {
+    name: "all",
+    text: "전체보기",
+  },
+  {
+    name: "busniess",
+    text: "비즈니스",
+  },
+  {
+    name: "entertainment",
+    text: "엔터테인먼트",
+  },
+  {
+    name: "health",
+    text: "건강",
+  },
+  {
+    name: "science",
+    text: "과학",
+  },
+  {
+    name: "sports",
+    text: "스포츠",
+  },
+  {
+    name: "technology",
+    text: "기술",
+  },
+];
+
+const CategoriesBlock = styled.div`
+  display: flex;
+  padding: 1rem;
+  width: 768px;
+  margin: 0 auto;
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    overflow-x: auto;
+  }
+`;
+
+const Category = styled.div`
+  font-size: 1.125rem;
+  cursor: pointer;
+  white-space: pre;
+  text-decoration: none;
+  color: inherit;
+  padding-bottom: 0.25rem;
+
+  &:hover {
+    color: #495057;
+  }
+
+  & + & {
+    margin-left: 1rem;
+  }
+`;
+
+const Categories = () => {
+  return (
+    <CategoriesBlock>
+      {categories.map((category) => (
+        <Categogy key={category.name}>{category.text}</Categogy>
+      ))}
+    </CategoriesBlock>
+  );
+};
+
+export default Categories;
+```
+
+위 코드에서는 categories라는 배열 안에 name과 text 값이 들어가 있는 객체들을 넣어 주어서 한글로 된 카테고리와 실제 카테고리 값을 연결시켜 주었다. 여기서 name은 실제 카테고리 값을 가리키고, text 값은 렌더링할 때 사용할 카테고리를 가리킨다.
+
+다 만든 컴포넌트는 App에서 NewList 컴포넌트 상단에 렌더링 시켜준다. 저장 후 화면을 보면 아래와 같이 카테고리가 상단에 잘 나타나는 것을 확인할 수 있다.
+
+<img src="./images/14_05.png" />
+
+이제 App에서 category 상태를 useState로 관리해보자. 추가로 category 값을 업데이는 하는 onSelect라는 함수도 만들어 준다. 그러고 나서 category와 onSelect 함수를 Categories 컴포넌트에게 props로 전달해준다. 또한 category 값을 NewsList 컴포넌트에게도 props로 전달해준다.
+
+```react
+import React, { useCallback, useState } from "react";
+import Categories from "./components/Categories";
+import NewsList from "./components/NewsList";
+
+function App() {
+  const [category, setCategory] = useState("all");
+  const onSelect = useCallback((category) => setCategory(category), []);
+  return (
+    <>
+      <Categories category={category} onSelect={onSelect} />
+      <NewsList category={category} />
+    </>
+  );
+}
+
+export default App;
+```
+
+다음으로 Categories에서는 props로 전달받은 onSelect를 각 Category 컴포넌트의 onClick으로 설정해 주고, 현재 선택된 카테고리 값에 따라 다른 스타일을 적용해보도록 하자.
+
+```react
+import React from "react";
+import styled, { css } from "styled-components";
+
+const categories = [
+  {
+    name: "all",
+    text: "전체보기",
+  },
+  {
+    name: "busniess",
+    text: "비즈니스",
+  },
+  {
+    name: "entertainment",
+    text: "엔터테인먼트",
+  },
+  {
+    name: "health",
+    text: "건강",
+  },
+  {
+    name: "science",
+    text: "과학",
+  },
+  {
+    name: "sports",
+    text: "스포츠",
+  },
+  {
+    name: "technology",
+    text: "기술",
+  },
+];
+
+const CategoriesBlock = styled.div`
+  display: flex;
+  padding: 1rem;
+  width: 768px;
+  margin: 0 auto;
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    overflow-x: auto;
+  }
+`;
+
+const Category = styled.div`
+  font-size: 1.125rem;
+  cursor: pointer;
+  white-space: pre;
+  text-decoration: none;
+  color: inherit;
+  padding-bottom: 0.25rem;
+
+  &:hover {
+    color: #495057;
+  }
+
+  ${(props) =>
+    props.active &&
+    css`
+      font-weight: 600;
+      border-bottom: 2px solid #22b8cf;
+      color: #22b8cf;
+      &:hover {
+        color: #3bc9db;
+      }
+    `}
+
+  & + & {
+    margin-left: 1rem;
+  }
+`;
+
+const Categories = ({ category, onSelect }) => {
+  return (
+    <CategoriesBlock>
+      {categories.map((c) => (
+        <Category
+          key={c.name}
+          onClick={() => onSelect(c.name)}
+          active={category === c.name}
+        >
+          {c.text}
+        </Category>
+      ))}
+    </CategoriesBlock>
+  );
+};
+
+export default Categories;
+```
+
+저장후 화면을 보게 되면 다음과 같이 청록색의 스타일이 선택된 카테고리에 입혀진 것을 확인할 수 있다.
+
+<img src="./images/14_06.png" />
+
+#### 14.6.2 API를 호출할 때 카테고리 지정하기
+
+현재는 API를 요청할 때 전체 뉴스 목록을 불러오는 것만 구현이 되어 있지만 카테고리를 눌렀을 때 해당 카테고리에 맞는 뉴스들을 불러올 수 있도록 NewsList 컴포넌트에서 현재 props로 받아 온 category에 따라 API를 요청하도록 구현해보도록 하자.
+
+```react
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import NewsItem from "./NewsItem";
+import axios from "axios";
+
+(...)
+ 
+const NewsList = ({ category }) => {
+  const [articles, setArticles] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // async를 사용하는 함수 따로 선언
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const query = category === "all" ? "" : `&category=${category}`;
+        const response = await axios.get(
+          `https://newsapi.org/v2/top-headlines?country=kr${query}&apiKey=7f503bc4b6d64e3baa9f7b4593d8e279`
+        );
+        setArticles(response.data.articles);
+      } catch (e) {
+        console.log(e);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [category]);
+
+  // 대기 중일 때
+  if (loading) {
+    return <NewsListBlock>대기 중...</NewsListBlock>;
+  }
+  // Articles 값이 설정되지 않았을 때
+  if (!articles) {
+    return null;
+  }
+
+  return (
+    <NewsListBlock>
+      {articles.map((article) => (
+        <NewsItem article={article} />
+      ))}
+    </NewsListBlock>
+  );
+};
+
+export default NewsList;
+```
+
+현재 category 값이 무엇인지에 따라 요청할 주소가 동적으로 바뀌고 있다. category 값이 'all'이라면 query 값을 공백으로 설정하고, 'all'이 아니라면 "&category=카테고리" 형태의 문자열을 만들도록 했다. 그리고 이 query를 요청할 때 주소에 포함시켜 줬다.
+
+추가로 category 값이 바뀔 때마다 뉴스를 새로 불러와야 하기 때문에 useEffect의 의존 배열(두 번째 파라미터로 설정하는 배열)에 category를 넣어 주어야 한다. 만약 이 컴포넌트를 클래스형 컴포넌트로 만들게 된다면 componentDidMount와 componentDidUpdate에서 요청을 하도록 설정해 주어야 하는데 함수형 컴포넌트라면 useEffect 한 번으로 컴포넌트가 맨 처음 렌더링될 때, category 값이 바뀔 때 요청하도록 설정해 줄 수 있다.
+
+저장 후 브라우저를 열어 다른 카테고리를 눌러보면 해당 카테고리에 따른 기사들을 정상적으로 불러오는 것을 확인할 수 있다.
+
+<img src="./images/14_07.png" />
+
