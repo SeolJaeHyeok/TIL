@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.js"],"names":["console","log"],"mappings":"AAAAA,OAAO,CAACC,GAAR,CAAY,cAAZ","file":"vanila-redux.e31bb0bc.js","sourceRoot":"..","sourcesContent":["console.log(\"hello parcel\");\n"]}
