@@ -2,7 +2,7 @@
 
 ## 2.1 코드 이해하기
 
-```react
+```jsx
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
@@ -36,7 +36,7 @@ export default App;
 
 위 전체 코드를 분리하여 설명을 해보자면 
 
-```react
+```jsx
 import React from 'react';
 ```
 
@@ -52,7 +52,7 @@ import React from 'react';
 
 - 번들러 도구를 사용하면 import로 모듈을 불러왔을 때 불러온 모듈을 모두 합쳐서 하나의 파일을 생성해 주고 또 최적화 과정에서 여러 개의 파일로 분리 될 수도 있다.
 
-``` react
+``` jsx
 import logo from './logo.svg';
 import './App.css';
 ```
@@ -67,7 +67,7 @@ import './App.css';
   >
   >  현재 대부분의 웹 브라우저에서는 최신 JS문법을 바로 실행할 수 있지만, 구 버전 웹브라우저에서는 실행이 되지 않기 때문에 사전에 변환해줘야한다.  앞으로 배우게 되는 리액트 컴포넌트에서 사용하는 JSX라는 문법도 정식 자바스크립트 문법이 아니므로 ES5 형태의 코드로 변환해야 한다.
 
-``` react
+``` jsx
 function App() {
   return (
     <div className="App">
@@ -99,7 +99,7 @@ function App() {
 - JSX란 자바스크립트의 확장 문법이며 XML과 아주 유사하게 생겼다.
 - 이렇게 작성한 코드가 브라우저에서 실행되기 전 코드가 번들링되는 과정에서 바벨을 사용하여 일반 자바스크립트 코드로 변환된다.
 
-``` react
+``` jsx
 function App() {
   return (
   <div>
@@ -111,7 +111,7 @@ function App() {
 
 위와 같이 작성된 JSX는 
 
-``` react
+``` jsx
 function App(){
   return React.createElement("div",null, "Hello", React.createElement("b", null, "react"));
 }
@@ -129,7 +129,7 @@ function App(){
    - JSX에서는 우리가 알고 있는 div나 span 같은 HTML 태그를 사용할 수 있을 뿐만 아니라, 앞으로 만들  Component도 JSX 안에서 작성할 수 있다. 
    - 아래 코드를 보면 App Component를 마치 HTML 태그 쓰듯이 그냥 작성하는 것을 볼 수 있다.
 
-``` react
+``` jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
@@ -158,7 +158,7 @@ ReactDOM.render(
 
 - 컴포넌트에 여러 요소가 있다면 반드시 부모 요소 하나로 감싸야 한다.
 
-``` react
+``` jsx
 import React from "react";
 
 function App() {
@@ -175,7 +175,7 @@ export default App;
 
 이를 해결하기 위해서
 
-``` react
+``` jsx
 import React from "react";
 
 function App() {
@@ -196,7 +196,7 @@ export default App;
 
 div요소를 사용하고 싶지 않다면 리액트 v16이상부터 도입된 Fragment라는 기능을 사용하면 된다.
 
-```react
+```jsx
 import React, {Fragment} from "react"
 
 function App() {
@@ -213,7 +213,7 @@ export default App;
 
 위와 같이 Fragment를 import 시켜서 사용하는 방법과 아래와 같이 사용하는 방법도 있다.
 
-```react
+```jsx
 import React from "react"
 
 function App() {
@@ -232,7 +232,7 @@ export default App;
 
 - JSX에서는 자바스크립트 표현식을 쓸 수 있다. 방법은 JSX 내부에서 코드를 {}로 감싸면 된다.
 
-```react
+```jsx
 import React from "react"
 
 function App() {
@@ -255,7 +255,7 @@ export default App;
 - JSX 내부의 자바스크립트 표현식에서는 if문을 사용할 수 없다.
 - 조건에 따라 렌더링이 필요할 때는 JSX 밖에서 if문을 사용하여 사전에 값을 설정하거나, {} 안에 조건부 연산자(=삼항연산자)를 사용하면 된다.
 
-```react
+```jsx
 import React from "react"
 
 function App() {
@@ -278,7 +278,7 @@ export default App;
 
 name의 값을 아래와 같이 다른 값으로 바꿔주면 
 
-```
+```jsx
 const name = "자바스크립트";
 ```
 
@@ -290,7 +290,7 @@ const name = "자바스크립트";
 
 이럴 때도 조건부 연산자를 통해 구현할 수 있는데 아래 코드를 보면 name값이 조건에 맞지 않으면 아무것도 출력되지 않는 것을 확인할 수 있다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -303,7 +303,7 @@ export default App;
 
 하지만 이보다 더 짧게 코드를 작성할 수 있는데 아래 코드블럭을 보면 똑같은 결과가 나오는 걸 알  수 있다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -316,7 +316,7 @@ export default App;
 
 && 연산자로 조건부 렌더링을 할 수 있는 이유는 리액트에서 false를 렌더링할 때는 null과 마찬가지로 아무것도 나타나지 않기 때문이다. 여기서 한가지 주의할 점은 falsy한 값이 0은 예외적으로 화면에 나타난다는 점이다.
 
-```react
+```jsx
 const number = 0;
 return number && <div>내용</div>;
 ```
@@ -333,7 +333,7 @@ return number && <div>내용</div>;
 
 - 리액트 컴포넌트에서는 함수에서 undefined만 반환하는 상황을 만들면 안된다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -348,7 +348,7 @@ export default App;
 
 어떤 값이 undefined일 수도 있다면 OR(||) 연산자를 사용하면 해당 값이 undefined일 때 사용할 값을 지정할 수 있으므로 간단하게 오류를 방지할 수 있다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -361,7 +361,7 @@ export default App;
 
 하지만 JSX 내부에서 undefined를 렌더링하는 것은 괜찮다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -374,7 +374,7 @@ export default App;
 
 만약 name 값이 undefined일 때 보여주고 싶은 문구가 있다면 아래와 같이 코드를 작성하면 된다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -390,7 +390,7 @@ export default App;
 - 리액트에서 DOM요소에 스타일을 적용할 때는 일반적으로 css 요소를 추가하는 방법처럼 문자열 형태로 넣는 것이 아니라 객체 형태로 넣어 줘야 한다.
 - 스타일 이름 중 background-color와 같이 - 문자가 포함되는 이름들은 -를 없애고 카멜 표기법으로 작성해야한다. 따라서 background-color는 backgroundColor로 작성한다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -410,7 +410,7 @@ export default App;
 
 위 코드 처럼 style 객체를 미리 선언하고 div의 style값을 지정해줬는데 미리 선언하지 않고 바로 style 값을 지정하고 싶다면 아래와 같이 작성하면 된다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {
@@ -439,7 +439,7 @@ export default App;
 - HTML 코드를 작성할 때는 가끔 태그를 닫지 않은 상태로 코드를 작성하는 경우도 있다. 예를 들어 input 태그나 br태그는 </input>, </br> 처럼 닫아주지 않아도 문제가 없다.
 - 하지만 리액트에서는 태그를 닫지 않으면 오류가 발생한다.
 
-```react
+```jsx
 import React from "react";
 
 function App() {

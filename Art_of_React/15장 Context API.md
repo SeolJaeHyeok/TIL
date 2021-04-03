@@ -16,7 +16,7 @@ Context API는 리액트 프로젝트에서 전역적으로 사용할 데이터�
 
 G 컴포넌트는 전역 상태를 업데이트 시키고, F와 J 컴포넌트는 업데이트 된 상태를 렌더링 한다고 가정해보자. 그렇다면 App 컴포넌트에서는 다음과 같이 상태와 업데이트 함수를 정의해야 한다.
 
-```react
+```jsx
 const [value, setValue] = useState('Hello');
 const onSetValue = useCallback(value => setValue(value), []);
 ```
@@ -41,7 +41,7 @@ const onSetValue = useCallback(value => setValue(value), []);
 
 파일을 만들고 아래와 같이 입력한다.
 
-```react
+```jsx
 import { createContext } from "react";
 
 const colorContext = createContext({ color: "black" });
@@ -57,7 +57,7 @@ export default colorContext;
 
 Src 디렉터리에 components 디렉터리를 만들고, 그 안에 ColorBox.js 파일을 생성하여 아래와 같이 입력해준다.
 
-```react
+```jsx
 import React from "react";
 import ColorContext from "../contexts/color";
 
@@ -82,7 +82,7 @@ Consumer 사이에 중괄호를 열어서 그 안에 함수를 넣어 주었다.
 >
 > Render Props 예제
 >
-> ```react
+> ```jsx
 > import React from "react";
 > 
 > const RenderPropsSample = ({children}) => {
@@ -94,7 +94,7 @@ Consumer 사이에 중괄호를 열어서 그 안에 함수를 넣어 주었다.
 >
 > 만약 위와 같은 컴포넌트가 있다면 추후 사용할 때 다음과 같이 사용할 수 있다.
 >
-> ```react
+> ```jsx
 > <RenderPropsSample>{value => 2 * value}</RenderPropsSample>;
 > ```
 >
@@ -108,7 +108,7 @@ Consumer 사이에 중괄호를 열어서 그 안에 함수를 넣어 주었다.
 
 Provider를 사용하면 Context의 value를 변경할 수 있다. App 컴포넌트를 다음과 같이 수정해보자
 
-```react
+```jsx
 import React from "react";
 import ColorBox from "./components/ColorBox";
 import ColorContext from "./contexts/color";
@@ -134,7 +134,7 @@ export default App;
 
 다음은 오류가 발생하는 코드다.
 
-```react
+```jsx
 import React from "react";
 import ColorBox from "./components/ColorBox";
 import ColorContext from "./contexts/color";
@@ -166,7 +166,7 @@ Context의 value에는 무조건 상태 값만 있어야 하는 것은 아니고
 
 기존에 작성했던 ColorContext의 코드를 다음과 같이 수정해보자.
 
-```react
+```jsx
 import { createContext, useState } from "react";
 
 const ColorContext = createContext({
@@ -208,7 +208,7 @@ export default ColorContext;
 
 새로 만든 Context를 프로젝에 반영해보자. 우선 App 컴포넌트의 ColorContext.Provider를 ColorProvider로 바꿔준다.
 
-```react
+```jsx
 import React from "react";
 import ColorBox from "./components/ColorBox";
 import { ColorProvider } from "./contexts/color";
@@ -228,7 +228,7 @@ export default App;
 
 그런 다음 ColorBox의 ColorContext.Consumer도 ColorConsumer로 변경하고 사용할 value의 형태도 바뀌었으니 이에 따른 변화를 다음과 같이 반영시켜 준다.
 
-```react
+```jsx
 import React from "react";
 import { ColorConsumer } from "../contexts/color";
 
@@ -262,7 +262,7 @@ export default ColorBox;
 
 위 코드에서 객체 비구조화 할당 문법을 사용하면 다음과 같이 value를 조회하는 것을 생략할 수도 있다.
 
-```react
+```jsx
 import React from "react";
 import { ColorConsumer } from "../contexts/color";
 
@@ -302,7 +302,7 @@ export default ColorBox;
 
 이번에는 Context의 actions에 넣어 준 함수를 호출하는 컴포넌트를 만들어 보자. SelectColors.js 파일을 만들고 아래와 같이 작성해준다. 지금은 Consumer를 사용하지 않고 UI만 작성해보겠다.
 
-```react
+```jsx
 import React from "react";
 
 const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
@@ -334,7 +334,7 @@ export default SelectColors;
 
 작성한 뒤 저장하고 App 컴포넌트에서 ColorBox 위에 렌더링 시키자.
 
-```react
+```jsx
 import React from "react";
 import ColorBox from "./components/ColorBox";
 import SelectColors from "./components/SelectColors";
@@ -360,7 +360,7 @@ export default App;
 
 이제 해당 색상에서 마우스 왼쪽 버튼을 클릭하면 큰 정사각형의 색상을 변경하고, 오른쪽 버튼을 클릭하면 작은 정사각형의 색상을 변경하도록 구현해보자.
 
-```react
+```jsx
 import React from "react";
 import { ColorConsumer } from "../contexts/color";
 
@@ -410,7 +410,7 @@ export default SelectColors;
 
 리액트에 내장되어 있는 Hook 중에 useContext라는 Hook을 사용하면, 함수형 컴포넌트에서 Context를 아주 편하게 사용할 수 있다. ColorBox.js의 코드를 다음과 같이 수정해보자.
 
-```react
+```jsx
 import React, { useContext } from "react";
 import ColorContext from "../contexts/color";
 
@@ -445,7 +445,7 @@ Children 함수에 전달하는 Render Props 패턴이 불편하다면 useContex
 
 함수형 컴포넌트에서 Context를 쉽게 사용하려면 위에서 본 static contextType을 정의하는 방법이 있다. 다음과 같이 SelectColors 컴포넌트를 클래스형 컴포넌트로 리팩토링 하고 Consumer 쪽의 코드는 제거해줬다.
 
-```react
+```jsx
 import React, { Component } from "react";
 
 const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
@@ -488,7 +488,7 @@ export default SelectColors;
 
 그런 다음 클래스 상단에 static contextType을 지정해준다.
 
-```react
+```jsx
 import React, { Component } from "react";
 
 const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
@@ -507,7 +507,7 @@ export default SelectColors;
 
 컴포넌트를 다음과 같이 완성해보자
 
-```react
+```jsx
 import React, { Component } from "react";
 import ColorContext from "../contexts/color";
 

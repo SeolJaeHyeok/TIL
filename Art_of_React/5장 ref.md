@@ -2,7 +2,7 @@
 
 일반 HTML에서 DOM 요소에 이름을 달 때는 id를 사용한다.
 
-```react
+```jsx
 <div id="my-element"></div>
 ```
 
@@ -28,7 +28,7 @@
 
 정답은 '<b>DOM을 꼭 직접적으로 건드려야 할 때</b>'이다. 예를 들어 일반 바닐라 자바스크립트 및 jQuery로 만든 웹 사이트에서 검증할 때는 아래와 같이 특정 id를 가진 input에 클래스를 설정해준다.
 
-```html
+```jsx
 <html>
   <head>
     <meta charset="utf-8">
@@ -73,7 +73,7 @@
 
 아래처럼 ValidationSample.css 파일을 만들어 className의 변화에 따라 다른 배경색을 가질 수 있도록 두 개의 className을 스타일링했고
 
-```react
+```jsx
 .success {
   background-color: lightgreen;
 }
@@ -83,7 +83,7 @@
 }
 ```
 
-```react
+```jsx
 import React, { Component } from "react";
 import "./ValidationSample.css";
 
@@ -156,7 +156,7 @@ ref를 사용하는 방법은 두 가지다.
 
 ref를 만드는 가장 기본적인 방법은 콜백 함수를 사용하는 것이다. ref를 달고자 하는 요소에 ref라는 콜백 함수를 props로 전달해주면 된다. 이 콜백 함수는 ref 값을 파라미터로 전달받고 함수 내부에서 파라미터로 받은 ref를 컴포넌트의 멤버 변수로 설정을 해준다.
 
-```react
+```jsx
 <input ref={(ref) => {this.input = ref}} />
 ```
 
@@ -166,7 +166,7 @@ ref를 만드는 가장 기본적인 방법은 콜백 함수를 사용하는 것
 
 ref를 만드는 또 다른 방법은 리액트에 내장되어 있는 createRef라는 함수를 사용하는 것이다. 이 하수를 사용해서 만들면 더 적은 코드로 쉽게 사용할 수 있다. 이 기능은 리액트 v16.3부터 도입됐다.
 
-```react
+```jsx
 import React, {Component} from "react";
 
 class RefSample extends Component {
@@ -206,7 +206,7 @@ createRef를 사용하여 ref를 만들려면 우선 컴포넌트 내부에서 �
 
 위에서 배운대로 콜백 함수를 이용해 ValidationSample 컴포넌트에 ref를 달아보면 아래처럼 작성할 수 있다.
 
-```react
+```jsx
 (...)
  		<input 
  			ref={(ref) => {this.input = ref}}
@@ -216,7 +216,7 @@ createRef를 사용하여 ref를 만들려면 우선 컴포넌트 내부에서 �
 
 그 다음으로 버튼에 onClick 이벤트가 발생했을 때 input에 포커스를 주도록 코드를 아래와 같이 수정한다.
 
-```react
+```jsx
 handleButtonClick = (e) => {
   this.setState({
     clicked: true,
@@ -238,7 +238,7 @@ this.input이 컴포넌트 내부의 input 요소를 가리키고 있으니, 일
 
 #### 5.3.1 사용법
 
-```react
+```jsx
 <MyComponent
   ref={(ref) => {this.myComponent = ref}}
 />
@@ -256,7 +256,7 @@ this.input이 컴포넌트 내부의 input 요소를 가리키고 있으니, 일
 
 #### 5.3.2 컴포넌트 초기 설정
 
-```react
+```jsx
 import React, { Component } from "react";
 
 class ScrollBox extends Component {
@@ -309,7 +309,7 @@ export default ScrollBox;
 
 스크롤바를 맨 아래쪽으로 내리려면 scrollHeight에서 clientHeight 높이를 빼면 구할 수 있다.
 
-```react
+```jsx
 import React, { Component } from "react";
 
 class ScrollBox extends Component {
@@ -337,7 +337,7 @@ export default ScrollBox;
 
 App 컴포넌트에서 ScrollBox에 ref를 달고 버튼을 만들어 누르면 ScrollBox 컴포넌트의 scrollToBottom 메서드를 실행하도록 코드를 작성해보자.
 
-```react
+```jsx
 import React, { Component } from "react";
 import ScrollBox from "./ScrollBox";
 

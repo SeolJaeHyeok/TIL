@@ -16,7 +16,7 @@ Https://newsapi.org/에서 제공하는 API를 사용하여 데이터를 받아 
 
 이렇게 서버 API를 호출할 때 외에도 작업을 비동기적으로 처리할 때가 있는데, 바로 setTimeout 함수를 사용하여 특정 작업을 예약할 때이다. 예를 들어 다음 코드는 3초 후에 printMe함수를 호출한다.
 
-```react
+```jsx
 function printMe() {
   console.log('Hello World!');
 }
@@ -38,7 +38,7 @@ setTimeout이 사용되는 시점에서 코드가 3초 동안 멈추는 것이 �
 
 예를 들어 파라미터 값이 주어지면 1초 뒤에 10을 더해서 반환하는 함수가 있다고 생각해보자. 그리고 해당 함수가 처리된 직후 어떠한 작업을 하고 싶다면 다음과 같이 콜백 함수를 활용해서 작업한다.
 
-```react
+```jsx
 function increase(number, callback) {
   setTimeout(() => {
     const result = number + 10;
@@ -55,7 +55,7 @@ increase(0, result => {
 
 1초에 걸쳐서 10, 20, 30, 40과 같은 형태로 여러 번 순차적으로 처리하고 싶다면 콜백 함수를 중첩하여 구현할 수 있다.
 
-```react
+```jsx
 function increase(number, callback) {
   setTimeout(() => {
     const result = number + 10;
@@ -106,7 +106,7 @@ increase(0, result => {
 
 Promise는 자바스크립트 ES6에 도입된 기능으로 콜백 지옥 같은 코드가 형성되지 않게 하는 방법이다. 앞에 작성한 코드를 Promise를 사용하여 구현해보자.
 
-```react
+```jsx
 function increase(number) {
 	const promise = new Promise((resole, reject) => {
     // resolve는 성공, reject는 실패
@@ -153,7 +153,7 @@ increase(0)
 
 async/await는 Promise를 더욱 쉽게 사용할 수 있도록 해 주는 ES2017(ES8) 문법이다. 이 문법을 사용하려면 함수의 앞부분에 async 키워드를 추가하고, 해당 함수 내부에서 Promise의 앞 부분에 await 키워드를 사용한다. 이렇게 하면 Promise가 끝날 때까지 기다리고, 결과 값을 특정 변수에 담을 수 있다.
 
-```react
+```jsx
 function increase(number) {
 	const promise = new Promise((resole, reject) => {
     // resolve는 성공, reject는 실패
@@ -201,7 +201,7 @@ axios는 현재 가장 많이 사용되고 있는 자바스크립트 HTTP 클라
 
 설치를 다 마친 후 App.js의 코드를 다음과 같이 고쳐줬다.
 
-```react
+```jsx
 import React, { useState } from "react";
 import axios from "axios";
 
@@ -239,7 +239,7 @@ export default App;
 
 onClick 함수에서 axios.get 함수를 사용했다. 이 함수는 파라미터로 전달된 주소에 GET 요청을 해준다. 그리고 이에 대한 결과는 .then을 통해 비동기적으로 확인할 수 있다. 위 코드에 async를 적용하려면 아래와 같이 코드를 수정해주면 된다.
 
-```react
+```jsx
 import React, { useState } from "react";
 import axios from "axios";
 
@@ -315,7 +315,7 @@ NewsItem을 만들기 전에 각 뉴스 데이터에 어떤 필드가 있는지 
 
 NewsItem 컴포넌트는 article이라는 객체를 props로. 통째로 받아 와서 사용한다. NewsItem 컴포넌트를 아래와 같이 작성해줬다.
 
-```react
+```jsx
 import React from "react";
 import styled from "styled-components";
 
@@ -379,7 +379,7 @@ export default NewsItem;
 
 이 컴포넌트에서 API 요청을 하게 될텐데 아직 데이터를 불러오지 않고 있으니 sampleArticle이라는 객체에 미리 예시 데이터(Mock Data)를 넣은 후 각 컴포넌트에 전달하여 가짜 내용을 보이게 해줬다.
 
-```react
+```jsx
 import React from "react";
 import styled from "styled-components";
 import NewsItem from "./NewsItem";
@@ -432,7 +432,7 @@ NewsList 컴포넌트에서 이전에 연습 삼아 사용했던 API를 호출�
 
  추가로 loading이라는 state도 관리해서 API요청이 대기 중인지 판별하도록 할 것이다. 요청이 대기 중일때는 true, 요청이 끝나면 false가 되어야 한다.
 
-```react
+```jsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import NewsItem from "./NewsItem";
@@ -516,7 +516,7 @@ export default NewsList;
 
 Categories.js 파일을 만들어 다음과 같이 작성해준다.
 
-```react
+```jsx
 import React from "react";
 import styled from "styled-components";
 
@@ -600,7 +600,7 @@ export default Categories;
 
 이제 App에서 category 상태를 useState로 관리해보자. 추가로 category 값을 업데이는 하는 onSelect라는 함수도 만들어 준다. 그러고 나서 category와 onSelect 함수를 Categories 컴포넌트에게 props로 전달해준다. 또한 category 값을 NewsList 컴포넌트에게도 props로 전달해준다.
 
-```react
+```jsx
 import React, { useCallback, useState } from "react";
 import Categories from "./components/Categories";
 import NewsList from "./components/NewsList";
@@ -621,7 +621,7 @@ export default App;
 
 다음으로 Categories에서는 props로 전달받은 onSelect를 각 Category 컴포넌트의 onClick으로 설정해 주고, 현재 선택된 카테고리 값에 따라 다른 스타일을 적용해보도록 하자.
 
-```react
+```jsx
 import React from "react";
 import styled, { css } from "styled-components";
 
@@ -722,7 +722,7 @@ export default Categories;
 
 현재는 API를 요청할 때 전체 뉴스 목록을 불러오는 것만 구현이 되어 있지만 카테고리를 눌렀을 때 해당 카테고리에 맞는 뉴스들을 불러올 수 있도록 NewsList 컴포넌트에서 현재 props로 받아 온 category에 따라 API를 요청하도록 구현해보도록 하자.
 
-```react
+```jsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import NewsItem from "./NewsItem";
@@ -791,7 +791,7 @@ export default NewsList;
 
 이번 실습에서 리액트 라우터를 적용할 때 만들어야 할 페이지는 단 하나다. src 디렉터리에 pages라는 디렉터리를 생성하고 NewsPages.js 파일을 만들어 아래와 같이 작성해 준다.
 
-```react
+```jsx
 import React from "react";
 import Categories from "../components/Categories";
 import NewsList from "../components/NewsList";
@@ -813,7 +813,7 @@ export default NewsPage;
 
 현재 선택된 category 값을 URL 파라미터를 통해 사용할 것이므로 Categories 컴포넌트에서 현재 선택된 카테고리 값을 알려 줄 필요도 없고, onSelect 함수를 따로 전달해 줄 필요도 없다. App컴포넌트의 기존 내용을 다 지우고 Route를 정의 해준다.
 
-```react
+```jsx
 import React from "react";
 import { Route } from "react-router-dom";
 import NewsPage from "./pages/NewsPage";
@@ -831,7 +831,7 @@ export default App;
 
 이제 Categories에서 기존의 onSelect 함수를 호출하여 카테고리를 선택하고, 선택된 카테고리에 다른 스타일을 주는 기능을 NavLink로 대체 해보도록 하자. div, button, input 처럼 일반 HTML 요소가 아닌 특정 컴포넌트에 styled-components를 사용하려면 **styled(컴포넌트이름)``** 같은 형식을 사용한다.
 
-```react
+```jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
 import styled from "styled-components";
@@ -902,7 +902,7 @@ NavLink로 만들어진 Category 컴포넌트에 to 값은 "/카테고리이름"
 
 만들 Hook의 이름은 usePromise다. Src 디렉터리에 lib 디렉터리를 만들고, 그 안에 usePromise.js를 아래와 같이 작성해준다.
 
-```react
+```jsx
 import { useState, useEffect } from "react";
 
 export default function usePromise(promiseCreator, deps) {
@@ -936,7 +936,7 @@ export default function usePromise(promiseCreator, deps) {
 
 코드를 저장한 뒤 NewsList 컴포넌트에서 usePromise를 사용해보자.
 
-```react
+```jsx
 import React from "react";
 import styled from "styled-components";
 import NewsItem from "./NewsItem";

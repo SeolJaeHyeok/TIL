@@ -16,7 +16,7 @@
 
 상태에 어떠한 변화가 필요하면 액션(action)이란 것이 발생한다. 이는 하나의 객체로 표현되는데 액션 객체는 다음과 같은 형식으로 이루어져 있다.
 
-```react
+```jsx
 {
   type: 'TOGGLE_VALUE',
 }
@@ -24,7 +24,7 @@
 
 액션 객체는 type 필드를 반드시 가지고 있어야 한다. 이 값을 액션의 이름이라고 생각하면 된다. 그리고 그 외의 값들은 나중에 상태 업데이트를 할 때 참고해야 할 값이며, 작성자 마음대로 넣을 수 있다. 
 
-```react
+```jsx
 {
   type: 'ADD_TODO',
   data: {
@@ -61,7 +61,7 @@ const changeInput = text => ({
 
 리듀서(Reducer)는 변화를 일으키는 함수다. 액션을 만들어서 발생시키면 리듀서가 현재 상태와 전달받은 액션 객체를 파라미터로 받아 온다. 그리고 두 값을 참고하여 **새로운 상태를 만들어서 반환**해 준다. 리듀서 코드는 다음과 같은 형태로 이루어져 있다.
 
-```react
+```jsx
 const initialState = {
   counter: 1,
 }
@@ -90,7 +90,7 @@ function reducer(state=initialState, action) {
 
 구독(subscribe)도 스토어의 내장 함수 중 하나다. subscribe 함수 안에 리스너 함수를 파라미터로 넣어서 호출해 주면(**함수 형태의 값을 파라미터로 받음**), 이 리스너 함수가 액션이 디스패치되어 상태가 업데이트될 때마다 호출된다.
 
-```react
+```jsx
 const listener = () => {
   console.log('상태가 업데이트됨');
 }
@@ -141,7 +141,7 @@ unsubscribe(); // 추후 구독을 비활성화할 때 함수를 호출
 
 실습을 위한 간단한 UI를 만들기 위해 css파일을 만들고 index.html을 다음과 같이 수정해줬다.
 
-```react
+```jsx
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -179,7 +179,7 @@ unsubscribe(); // 추후 구독을 비활성화할 때 함수를 호출
 
 이번 프로젝트에서느 UI를 관리할 때 별도의 라이브러리를 사용하지 않기 때문에 DOM을 직접 수정해주어야 한다. 다음과 같이 자바스크립트 파일 상단에 수정할 DOM 노드를 가리키는 값을 미리 선언해 준다.
 
-```react
+```jsx
 const divToggle = document.querySelector(".toggle");
 const counter = document.querySelector("h1");
 const btnIncrease = document.querySelector("#increase");
@@ -190,7 +190,7 @@ const btnDncrease = document.querySelector("#Decrease");
 
 프로젝트의 상태의 변화를 일으키는 것을 액션이라고 한다라고 배웠다. 먼저 액션에 이름을 정의해 주겠습니다. 액션 이름은 문자열 형태로, 주로 대문자로 작성하며 액션 이름은 고유해야 한다. 이름이 중복되면 의도하지 않은 결과가 발생할 수 있기 때문이다.
 
-```react
+```jsx
 const divToggle = document.querySelector(".toggle");
 const counter = document.querySelector("h1");
 const btnIncrease = document.querySelector("#increase");
@@ -203,7 +203,7 @@ const DECREASE = "DECREASE";
 
 다음으로 이 액션 이름을 사용하여 액션 객체를 만드는 액션 생성 함수를 작성해 준다. 액션 객체는 type 값을 반드시 갖고 있어야 하며, 그 외에 추후 상태를 업데이트할 때 참고하고 싶은 값은 마음대로 넣을 수 있다.
 
-```react
+```jsx
 const divToggle = document.querySelector(".toggle");
 const counter = document.querySelector("h1");
 const btnIncrease = document.querySelector("#increase");
@@ -222,7 +222,7 @@ const decrease = () => ({ type: DECREASE });
 
 초깃값의 형태는 자유다. 숫자일 수도 있고, 문자열일 수도 있고, 객체일 수도 있다.
 
-```react
+```jsx
 const divToggle = document.querySelector(".toggle");
 const counter = document.querySelector("h1");
 const btnIncrease = document.querySelector("#increase");
@@ -246,7 +246,7 @@ const initialState = {
 
 리듀서는 변화를 일으키는 함수다. 함수의 파라미터로는 state와 action 값을 받아온다.
 
-```react
+```jsx
 const divToggle = document.querySelector(".toggle");
 const counter = document.querySelector("h1");
 const btnIncrease = document.querySelector("#increase");
@@ -299,7 +299,7 @@ function reducer(state = initialState, action) {
 
 스토어를 만들 때는 createStore 함수를 사용한다. 이 함수를 사용하려면 코드 상단에 import 구문을 넣어 리덕스에서 해당 함수를 불러와야 하고, 함수의 파라미터에는 리듀서 함수를 넣어 주어야 한다. 
 
-```react
+```jsx
 const { createStore } = require("redux");
 
 (...)
@@ -313,7 +313,7 @@ const store = createStore(reducer);
 
 render 함수는 상태가 업데이트될 때마다 호출되며, 리액트의 render 함수와는 다르게 이미 html을 사용하여 만들어진 속성을 상태에 따라 변경해 준다.
 
-```react
+```jsx
 const { createStore } = require("redux");
 
 (...)
@@ -339,7 +339,7 @@ render();
 
 스토어의 상태가 바뀔 때마다 방금 만든 render 함수가 호출되도록 해 줄 것이다. 이 작업은 스토어의 내장 함수 subscribe를 사용하여 수행할 수 있다. subscribe 함수의 파라미터로는 함수형태의 값을 전달해 준다. 이렇게 전달된 함수는 추후 액션이 발생하여 상태가 업데이트될 때마다 호출된다.
 
-```react
+```jsx
 const listener = () => {
   console.log('상태가 업데이트됨');
 }
@@ -352,7 +352,7 @@ unsubscribe(); // 추후 구독을 비활성화할 때 함수를 호출
 
 이제 상태가 업데이트될 때마다 render 함수를 호출하도록 코드를 작성해 보자.
 
-```react
+```jsx
 (...)
  
 const render = () => {
@@ -377,7 +377,7 @@ store.subscribe(render);
 
 다음과 같이 각 DOM 요소에 클릭 이벤트를 설정하고 이벤트 함수 내부에서는 dispatch 함수를 사용하여 액션에 스토어를 전달해 주자.
 
-```react
+```jsx
 (...)
 
 divToggle.onclick = () => {

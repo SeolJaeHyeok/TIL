@@ -2,7 +2,7 @@
 
 11장에서는 컴포넌트 업데이트 성능을 어떻게 최적화해야 하는지, 불변성을 유지하면서 상태를 업데이트하는 것이 왜 중요한지 배웠다. 전개 연산자와 배열의 내장 함수를 사용하면 간단하게 배열 혹은 객체를 복사하고 새로운 값을 덮어 쓸 수 있다. 하지만 객체의 구조가 엄청나게 깊어지면 불변성을 유지하면서 이를 업데이트하는 것은 매우 힘이 든다.
 
-```javascript
+```jsx
 const object = {
   somewhere: {
     deep: {
@@ -63,7 +63,7 @@ Immer 실습을 위해 간단한 리액트 프로젝트를 새로 생성하고, 
 
 먼저 immer를 사용하지 않고 불변성을 유지하면서 값을 업데이트하는 컴포넌트를 작성해보기 위해 App 컴포넌트를 아래와 같이 작성해준다.
 
-```react
+```jsx
 import React, { useCallback, useState, useRef } from "react";
 
 const App = () => {
@@ -162,7 +162,7 @@ export default App;
 
 immer를 사용하면 불변성을 유지하느 작업을 매우 간단하게 처리할 수 있다. 사용법은 다음과 같다.
 
-```react
+```jsx
 import produce from 'immer';
 const nextState = produce(originalState, draft => {
   //바꾸고 싶은 값 바꾸기
@@ -176,7 +176,7 @@ produce라는 함수는 두 가지 파라미터를 받는다. 첫 번째 파라�
 
 다음은 좀 더 복잡한 데이터를 불변성을 유지하면서 업데이트하는 예시다.
 
-```react
+```jsx
 import produce from 'immer';
 
 const originalState = [
@@ -214,7 +214,7 @@ const nextState = produce(originalState, draft => {
 
 방금 만든 App 컴포넌트에 immer를 적용하여 더 깔끔한 코드로 상태를 업데이트 해보자.
 
-```react
+```jsx
 import React, { useRef, useCallback, useState } from 'react';
 import produce from 'immer';
 
@@ -339,7 +339,7 @@ console.log(nextState); // {value: 2, foo: 'bar'}
 
 이러한 immer의 속성과 useState의 함수형 업데이트를 함께 활용하면 코드를 더욱 깔끔하게 만들 수 있다. App 컴포넌트를 다음과 같이 수정해보자
 
-```react
+```jsx
 import React, { useRef, useCallback, useState } from "react";
 import produce from "immer";
 

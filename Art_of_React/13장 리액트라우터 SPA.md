@@ -46,7 +46,7 @@ SPA의 단점은 앱의 규모가 커지면 자바스크립트 파일이 너무 
 
 프로젝트에 리액트 라우터를 적용할 때는 src.index.js 파일에서 react-router-dom에 내장되어 있는 BrowserRouter라는 컴포넌트를 사용하여 감싸면 된다. 이 컴포넌트는 웹 애플리케이션에 HTML5의 History API를 사용하여 페이지를 새로고침하지 않고도 주소를 변경하고, 현재 주소에 관련된 정보를 props로 쉽게 조회하거나 사용할 수 있도록 한다.
 
-```react
+```jsx
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
@@ -79,7 +79,7 @@ const Home = () => {
 export default Home;
 ```
 
-```react
+```jsx
 import React from "react";
 
 const About = () => {
@@ -102,7 +102,7 @@ Route라는 컴포넌트를 사용하여 사용자의 현재 경로에 따라 �
 
 App 컴포넌트에 방금 만든 Home 컴포넌트 혹은 About 컴포넌트를 보여줄 수 있도록 아래와 같이 설정했다.
 
-```react
+```jsx
 import React from "react";
 import { Route } from "react-router-dom";
 import Home from "./Home";
@@ -148,7 +148,7 @@ Link 컴포넌트는 다음과 같이 사용한다.
 
 이제 "/" 경로에서 "/about" 경로로 이동하는 Link 컴포넌트를 만들어보자
 
-```react
+```jsx
 import React from "react";
 import { Route, Link } from "react-router-dom";
 import Home from "./Home";
@@ -183,7 +183,7 @@ export default App;
 
 Route 하나에 여러 개의 path를 지정하는 것은 최신 버전의 라우터 v5부터 적용된 기능이다. Route를 여러 번 사용하는 대신 path props를 배열로 설정해 주면 여러 경로에서 같은 컴포넌트를 보여 줄 수 있다.
 
-```react
+```jsx
 import React from "react";
 import { Route, Link } from "react-router-dom";
 import Home from "./Home";
@@ -230,7 +230,7 @@ export default App;
 
 먼저 profile 컴포넌트를 아래와 같이 정의해준다.
 
-```react
+```jsx
 import React from "react";
 
 const data = {
@@ -268,7 +268,7 @@ URL 파라미터를 사용할 때는 라우트로 사용되는 컴포넌트에�
 
 이제 App 컴포넌트에서 Profile 컴포넌트를 위한 라우트를 정의 하는데 이번에 사용할 path 규칙에는 **/profile/:username**이라고 넣어 주면 된다. 이렇게 설정하면 match.params.username 값을 통해 현재 username 값을 조회할 수 있다. 아래 코드처럼 라우트를 정의하고 상단에 각 프로필 페이지로 갈 수 있는 링크도 추가하면 된다.
 
-```react
+```jsx
 import React from "react";
 import { Route, Link } from "react-router-dom";
 import Home from "./Home";
@@ -311,7 +311,7 @@ export default App;
 
 이번에는 About 페이지에서 쿼리를 받아 오려고 한다. 쿼리는 location 객체 안에 들어 있는 search 값에서 조회할 수 있다. location 객체는 라우트로 사용된 컴포넌트에게 props로 전달되며, location의 형태는 다음과 같다.
 
-```react
+```jsx
 {
   "pathname" : "/about",
   "search" : "?detail=true",
@@ -325,7 +325,7 @@ export default App;
 
 `$ yarn add qs` 명령어를 통해 해당 라이브러리를 설치하고 About 컴포넌트에서 location.search 값에 있는 detail이 true인지 아닌지에 따라 추가 정보를 보여 주도록 만들어보자. About 컴포넌트를 다음과 같이 수정했다.
 
-```react
+```jsx
 import React from "react";
 import qs from "qs";
 
@@ -360,7 +360,7 @@ export default About;
 
 우선 Profiles라는 컴포넌트를 만들어 준다.
 
-```react
+```jsx
 import React from "react";
 import { Link, Route } from "react-router-dom";
 import Profile from "./Profile";
@@ -395,7 +395,7 @@ export default Profiles;
 
 컴포넌트를 다 만들었다면 기존의 App 컴포넌트에 있던 프로필 링크를 지우고, Profiles 컴포넌트를 /profiles 경로에 연결 시키고 해당 경로로 이동하는 링크도 만들어 준다.
 
-```react
+```jsx
 import React from "react";
 import { Route, Link } from "react-router-dom";
 import Home from "./Home";
@@ -439,7 +439,7 @@ history 객체는 라우트로 사용된 컴포넌트에 match, location과 함�
 
 이 객체의 사용법을 알아보기 위해 HistorySample 컴포넌트를 작성해준다.
 
-```react
+```jsx
 import React, { Component } from "react";
 
 class HistorySample extends Component {
@@ -487,7 +487,7 @@ export default HistorySample;
 
 withRouter 함수는 HoC(Higher-order-Component)다. 이는 라우트로 사용된 컴포넌트가 아니어도 match, location, history 객체를 접근할 수 있게 해준다. WithRouterSample 컴포넌트를 만들어 사용해보도록 하자.
 
-```react
+```jsx
 import React from "react";
 import { withRouter } from "react-router-dom";
 
@@ -522,7 +522,7 @@ export default withRouter(WithRouterSample);
 
 이 문제를 해결하는 것은 withRouterSample을 Profiles에서 지우고 Profile에서 렌더링 시켜주면 제대로 보이는 것을 확인할 수 있다.
 
-```react
+```jsx
 import React from "react";
 import WithRouterSample from "./WithRouterSample";
 
@@ -551,7 +551,7 @@ match의 params가 제대로 username을 받아오는 것을 확인할 수 있�
 
 Switch 컴포넌트는 여러 Route를 감싸서 그중 일치하는 단 하나의 라우트만을 렌더링 시켜준다. Switch를 사용하면 모든 규칙과 일치하지 않을 때 보여줄 Not Found 페이지도 구현할 수 있다. App 컴포넌트를 다음과 같이 수정해보자
 
-```react
+```jsx
 import React from "react";
 import { Route, Link, Switch } from "react-router-dom";
 import Home from "./Home";
@@ -609,7 +609,7 @@ NavLink는 Link와 비슷하다. 현재 경로와 Link에서 사용하는 경로
 
 NavLink에서 링크가 활성화되었을 때의 스타일을 적용할 때는 activeStyle 값을, CSS 클래스를 적용할 때는 activeClassName 값을 props로 넣어주면 된다. Profiles에서 사용하고 있는 컴포넌트에서 Link 대신 NavLink를 사용하게 하고, 현재 선택되어 있는 경우 검정색 배경에 흰색 글씨로 스타일을 보여 주게끔 코드를 수정해보자.
 
-```react
+```jsx
 import React from "react";
 import { NavLink, Route } from "react-router-dom";
 import Profile from "./Profile";
