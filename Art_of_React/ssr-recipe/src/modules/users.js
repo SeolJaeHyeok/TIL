@@ -34,7 +34,7 @@ const initialState = {
   user: null,
   loading: {
     users: false,
-    users: false,
+    user: false,
   },
   error: {
     users: null,

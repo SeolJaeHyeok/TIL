@@ -5,10 +5,13 @@ const Menu = () => {
   return (
     <ul>
       <li>
-        <Link to="./red">Red</Link>
+        <Link to="/red">Red</Link>
       </li>
       <li>
-        <Link to="./blue">Blue</Link>
+        <Link to="/blue">Blue</Link>
+      </li>
+      <li>
+        <Link to="/users">Users</Link>
       </li>
     </ul>
   );
