@@ -18,7 +18,7 @@ const getUsersFailure = (payload) => ({
 });
 
 export const getUser = (id) => ({ type: GET_USER, payload: id });
-const getUserSuccess = (payload) => ({ type: GET_USER_SUCCESS, payload });
+const getUserSuccess = (data) => ({ type: GET_USER_SUCCESS, payload: data });
 const getUserFailure = (error) => ({
   type: GET_USER_FAILURE,
   payload: error,
@@ -68,6 +68,24 @@ const initialState = {
 
 function users(state = initialState, action) {
   switch (action.type) {
+    case GET_USERS_PENDING:
+      return {
+        ...state,
+        loading: { ...state.loading, users: true },
+        error: { ...state.error, users: null }, // 책에서는 없었는데 깃헙에는 존재
+      };
+    case GET_USERS_SUCCESS:
+      return {
+        ...state,
+        loading: { ...state.loading, users: false },
+        users: action.payload.data,
+      };
+    case GET_USERS_FAILURE:
+      return {
+        ...state,
+        loading: { ...state.loading, users: false },
+        error: { ...state.error, users: action.payload },
+      };
     case GET_USER:
       return {
         ...state,
@@ -78,7 +96,7 @@ function users(state = initialState, action) {
       return {
         ...state,
         loading: { ...state.loading, user: false },
-        users: action.payload,
+        user: action.payload, // user를 users로 잘못 입력해서 렌더링이 안됐던 것...
       };
     case GET_USER_FAILURE:
       return {

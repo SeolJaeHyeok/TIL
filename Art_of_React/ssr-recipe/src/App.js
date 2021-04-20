@@ -3,7 +3,7 @@ import { Route } from "react-router-dom";
 import RedPage from "./pages/RedPage";
 import BluePage from "./pages/BluePage";
 import Menu from "./components/Menu";
-import UserPage from "./pages/UsersPage";
+import UsersPage from "./pages/UsersPage";
 
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
       <hr />
       <Route path="/red" component={RedPage} />
       <Route path="/blue" component={BluePage} />
-      <Route path="/users" component={UserPage} />
+      <Route path="/users" component={UsersPage} />
     </div>
   );
 }
