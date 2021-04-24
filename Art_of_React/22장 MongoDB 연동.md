@@ -99,3 +99,24 @@ RDBMS에서 데이터베이스를 설계한다면 그 구조는 다음과 유사
 
 ## 22.2 MongoDB 서버 준비
 
+#### 22.2.1 설치
+
+MongoDB 서버를 사용하려면 우선 설치를 해야 한다.
+
+**macOS**
+
+macOS 사용사는 Homebrew를 이용하여 간편하게 설치할 수 있다.
+
+`$ brew tap mongdb/brew`
+
+`$ brew install mongodb-community@4.2`
+
+`$ brew services start mongodb-community@4.2`
+
+위 명령어를 입력하게 되면 설치할 수 있다.
+
+(본인은 macOS를 사용중이므로 따로 윈도우 및 리눅스 환경에서의 설치법은 다루지 않겠다)
+
+#### 22.2.2 MongoDB 작동 확인
+
+MongoDB가 성공적으로 설치되었고 제대로  가동 중인지 확인하려면, 터미널에서 mongo를 입력하면 터미널 기반의 MongoDB 클라이언트가 실행되는 것을 확인할 수 있다.
