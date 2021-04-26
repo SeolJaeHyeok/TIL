@@ -120,3 +120,272 @@ macOS 사용사는 Homebrew를 이용하여 간편하게 설치할 수 있다.
 #### 22.2.2 MongoDB 작동 확인
 
 MongoDB가 성공적으로 설치되었고 제대로  가동 중인지 확인하려면, 터미널에서 mongo를 입력하면 터미널 기반의 MongoDB 클라이언트가 실행되는 것을 확인할 수 있다.
+
+<img src="./images/22_01.png" />
+
+> ❗️
+>
+> 처음 mongo 명령어를 터미널에 실행하니 zsh: command not found: mongo 오류가 발생했었다.
+>
+> 이를 해결하기 위해 경로를 따로 설정을 해주는 작업을 거쳤는데
+>
+> .zshrc 파일 내에 들어가 **export PATH="$PATH:/usr/local/Cellar/mongodb-community@4.2/4.2.12/bin"** 
+>
+> 위 문장을 추가를 해줘서 해당 명령어의 경로를 저 위치로 설정을 해주니 해결이 됐다.
+
+## 22.3 mongoose의 설치 및 적용
+
+mongooose는 Node.js 환경에서 사용하는 MongoDB 기반 ODM(Object Data Modelling) 라이브러리다. 이 라이브러리는 데이터베이스 문서들을 자바스크립트 객체처럼 사용할 수 있게 해 준다.
+
+우선 백엔드 프로젝트 디렉터리에서 아래 명령어를 입력해 라이브러리들을 설치해 준다.
+
+`$ yarn add mongoose dotenv`
+
+dotenv는 환경변수들을 파일에 넣고 사용할 수 있게 하는 개발 도구다. mongoose를 사용하여 MongoDB에 접속할 때, 서버에 주소나 계정 및 비밀번호가 필요할 경우도 있다. 이렇게 **민감하거나 환경별로 달라질 수 있는 값은 코드 안에 직접 작성하지 않고, 환경변수로 설정하는 것이 좋다.** 프로젝트를 깃허브, 깃랩 등의 서비스에 올릴 때는 .gitignore를 작성하여 환경변수가 들어 있는 파일은 제외시켜 주어야 한다.
+
+#### 22.3.1 .env 환경변수 파일 생성
+
+환경번수에는 서버에서 사용할 포트와 MongoDB 주소를 넣어 주도록 하자. 프로젝트의 루트 경로에 .env 파일을 만들고 아래와 같이 입력해 준다.
+
+```jsx
+PORT=4000
+MONGO_URI=mongodb://localhost:27017/blog
+```
+
+여기서 blog는 우리가 사용할 데이터베이스 이름이다. 지정한 데이터베이스가 서버에 없다면 자동으로 만들어 주므로 사전에 직접 생성할 필요는 없다.
+
+다음으로 src/index.js 파일의 맨 위에 다음과 같이 dotenv를 불러와서 config()함수를 호출해 준다. Node.js에서 환경변수는 process.env 값을 조회할 수 있다.
+
+```jsx
+require('dotenv').config();
+const Koa = require('koa');
+const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
+
+// 비구조화 할당을 통해 process.env 내부 값에 대한 레퍼런스 만들기
+const { PORT } = process.env;
+
+const api = require('./api');
+
+const app = new Koa();
+const router = new Router();
+
+// 라우터 설정
+router.use('/api', api.routes()); // api 라우트 적용
+
+// 라우터 적용 전에 bodyParser 적용
+app.use(bodyParser());
+
+// app 인스턴스에 라우터 적용
+app.use(router.routes()).use(router.allowedMethods());
+
+// PORT가 지정되어 있지 않다면 4000을 사용
+const port = PORT || 4000;
+app.listen(port, () => {
+  console.log('Listening to port %d', port);
+});
+```
+
+.env 파일에서 PORT를 4001로 변경한 뒤 서버를 재시작 해보면 (nodemon에서는 .env 파일을 변경할 때는 자동으로 재시작 하지 않으므로 직접 재시작 해야 한다.)
+
+<img src="./images/22_02.png" />
+
+위와 같이 바뀐 포트로 실행이 되는 것으 확인할 수 있다.
+
+#### 22.3.2 mongoose로 서버와 데이터베이스 연결
+
+이 mongoose를 이용하여 서버와 데이터베이스를 연결해보자. 연결할 때는 mongoose의 connect 함수를 사용한다.
+
+```jsx
+require('dotenv').config();
+const Koa = require('koa');
+const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
+const mongoose = require('mongoose');
+
+// 비구조화 할당을 통해 process.env 내부 값에 대한 레퍼런스 만들기
+const { PORT, MONGO_URI } = process.env;
+
+mongoose
+  .connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((e) => {
+    console.log(e);
+  });
+
+(...)
+```
+
+코드를 저장한 뒤 터미널을 보면 아래와 같은 문구가 나오는데 이는 데이터베이스가 성공적으로 연결된 것이고 mongoose를 사용할 준비가 끝난다.
+
+<img src="./images/22_03.png" />
+
+> ❗️
+>
+> 책에 서술된대로 입력하니 
+>
+> Warning: Current Server Discovery and Monitoring engine is deprecated, and will be removed in a future version. To use the new Server Discover and Monitoring engine, pass option { useUnifiedTopology: true } to the MongoClient constructor.
+>
+> 위와 같은 경고문이 나왔다.  이는 현재 서버 검색 및 모니터링 엔진은 더이상 사용되지 않으면 이후 버전에서 제거된다는 뜻이기에 
+>
+>  useUnifiedTopology: true 이 옵션을 MongoClient 생성자에게 전달해주면서 해결했다.
+
+## 22.4 esm으로 ES 모듈 import/export 문법 사용하기
+
+기존 리액트 프로젝트에서 사용해 오던 ES 모듈 import/export 문법은 Node.js에서 아직 정식으로 지원되지 않는다. Node.js에 해당 기능이 구현되어 있기는 하지만 아직 실험적인 단계이기 때문에 기본 옵션으로는 사용할 수 없으며, 확장자를 .mjs로 사용하고 node를 실행할 때 --experimental-modules라는 옵션을 넣어 주어야 한다.
+
+Node.js에서 import/export 문법을 꼭 사용해야 할 필요는 없지만, 이 문법을 사용하면 VSC에서 자동 완성을 통해 모듈을 자동으로 쉽게 불러올 수 있고 코드도 더욱 깔끔해진다. 그래서 esm이라는 라이브러리를 이용해 해당 문법을 사용해보도록 하자.
+
+먼저 `$ yarn add esm` 으로 라이브러리를 설치해 주고 기존 src/index.js 파일의 이름을 main.js로 변경하고, index.js 파일을 새로 생성해서 다음과 같이 입력해 준다.
+
+```jsx
+// 이 파일에서만 no-global-assgin ESLint 옵션을 비활성화 한다.
+// eslint-disable no-global-assign
+
+require = require('esm')(module /*, option */);
+module.exports = require('./main.js');
+```
+
+그런 다음 package.json에서 만들었던 스크립트를 조금 수정해 준다.
+
+```jsx
+{
+  (...)
+  "scripts": {
+    "start": "node -r esm src",
+    "start:dev": "nodemon --watch src/ -r esm src/index.js"
+  }
+}
+
+```
+
+ESLint에서 import/export 구문을 사용해도 오류로 간주하지 않도록 다음과 같이 .eslintrc.json에서 soureType 값을 "module"로 설정해 준다.
+
+```jsx
+{
+  "env": {
+    "node": true,
+    "commonjs": true,
+    "es6": true
+  },
+  "extends": ["eslint:recommended", "prettier"],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "soureType": "module"
+  },
+  "rules": {}
+}
+
+```
+
+이제 프로젝트에서 import/export 구문을 자유롭게 사용할 수 있다. 
+
+기존에 실행 중이던 서버는 종료하고, 다시 `yarn start:dev` 명령어를 입력하고 새로운 스크립트로 서버를 구동한다.
+
+#### 22.4.1 기존 코드 ES Module 형태로 바꾸기
+
+먼저 api/posts/posts.ctrl.js 파일을 열어 exports 코드를 export const로 모두 변환해 준다.
+
+```jsx
+(...)
+export const write = (ctx) => {
+  (...)
+};
+
+export const list = (ctx) => {
+  ctx.body = posts;
+};
+
+export const read = (ctx) => {
+  (...)
+};
+
+export const remove = (ctx) => {
+  (...)
+};
+
+export const replace = (ctx) => {
+	(...)
+};
+
+export const update = (ctx) => {
+  (...)
+};
+```
+
+다음 src/api/posts/index.js 파일 수정하자.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', postsCtrl.write);
+posts.get('/:id', postsCtrl.read);
+posts.delete('/:id', postsCtrl.remove);
+posts.put('/:id', postsCtrl.replace);
+posts.patch('/:id', postsCtrl.update);
+export default posts;
+```
+
+이제 다음 두 파일을 수정하자.
+
+```jsx
+import Router from 'koa-router';
+import posts from './posts';
+
+const api = new Router();
+
+api.use('/posts', posts.routes());
+
+// 라우터를 내보낸다.
+export default api;
+```
+
+```jsx
+require('dotenv').config();
+import Koa from 'koa';
+import Router from 'koa-router';
+import bodyParser from 'koa-bodyparser';
+import mongoose from 'mongoose';
+
+import api from './api';
+
+// 비구조화 할당을 통해 process.env 내부 값에 대한 레퍼런스 만들기
+const { PORT, MONGO_URI } = process.env;
+
+(...)
+```
+
+이제 Postman으로 http://localhost:4000/api/posts에 요청을 보내면 우리가 만든 서버가 오류 발생으로 종료되지 않고 잘 작동하는 것을 확인할 수 있다.
+
+이제 마지막으로 프로젝트 루트 디렉터리에 jsconfig.json을 작성해 준다.
+
+```jsx
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es2015"
+  },
+  "include": ["src/**/*"]
+}
+```
+
+이 파일을 위 코드와 같이 작성해 주면 나중에 자동 완성을 통해 모듈을 불러올 수 있다. Src 디렉터리에 sample.js라는 파일을 작성하고, api를 입력했을 때 자동 완성할 수 있는 인텔리센스창이 뜨는지 확인해 보자.
+
+<img src="./images/22_04.png" />
+
+이 상태에서 엔터를 누르면 import가 잘 될 것이다. 확인이 됐으면 sample.js는 삭제해 준다.
+
