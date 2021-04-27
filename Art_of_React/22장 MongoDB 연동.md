@@ -389,3 +389,115 @@ const { PORT, MONGO_URI } = process.env;
 
 이 상태에서 엔터를 누르면 import가 잘 될 것이다. 확인이 됐으면 sample.js는 삭제해 준다.
 
+## 22.5 데이터베이스의 스키마와 모델
+
+mongoose에는 스키마와 모델이라는 개념이 있는데, 이 둘은 혼동하기 쉽다. 스키마는 컬렉션에 들어가는 문서 내부의 각 필드가 어떤 형식으로 되어 있는 지 정의하는 객체다. 이와 달리 모델은 스키마를 사용하여 만드는 인스턴스로, 데이터베이스에서 실제 작업을 처리할 수 있는 함수들을 지니고 있는 객체다.
+
+![](https://thebook.io/img/080203/651.jpg)
+
+#### 22.5.1 스키마 생성
+
+모델을 만들려면 사전에 스키마를 만들어 주어야 한다. 우리는 블로그 포스트에 대한 스키마를 준비할 텐데, 어떤 데이터가 필요할지 한 번 생각해보자.
+
+- 제목
+- 내용
+- 태그
+- 작성일
+
+포스트 하나에 이렇게 총 네 가지 정보가 필요하다. 각 정보에 대한 필드 이름과 데이터 타입을 설정하여 스키마를 만든다.
+
+| 필드 이름     | 데이터 타입 | 설명      |
+| ------------- | ----------- | --------- |
+| title         | 문자열      | 제목      |
+| body          | 문자열      | 내용      |
+| tags          | 문자열 배열 | 태그 목록 |
+| publishedDate | 날짜        | 작성 날짜 |
+
+이렇게 네 가지 필드가 있는 스키마를 만들어 보자. 스키마와 모델에 관련된 코드는 src/models 디렉터리에 작성한다. 이렇게 디렉터리를 따로 만들어서 관리하면 나중에 유지 보수를 좀 더 편하게 할 수 있다. models 디렉터리를 만들고, 그 안에 post.js 파일을 만들어 아래와 같이 작성해 준다.
+
+```jsx
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
+
+const PostSchema = new Schema({
+  title: String,
+  body: String,
+  tags: [String], // 문자열로 이루어진 배열
+  publishedDate: {
+    type: Date,
+    default: Date.now, // 현재 날짜를 기본값으로 지정
+  },
+});
+```
+
+스키마를 만들 때는 mongoose 모듈의 Schema를 사용하여 정의한다. 그리고 각 필드 이름과 필드의 데이터 타입 정보가 들어 있는 객체를 작성한다. 필드의 기본값으로는 default 값을 설정해 주면 된다.
+
+Schema에서 기본적으로 지원하는 타입을 다음과 같다.
+
+| 타입                            | 설명                                         |
+| ------------------------------- | -------------------------------------------- |
+| String                          | 문자열                                       |
+| Number                          | 숫자                                         |
+| Date                            | 날짜                                         |
+| Buffer                          | 파일을 담을 수 있는 버퍼                     |
+| Boolean                         | True 또는 false 값                           |
+| Mixed(Schema.Types.Mixed)       | 어떤 데이터도 넣을 수 있는 형식              |
+| ObjectId(Schema.Types.ObjectId) | 객체 아이디, 주로 다른 객체를 참조할 때 사용 |
+| Array                           | 배열 형태의 값으로 []로 감싸서 사용          |
+
+우리가 만들 프로젝트에는 필요하지 않지만, 이 스키마를 활용하여 좀 더 복잡한 방식의 데이터도 저장할 수 있다.
+
+```jsx
+const AuthorSchema = new Schema({
+  name: String,
+  email: String,
+});
+const BookSchema = new Schema({
+  title: String,
+  description: String,
+  authors: [AuthorSchema],
+  meta: {
+    likes:Number,
+  },
+  extra: Schema.Types.Mixed
+});
+```
+
+위 코드에서 authors 부분에 [AuthorSchema]를 넣어 주었는데 이는 Author 스키마로 이루어진 여러 개의 객체가 들어 있는 배열을 의미한다. 이렇게 스키마 내부에 다른 스키마를 내장시킬 수도 있다.
+
+#### 22.5.2 모델 생성
+
+모델을 만들 때는 mongoose.model 함수를 사용한다. post.js 파일 맨 하단에 다음 코드를 입력해 준다.
+
+```jsx
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
+
+const PostSchema = new Schema({
+  title: String,
+  body: String,
+  tags: [String], // 문자열로 이루어진 배열
+  publishedDate: {
+    type: Date,
+    default: Date.now, // 현재 날짜를 기본값으로 지정
+  },
+});
+
+const Post = mongoose.model('Post', PostSchema);
+export default Post;
+```
+
+모델 인스턴스를 만들고, export default를 통해 내보내 주었다. 여기서 사용한 model() 함수는 기본적으로 두 개의 파라미터가 필요하다. 첫 번째 파라미터는 스키마 이름이고, 두 번째 파라미터는 스키마 객체다. 데이터베이스는 스키마 이름을 정해 주면 그 이름의 복수 형태로 데이터베이스에 컬렉션 이름을 만든다.
+
+예를 들어 스키마 이름을 Post로 설정하면, 실제 데이터베이스에 만드는 컬렉션 이름은 posts다. BookInfo로 입력하면 bookinfos를 만든다.
+
+MongoDB에서 컬렉션 이름을 만들 때, 권장되는 컨벤션은 구분자를 사용하지 않고 복수 형태로 사용하는 것이다. 이 컨벤션을 따르고 싶지 않다면, 다음 코드 처럼 세 번쨰 파라미터에 원하는 이름을 입력하면 된다.
+
+```jsx
+mongoose.model('Post', PostSchema, 'custom_book_collection');
+```
+
+이 경우 첫 번째 파라미터로 넣어 준 이름은 나중에 다른 스키마에서 현재 스키마를 참조해야 하는 상황에서 사용한다.
+
