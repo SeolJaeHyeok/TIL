@@ -666,3 +666,69 @@ GET http://localhost:4000/api/posts/60894f1ac1b56fea3512ea4a
 
 ## 22.8 데이터 삭제와 수정
 
+## 22.8.1 데이터 삭제
+
+이번에는 데이터를 삭제해 보자. 데이터를 삭제할 때는 여러 종류의 함수를 사용할 수 있다.
+
+- remove() : 특정 조건을 만족하는 데이터를 모두 지운다.
+- findByIdAndRemove(): id를 찾아서 지운다.
+- findOneAndRemove(): 특정 조건을 만족하는 데이터 하나를 찾아서 제거한다.
+
+여기서는 위 함수 중 findByIdAndRemove()를 사용하여 데이터를 제거해 보도록 하자.
+
+```jsx
+/*
+  DELETE /api/posts/:id
+ */
+export const remove = async (ctx) => {
+  const { id } = ctx.params;
+  try {
+    await Post.findByIdAndRemove(id).exec();
+    ctx.status = 204; // No Content (성공하기는 했지만 응당합 데이터는 없음)
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+코드를 저장한 후 방금 GET 요청을 헀던 주소에 DELETE 요청을 하면 아래와 같이 데이터가 삭제가 된 것을 확인할 수 있다.
+
+<img src="./images/22_12.png" />
+
+다시 또 똑같은 주소로 GET 요청을 하게 되면 404 오류가 발생하면서 'Not Found' 라는 문구가 나타나는 것을 확인할 수 있다.
+
+<img src="./images/22_13.png" />
+
+#### 22.8.2 데이터 수정
+
+마지막으로 update 함수를 구현해 보자. 데이터를 업데이트할 때는 findByIdAndUpdate() 함수를 사용한다. 이 함수를 사용할 때는 세 가지 파라미터를 넣어 주어야 한다. 첫 번째 파라미터는 id, 두 번째 파라미터는 업데이트 내용, 세 번째 파라미터는 업데이트의 옵션이다.
+
+```jsx
+export const update = async (ctx) => {
+  const { id } = ctx.params;
+  try {
+    const post = await Post.findByIdAndUpdate(id, ctx.request.body, {
+      new: true, // 이 값을 설정하면 업데이트된 데이터를 반환한다.
+      // false일 때는 업데이트되기 전의 데이터를 반환한다.
+    }).exec();
+    if (!post) {
+      ctx.status = 404;
+      return;
+    }
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+조금 전 GET 요청을 햇던 id를 가진 포스트는 현재 삭제가 되었으니, 다시 GET api/posts 요청을 해서 유효한 id 값을 복사하고 해당 id를 가진 포스트를 업데이트 해보자. PATCH 메서드는 데이터의 일부만 업데이트해도 되므로, body에는 title만 넣어 보자.
+
+PATCH http://localhost:4000/api/posts/60894f29c1b56fea3512ea4b
+
+<img src="./images/22_14.png" />
+
+결과를 보면 title이 업데이트된 것을 확인할 수 있다. 
+
+## 22.9 요청 검증
+
