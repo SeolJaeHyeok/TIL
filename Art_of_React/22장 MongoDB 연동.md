@@ -517,3 +517,152 @@ Windows의 경우 MongoDB를 설치할 때 같이 설치되지만, macOS나 리�
 
 ## 22.7 데이터 생성과 조회
 
+22장에서는 REST API를 학습하면서 임시적으로 자바스크립트 배열을 사용해 기능을 구현했다. 자바스크립트 배열 데이터는 시스템 메모리 쪽에 위치하기 때문에 서버를 재시작하면 초기화된다. 이번에는 배열 대신 MongoDB에 데이터를 등록하여 데이터를 보존해 보도록 하자.
+
+#### 22.7.1 데이터 생성
+
+기존에 작성했던 로직을 모두 새로 작성할 것이므로 posts.ctrl.js에서 기존 코드를 모두 지우고 다음 코드를 입력한다.
+
+```jsx
+import Post from '../../models/post';
+
+export const write = (ctx) => {};
+
+export const list = (ctx) => {};
+
+export const read = (ctx) => {};
+
+export const remove = (ctx) => {};
+
+export const update = (ctx) => {};
+```
+
+기존 PUT 메서드에 연결했던 replace는 구현하지 않을 것이므로 해당 함수는 제거했다. 이에 따라 posts.js 라우트의 PUT 메서드를 설정한 부분도 제거해 준다.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', postsCtrl.write);
+posts.get('/:id', postsCtrl.read);
+posts.delete('/:id', postsCtrl.remove);
+posts.patch('/:id', postsCtrl.update);
+
+export default posts;
+```
+
+먼저 블로그 포스트를 작성하는 API인 write를 구현해 보자.
+
+```jsx
+/* 
+  POST /api/posts
+  {
+    title: '제목',
+    body: '내용',
+    tags: ['태그 1', '태그 2']
+  }
+*/
+export const write = async (ctx) => {
+  const { title, body, tags } = ctx.request.body;
+  const post = new Post({
+    title,
+    body,
+    tags,
+  });
+
+  try {
+    await post.save();
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+포스트의 인스턴스를 만들 때는 new 키워드를 사용한다. 그리고 생성자 함수의 파라미터에 정보를 지닌 객체를 넣는다. 
+
+인스턴스를 만들면 바로 데이터베이스에 저장되는 것은 아니다. Save() 함수를 실행시켜야 비로소 데이터베이스에 저장이 된다. 이 함수의 반환 값은 Promise이므로 async/await 문법으로 데이터베이스 저장 요청을 완료할 때까지 await를 사용하여 대기할 수 있다. **await를 사용하려면 async 키워드 또한 넣어줘야 하고 try/catch 문으로 오류를 처리해야 한다.**
+
+코드를 다 작성했으면 Postman으로 다음 정보를 요청해 보자.
+
+```jsx
+Post http://localhost:4000/api/posts
+{
+  "title": "제목",
+  "body": "내용",
+  "tags": ["태그 1", "태그 2"]
+}
+```
+
+<img src="./images/22_07.png" />
+
+Send 버튼을 여러 번 누르게 되면 응답에 나타나는 _id 값이 계속해서 바뀌는 것을 확인할 수 있다.
+
+다음으로 MongoDB Compass의 좌측 상단의 새로고침 버튼을 누르면 blog 데이터베이스가 나타날 것이다. blog 데이터베이스를 선택한 뒤 posts를 누르게 되면 방금 등록(POST)한 데이터들이 잘 나타나는 것을 확인할 수 있다.
+
+<img src="./images/22_08.png" />
+
+#### 22.7.2 데이터 조회
+
+이제 API를 사용하여 데이터를 조회해 보자. 데이터를 조회할 때는 모델 인스턴스의 find() 함수를 사용한다. posts.ctrl.js의 list 함수를 다음과 같이 작성해 준다.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = (ctx) => {
+  try {
+    const posts = await.Post.find().exec();
+    ctx.body = posts;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+**find() 함수를 호출한 후에는 exec()를 붙여 주어야 서버에 쿼리를 요청한다.** 데이터를 조회할 때 특정 조건을 설정하고, 불러오는 제한도 설정할 수 있는데 이 부분은 추후 페이지네이션 기능을 구현할 때 알아보도록 하자. 코드를 저장한 후 서버를 재시작 하고 Postman으로 다음 요청을 보내준다.
+
+GET http://localhost:4000/api/posts
+
+<img src="./images/22_09.png" />
+
+위와 같이 내가 등록한 여러 포스트가 들어 있는 배열이 정상적으로 응답하는 것을 확인할 수 있다.
+
+#### 22.7.3 특정 포스트 조회
+
+이번에는 read 함수를 통해 특정 포스트를 id로 찾아서 조회하는 기능을 구현해 보도록 하자. 특정 id를 가진 데이터를 조회할 때는 findById() 함수를 사용한다.
+
+```jsx
+/*
+  GET /api/posts/:id
+*/
+export const read = async (ctx) => {
+  const {id} = ctx.params;
+  try {
+    const post = await Post.findById(id).exec();
+    if(!post) {
+      ctx.status = 404; // Not Found
+      return;
+    }
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+코드를 저장하고 Postman을 사용하여 다음요청을 전송하는데 URL에서 id 부분에 넣는 파라미터 안에는 이전에 포스트 목록을 조회했을 때 나왔던 id 중 하나를 복사해 넣어 준다. 
+
+GET http://localhost:4000/api/posts/60894f1ac1b56fea3512ea4a
+
+<img src="./images/22_10.png" />
+
+만약 id가 존재하지 않는다면 Status 부분에 404 Error가 발생할 것이다. 그리고 만약 문자열을 몇 개 제거하고 요청하면 500 오류가 발생하는데 이는 전달받은 id가 ObjectId 형태가 아니어서 발생하는 서버 오류다. 이 부분은 나중에 검증하는 작업을 통해 개선시킬 수 있다.
+
+<img src="./images/22_11.png" />
+
+## 22.8 데이터 삭제와 수정
+
