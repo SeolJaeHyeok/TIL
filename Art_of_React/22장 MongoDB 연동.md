@@ -501,3 +501,19 @@ mongoose.model('Post', PostSchema, 'custom_book_collection');
 
 이 경우 첫 번째 파라미터로 넣어 준 이름은 나중에 다른 스키마에서 현재 스키마를 참조해야 하는 상황에서 사용한다.
 
+## 22.6 MongoDB Compass의 설치 및 사용
+
+MongoDB Compass는 MongDB를 위한 GUI 프로그램으로, 데이터베이스를 쉽게 조회하고 수정할 수 있다.
+
+Windows의 경우 MongoDB를 설치할 때 같이 설치되지만, macOS나 리눅스의 경우 직접 설치해야 하므로 [링크](https://www.mongodb.com/download-center/compass) 에서 설치해 준다.
+
+<img src="./images/22_05.png" />
+
+설치를 완료하면 위와 같은 화면이 나오는데 Hostname과 Port 부분에 localhost와 27017이 기본값으로 들어가 있는 것을 확인할 수 있다. 하단의 Connect를 누르면 아래와 같은 화면이 나타난다.
+
+<img src="./images/22_06.png" />
+
+추후 데이터베이스에 데이터를 등록하고 나면 이 프로그램을 통해 데이터를 쉽게 조회할 수 있다.
+
+## 22.7 데이터 생성과 조회
+
