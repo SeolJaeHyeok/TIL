@@ -732,3 +732,163 @@ PATCH http://localhost:4000/api/posts/60894f29c1b56fea3512ea4b
 
 ## 22.9 요청 검증
 
+#### 22.9.1 ObjectId 검증
+
+앞서 read API를 실행할 때,  id가 올바른 ObjectId 형식이 아니면 500 오류가 발생한 것을 확인할 수 있었다. 500 오류는 보통 서버에서 처리하지 않아 내부적으로 문제가 생겼을 때 발생한다.
+
+잘못된 id를 전달했다면 클라이언트가 요청을 잘못 보낸 것이니 400 Bad Request 오류를 띄워 주는 것이 맞다. 그러려면 id 값이 올바른 ObjectId인지 확인을 해야 하는데 이를 검증하는 방법은 다음과 같다.
+
+```jsx
+import mongoose from "mongoose";
+
+const { ObjecdId } = mongoose.Types;
+ObjecdId.isValid(id);
+```
+
+지금 ObjectId를 컴증해야 하는 API는 read, remove, update 이렇게 세 가지다. 모든 함수에서 검증 코드를 일일이 삽입한다면 똑같은 코드가 중복된다. 
+
+코드를 중복해 넣지 않고, 한 번만 구현한 다음 여러 라우트에 쉽게 적용하는 방법이 있는데 바로 미들웨어를 만드는 것이다. posts.ctrl.js의 코드 상단에 아래와 같은 미들웨어를 작성하자.
+
+```jsx
+import Post from '../../models/post';
+import mongoose from 'mongoose';
+
+const { ObjectId } = mongoose.Types;
+
+export const checkObjectId = (ctx, next) => {
+  const { id } = ctx.params;
+  if (!ObjectId.isValid(id)) {
+    ctx.status = 400; // Bad Request
+    return;
+  }
+  return next();
+};
+```
+
+그리고 src/api/posts/index.js에서 ObjectId 검증이 필요한 부분에 방금 만든 미들웨어를 추가해 준다.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', postsCtrl.write);
+posts.get('/:id', postCtrl.checkObjectId, postsCtrl.read);
+posts.delete('/:id', postCtrl.checkObjectId, postsCtrl.remove);
+posts.patch('/:id', postCtrl.checkObjectId, postsCtrl.update);
+
+export default posts;
+```
+
+이제 코드를 저장하고 GET /api/posts/:id 요청을 할 때 milkboy와 같이 일반 ObjectId의 문자열 길이가 다른 잘못된 id를 넣어보면 500 대신 400 Bad Request라는 에러가 발생하는 것을 확인할 수 있다.
+
+<img src="./images/22_15.png" />
+
+#### 22.9.2 Request body 검증
+
+이제 write, update API에서 전달받은 요청 내용을 검증하는 방법을 알아보자. 포스트를 작성할 때 서버는 title, body, tag 값을 모두 전달받아야 하고 클라이언트가 값을 빼먹었을 때는 400 오류를 발생해야 한다. 지금은 따로 처리하지 않았기 떄문에 요청 내용을 비운 상태에서 write API를 실행해도 요청이 성공하여 비어 있는 포스트가 등록된다.
+
+객체를 검증하기 위해 각 값을 if 문으로 비교하는 방법도 있지만, 여기서는 이를 수월하게 해 주는 라이브러리인 [Joi](https://github.com/hapijs/joi) 를 설치하여 사용해보자.
+
+`$ yarn add joi`
+
+그다음 write 함수에서 Joi를 사용하여 요청 내용을 검증한다.
+
+```jsx
+import Post from '../../models/post';
+import mongoose from 'mongoose';
+import Joi from 'joi';
+
+(...)
+/* 
+  POST /api/posts
+  {
+    title: '제목',
+    body: '내용',
+    tags: ['태그 1', '태그 2']
+  }
+*/
+export const write = async (ctx) => {
+  const schema = Joi.object().keys()({
+    // 객체가 다음 필드를 가지고 있음을 검증
+    title: Joi.string().required(), // required()가 있으면 필수 항목
+    body: Joi.string().required(),
+    tags: Joi.array().items(Joi.string()).required(), // 문자열로 이루어진 배열
+  });
+
+  // 검증하고 나서 검증 실패인 경우 에러 처리
+  const result = schema.validate(ctx.request.body);
+  if (result.error) {
+    ctx.status = 400; // Bad Request
+    ctx.body = result.error;
+    return;
+  }
+
+  const { title, body, tags } = ctx.request.body;
+  const post = new Post({
+    title,
+    body,
+    tags,
+  });
+
+  try {
+    await post.save();
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+(...)
+```
+
+설정을 마치고 write API를 호출할 때 Request Body에 필요한 필드가 빠져있다면 400 오류를 응답하게 된다. 응답 내용에는 에러를 함꼐 반환한다. 
+
+<img src="./images/22_16.png" />
+
+Write API를 수정한 뒤에 update API의 경우도 마찬가지로 Joi를 사용하여 ctx.request.body를 검증해 준다. write API에서 한 것과 비슷하지만 여기서는 required()가 없다.
+
+```jsx
+export const update = async (ctx) => {
+  const { id } = ctx.params;
+  // write에서 사용한 schema와 비슷하나 required()가 없다.
+  const schema = Joi.object().keys({
+    // 객체가 다음 필드를 가지고 있음을 검증
+    title: Joi.string(), // required()가 있으면 필수 항목
+    body: Joi.string(),
+    tags: Joi.array().items(Joi.string()), // 문자열로 이루어진 배열
+  });
+
+  // 검증하고 나서 검증 실패인 경우 에러 처리
+  const result = schema.validate(ctx.request.body);
+  if (result.error) {
+    ctx.status = 400; // Bad Request
+    ctx.body = result.error;
+    return;
+  }
+
+  try {
+    const post = await Post.findByIdAndUpdate(id, ctx.request.body, {
+      new: true, // 이 값을 설정하면 업데이트된 데이터를 반환한다.
+      // false일 때는 업데이트되기 전의 데이터를 반환한다.
+    }).exec();
+    if (!post) {
+      ctx.status = 404;
+      return;
+    }
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+이렇게 수정하면 다음과 같이 문자열을 전달해야 하는 title 값에 숫자를 넣을 경우 에러가 나타날 것이다.
+
+PATCH http://localhost:4000/api/posts/60894f29c1b56fea3512ea4b
+
+<img src="./images/22_17.png" />
+
+## 22.10 페이지네이션 구현
+
