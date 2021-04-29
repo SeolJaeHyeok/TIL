@@ -892,3 +892,276 @@ PATCH http://localhost:4000/api/posts/60894f29c1b56fea3512ea4b
 
 ## 22.10 페이지네이션 구현
 
+블로그에서 포스트 목록을 볼 때 한 페이지에 보이는 포스트의 개수는 10~20개 정도가 적당하다. 지금 만든 list API는 현재 작성된 모든 포스트를 불러오는데 만약 포스트가 수 백 개라면 로딩 속도가 느려질 수 있다. 또 포스트 목록을 볼 때 포스트 전체 내용을 보여 줄 필요는 없고, 처음 200자 정도만 보여 주면 적당하다. 불필요하게 모든 내용을 보여 주면 역시 로딩 속도가 지연되고, 트래픽도 낭비될 것이다.
+
+따라서 list API에서 페이지네이션 기능을 구현해서 위와 같은 문제들을 개선시켜보도록 하자.
+
+#### 22.10.1 가짜 데이터 생성
+
+페이지네이션 기능을 구현하려면 우선 데이터가 충분히 있어야된다. 수작업으로 직접 등록을 해도 좋지만, 좀 더 편하게 데이터를 채우기 위해 가짜 데이터를 생성하는 스크립트를 작성해 보자.
+
+src디렉터리에 createFakeData.js 파일을 만들고 아래와 같이 입력해 준다.
+
+```jsx
+import Post from './models/post';
+
+export default function createFageData() {
+  // 0, 1, 2 ... 39로 이루어진 배열을 생성한 후 포스트 데이터로 변환
+  const post = [...Array(40).keys()].map((i) => ({
+    title: `Post #${i}`,
+    body:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+    tags: ['가짜', '데이터'],
+  }));
+
+  Post.insertMany(posts, (err, docs) => {
+    console.log(docs);
+  });
+}
+
+```
+
+그 다음 main.js에서 방금 만든 함수를 불러와 한번 호출해 준다.
+
+```jsx
+require('dotenv').config();
+import Koa from 'koa';
+import Router from 'koa-router';
+import bodyParser from 'koa-bodyparser';
+import mongoose from 'mongoose';
+
+import api from './api';
+import createFakeData from './createFakeData';
+
+// 비구조화 할당을 통해 process.env 내부 값에 대한 레퍼런스 만들기
+const { PORT, MONGO_URI } = process.env;
+
+mongoose
+  .connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+    createFakeData();
+  })
+  .catch((e) => {
+    console.log(e);
+  });
+
+(...)
+```
+
+코드를 저장하고 서버가 재시작되면 터미널에 아래와 같이 출력이 되고  Compass를 통해 데이터가 잘 등록되었는지 확인해 줬다.
+
+<img src="./images/22_18.png" />
+
+<img src="./images/22_19.png" />
+
+DB에 데이터가 잘 등록되었으면 createFakeData를 호출하는 코드를 main.js에서 지워 준다.
+
+#### 22.10.2 포스트를 역순으로 불러오기
+
+페이지 기능을 구현하기에 앞서 포스트를 역순으로 불러오는 방법을 알아보자. 현재 list API 에서는 포스트가 작성된 순서대로 나열이 된다. 블로그에 방문한 사람에게 가장 최근 작성된 포스트를 먼저 보여주는 것이 더 좋기 때문에 list API에서 exec()를 하기 전에 sort() 구문을 넣어 역순으로 정렬을 시켜준다.
+
+Sort() 함수의 파라미터는 { key : 1 } 형식으로 넣는데 key는 정렬할 필드를 설정하는 부분이며, 오른쪽 값을 1로 설정하면 오름차순으로, -1로 설정하면 내림차순으로 정령한다. 
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  try {
+    const posts = await Post.find().sort({ _id: -1 }).exec();
+    ctx.body = posts;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+코드를 저장한 뒤 list API를 다시 호출하면 가장 마지막으로 등록된 포스트가 맨 위에 나타난 것을 확인할 수 있다.
+
+<img src="./images/22_20.png" />
+
+#### 22.10.3 보이는 개수 제한
+
+이번에는 한 번에 보이는 개수를 제한해 보자. 개수를 제한할 때는 limit() 함수를 사용하고, 파라미터에는 제한할 숫자를 넣으면 된다. 예를 들어 10개로 제한한다고 하면 limit(10)을 입력한다.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  try {
+    const posts = await Post.find().sort({ _id: -1 }).limit(10).exec();
+    ctx.body = posts;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+이렇게 작성하면 가장 최근 작성된 열 개의 포스트만 불러오게 된다.
+
+#### 22.10.4 페이지 기능 구현
+
+페이지의 기능을 구현하려면 앞 절에서 배운 limit 함수를 사용해야 하고, 추가로 skip 함수도 사용해야 한다.
+
+skip이란 표현에는 '넘긴가'라는 의미가 있다. skip 함수에 파라미터로 10을 넣어 주면, 처음 열 개를 제외하고 그다음 데이터 10개를 불러온다. 20을 넣어준다면 처음 20개를 제외하고 그다음 데이터 10개를 불러오게 될 것이다.
+
+skip함수의 파라미터에는 (page - 1)*10을 넣어 주면 된다. 1페이지에는 처음 열개를 불러오고 2페이지에는 그다음 열 개를 불러오게 된다. Page 값은 query에서 받아 오도록 설정해 준다. 이 값이 없으면 page 값을 1로 간주하여 코드를 작성해 보자.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  // query는 문자열이기에 숫자로 변환
+  // 값이 주어지지 않으면 1을 default로 설정
+  const page = parseInt(ctx.query.page || '1', 10);
+
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
+  try {
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
+      .exec();
+    ctx.body = posts;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+이렇게 하면 http://localhost:4000/api/hosts?page=2 와 같은 형식으로 페이지를 지정하여 조회할 수 있다.
+
+#### 22.10.5 마지막 페이지 번호 알려 주기
+
+마지막 페이지의 번호를 알려면 응답 내용의 형식을 바꾸어 새로운 필드를 설정하는 방법, Response 헤더 중 Link를 설정하는 방법, 커스텀 헤더를 설정하는 방법으로 이 정보를 알려 줄 수도 있다.
+
+이 중 커스텀 헤더를 설정하는 방법으로 구현해보도록 하자.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  // query는 문자열이기에 숫자로 변환
+  // 값이 주어지지 않으면 1을 default로 설정
+  const page = parseInt(ctx.query.page || '1', 10);
+
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
+  try {
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
+      .exec();
+    const postCount = await Post.countDocuments().exec();
+    ctx.set('Last-Page', Math.ceil(postCount / 10));
+    ctx.body = posts;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+Last-Page라는 커스텀 헤더를 설정했다. Postman으로 GET 요청을 다시 보내 확인해 보면 아래와 같이 Last-Page 헤더 값이 설정된 것을 확인할 수 있다.
+
+<img src="./images/22_21.png" />
+
+#### 22.10.6 내용 길이 제한
+
+이제 body의 길이가 200자 이상이면 뒤에 "..."을 붙이고 문자열을 자르는 기능을 구현해 보자. Find()를 통해 조회한 ㄷ이터는 mongoose 문서 인스턴스의 형태이므로 데이터를 바로 변형할 수 없다. 그 대신 toJSON() 함수를 실행하여 JSON 형태로 변환한 뒤 필요한 변형을 일으켜 주어야 한다.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  // query는 문자열이기에 숫자로 변환
+  // 값이 주어지지 않으면 1을 default로 설정
+  const page = parseInt(ctx.query.page || '1', 10);
+
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
+  try {
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
+      .exec();
+    const postCount = await Post.countDocuments().exec();
+    ctx.set('Last-Page', Math.ceil(postCount / 10));
+    ctx.body = posts
+      .map((post) => post.toJSON())
+      .map((post) => ({
+        ...post,
+        body:
+          post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`,
+      }));
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+또 다른 방법으로 데이터를 조회할 때 lean() 함수를 사용하는 방법도 있다. 이 함수를 사용하면 데이터를 처음부터 JSON 형태로 조회할 수 있다.
+
+```jsx
+/*
+  GET /api/posts
+*/
+export const list = async (ctx) => {
+  // query는 문자열이기에 숫자로 변환
+  // 값이 주어지지 않으면 1을 default로 설정
+  const page = parseInt(ctx.query.page || '1', 10);
+
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
+  try {
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
+      .lean()
+      .exec();
+    const postCount = await Post.countDocuments().exec();
+    ctx.set('Last-Page', Math.ceil(postCount / 10));
+    ctx.body = posts.map((post) => ({
+      ...post,
+      body:
+        post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`,
+    }));
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+코드를 저장한 뒤 Postman으로 list API를 호출하면 body길이가 200자로 제한된 것을 볼 수 있다.
+
+<img src="./images/22_22.png" />
+
+## 22.11 정리
+
+이 장에서는 REST API에 MongoDB를 연동하는 방법을 배우고, 쿼리를 작성하여 페이지네이션 기능까지 구현해 봤다. MongoDB는 이 책에서 다룬 것 외에 더욱 다양하고 복잡한 쿼리도 설정할 수 있다.
+
+백엔드는 결국 여러 가지 조건에 따라 클라이언트에서 전달받은 데이터를 등록하고 조회하고 수정하는 것이다. 현재 만든 백엔드 서버에는 한 종류의 데이터 모델과 REST API밖에 없지만, 프로젝트 규모에 따라 더욱 많은 종류의 모델과 API를 관리할 수도 있따.
