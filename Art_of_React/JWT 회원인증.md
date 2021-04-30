@@ -282,3 +282,50 @@ Compass를 통해 보면 데이터베이스에 실제로 데이터가 잘 생성
 <img src="./images/23_02.png" />
 
 이제 같은 username으로 다시 요청을 보내게 되면 중복 요청이므로 Conflict 에러가 발생할 것이다.
+
+#### 23.3.2 로그인 구현
+
+로그인 기능을 구현하기 위해 login 함수를 아래와 같이 정의한다.
+
+```jsx
+export const login = async (ctx) => {
+  // 로그인
+  const { username, password } = ctx.request.body;
+
+  // username, password가 없으면 에러 처리
+  if (!username || !password) {
+    ctx.status = 401; // Unauthorized
+    return;
+  }
+
+  try {
+    const user = await user.findByUsername(username);
+    // 계정이 존재하지 않으면 에러 처리
+    if (!user) {
+      ctx.status = 401;
+      return;
+    }
+
+    const valid = await user.checkPassword(password);
+    // 잘못된 비밀번호
+    if (!valid) {
+      ctx.status = 401;
+      return;
+    }
+    ctx.body = user.serialize();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+이 API에서는 username과 password가 제대로 전달되지 않으면 에러로 처리한다. 그리고 findByUsername을 통해 사용자 데이터를 찾고, 만약 사용자 데이터가 없으면 역시 에러로 처리한다. 계정이 유효하다면 checkPassword를 통해 비밀번호를 검사하고 성공했을 때는 계정 정보를 응답한다.
+
+Postman으로 조금 전 생성해던 계정 정보로 로그인 API를 요청해보자.
+
+<img src="./images/23_03.png" />
+
+위와 같이 해당 사용자의 정보를 응답하는 것을 확인할 수 있다. 만약 틀린 비밀번호로 요청했다면, 401Unauthorized 에러가 발생할 것이다.
+
+<img src="./images/23_04.png" />
+
