@@ -127,3 +127,158 @@ export default User;
 ```
 
 스태틱 함수에서의 this는 모델을 가리킨다. 여기서는 User를 가리키고 있다.
+
+## 23.3 회원 인증 API 만들기
+
+회원 인증 API를 구현하기 위해 먼저 새로운 라우트 auth를 정의 해줘야 한다. Api 디렉터리에 auth 디렉터리를 생성하고 그 안에 auth.ctrl.js를 아래와 같이 작성한다.
+
+```jsx
+export const register = async (ctx) => {
+  // 회원 가입
+};
+
+export const login = async (ctx) => {
+  // 로그인
+};
+
+export const check = async (ctx) => {
+  // 로그인 상태 확인
+};
+
+export const logout = async (ctx) => {
+  // 로그아웃
+};
+```
+
+이번 라우트에서는 총 네 개의 API를 만들것이다. 위와 같이 함수의 틀만 잡아주고, auth 디렉터리에 index.js 파일을 만들어서 auth 라우터를 생성해 준다.
+
+```jsx
+import Router from 'koa-router';
+import * as authCtrl from './auth.ctrl';
+
+const auth = new Router();
+
+auth.post('/register', authCtrl.register);
+auth.post('/login', authCtrl.login);
+auth.get('/check', authCtrl.check);
+auth.post('/logout', authCtrl.logout);
+
+export default auth;
+```
+
+그런 다음 auth 라우터를 api 라우터에 적용해 준다.
+
+```jsx
+import Router from 'koa-router';
+import auth from './auth';
+import posts from './posts';
+
+const api = new Router();
+
+api.use('/posts', posts.routes());
+api.use('/auth', auth.routes());
+
+// 라우터를 내보낸다.
+export default api;
+```
+
+API 라우트의 구조는 다 잡았고 이제 기능을 하나씩 구현해 보자.
+
+#### 23.3.1 회원가입 구현하기
+
+auth.ctrl.js 파일의 register 함수를 아래와 같이 작성해 준다.
+
+```jsx
+import Joi from 'joi';
+import User from '../../models/user';
+
+/*
+  POST /api/auth/register
+  {
+    username: 'milkboy',
+    password: '123456good',
+  }
+*/
+export const register = async (ctx) => {
+  // Request Body 검증
+  const schema = Joi.Object().keys({
+    username: Joi.string().alphanum().min(3).max(20).required(),
+    password: Joi.string().required(),
+  });
+  const result = schema.validate(ctx.request.body);
+  if(result.error) {
+    ctx.status = 400;
+    ctx.body = result.error;
+    return;
+  }
+
+  const {username, password} = ctx.request.body;
+  try {
+    // username이 이미 존재하는지 솩인
+    const exists = await User.findByUsername(username);
+    if(exists) {
+      ctx.status = 409; // Conflict
+      return;
+    }
+
+    const user = new User({
+      username,
+    })
+    await user.setPassword(password); // 비밀번호 설정
+    await user.save(); // 데이터베이스에 저장
+
+    // 응답할 데이터에서 hasedPassword 필드 제거
+    const data = user.toJSON();
+    delete data.hashedPassword;
+    ctx.body = data;
+  } catch(e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+회원가입 할 때 중복되는 계정이 생성되지 않도록 기존에 해당 username이 존재하는지 확인했다. 이 작업은 findByUsername 스태틱 메서드를 사용해 처리했다. 그리고 비밀번호를 설정하는 과정에서는 setPassword 인스턴스 함수를 사용했다. 
+
+이렇게 스태틱 또는 인스턴스 함수에서 해야 하는 작업들은 이 API 함수 내부에서 직접 구현해도 상관없지만, 이렇게 메서드들을 만들어서 사용하면 가독성도 좋고 추후 유지 보수를 할 때도 도움이 된다.
+
+함수의 마지막 부분에서는 hashedPassword 필드가 응답되지 않도록 데이터를 JSON으로 변환한 후 delete를 통해 해당 필드를 지워줬다. 앞으로 비슷한 작업을 자주 하게 되므로 이 작업을 serialize라는 인스턴스 함수로 따로 만들어 주자.
+
+```jsx
+UserSchema.methods.serialize = function () {
+  const data = this.toJSON();
+  delete data.hashedPassword;
+  return data;
+};
+```
+
+이제 기존의 코드를 user.serialize()로 대체시켜 준다.
+
+```jsx
+export const register = async (ctx) => {
+ 		(...)
+     
+    const user = new User({
+      username,
+    });
+    await user.setPassword(password); // 비밀번호 설정
+    await user.save(); // 데이터베이스에 저장
+
+    // 응답할 데이터에서 hasedPassword 필드 제거
+    ctx.body = user.serialize();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+
+(...)
+```
+
+이제 이 API의 작동을 확인하기 위해 POST 요청을 보내면 아래와 같은 응답이 나타나게 된다.
+
+<img src="./images/23_01.png" />
+
+Compass를 통해 보면 데이터베이스에 실제로 데이터가 잘 생성된 것을 확인할 수 있다.
+
+<img src="./images/23_02.png" />
+
+이제 같은 username으로 다시 요청을 보내게 되면 중복 요청이므로 Conflict 에러가 발생할 것이다.
