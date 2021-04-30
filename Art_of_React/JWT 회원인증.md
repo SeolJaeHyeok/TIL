@@ -531,3 +531,66 @@ export const check = async (ctx) => {
 
 #### 23.4.4 토큰 재발급
 
+<img src="./images/23_07.png" />
+
+위에서 iat 값은 이 토큰이 언제 만들어졌는지 알려 주는 값이고, exp 값은 언제 만료되는지 알려주는 값이다.
+
+exp에 표현된 날짜가 3.5일 미만이라면 토큰을 새로운 토큰으로 재발급해 주는 기능을 구현해 보도록 하자.
+
+```jsx
+import jwt from 'jsonwebtoken';
+import User from '../models/user';
+
+const jwtMiddleware = async (ctx, next) => {
+  const token = ctx.cookies.get('access_token');
+  if (!token) return next(); // 토큰이 없음
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    ctx.state.user = {
+      _id: decoded._id,
+      username: decoded.username,
+    };
+    // 토큰의 유효 기간이 3.5일 미만이면 재발급
+    const now = Math.floor(Date.now() / 1000);
+    if (decoded.exp - now < 60 * 60 * 24 * 3.5) {
+      const user = await User.findById(decoded._id);
+      const token = user.generateToken();
+      ctx.cookies.set('access_token', token, {
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+        httpOnly: true,
+      });
+    }
+    return next();
+  } catch (e) {
+    // 토큰 검증 실패
+    return next();
+  }
+};
+
+export default jwtMiddleware;
+```
+
+토큰 재발급이 잘되는지 확인해 보고 싶다면 user 모델 파일의 generateToken 함수에서 토큰 유효 기간을 3일로 설정하고, 다신 login API를 요청한 다음 check API를 요청해보자. 토큰 재발급이 잘 이루어졌다면, check API를 요청했을 때 Headers에서 새 토큰이 Set-Cookie를 통해 설정될 것이다.
+
+<img src="./images/23_09.png" />
+
+#### 23.4.5 로그아웃 기능 구현
+
+마지막으로 로그아웃기능을 구현해보자. 이 API는 단순히 쿠키를 지워주기만 하면 된다.
+
+logout 함수를 다음과 같이 작성해 준다.
+
+```jsx
+export const logout = async (ctx) => {
+  // 로그아웃
+  ctx.cookies.set('access_token');
+  ctx.status = 204; // No Content
+};
+```
+
+Postman으로 이 API를 호출하게 되면 아래와 같은 화면이 나타나게 된다.
+
+<img src="./images/23_10.png" />
+
+## 23.5 posts API에 회원 인증 시스템 도입
+
