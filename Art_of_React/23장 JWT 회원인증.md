@@ -372,7 +372,7 @@ UserSchema.methods.generateToken = function() {
 }
 ```
 
-이제 회원가입과 로그인에 성공했을 때 토큰을 사용자에게 전달해 주자. 사용자가 브라우저에서 토큰을 사용할 때는 주로 두 가지 방법을 사용한다. 첫 번째는 브라우저의 localStorage 혹은 sessionStorage에 담아서 사용하는 방법이고, 두 번째는 브라우저의 쿠키에 담아서 사용하는 방법이다.
+이제 **회원가입과 로그인에 성공했을 때 토큰을 사용자에게 전달**해 주자. 사용자가 브라우저에서 토큰을 사용할 때는 주로 두 가지 방법을 사용한다. **첫 번째는 브라우저의 localStorage 혹은 sessionStorage에 담아서 사용하는 방법**이고, 두 번째는 **브라우저의 쿠키에 담아서 사용하는 방법**이다.
 
 브라우저의 localStorage 혹은 sessionStorage에 토큰을 담으면 매우 사용하기가 편리하고 구현도 쉽다. 하지만 누군가 페이지에 악성 스크립트를 삽입한다면 쉽게 토큰을 탈취할 수 있다(이러한 공격을 XSS(Cross Site Scripting)라고 부른다).
 
@@ -426,7 +426,7 @@ Postman으로 다시 한번 login 요청을 하면 response의 header 부분에 
 
 #### 23.4.3 토큰 검증하기
 
-이번에는 사용자의 토큰을 확인한 후 검증하는 작업을 해 볼텐데, 이 작업을 미들웨어를 통해 처리해 보도록 하자. 
+이번에는 **사용자의 토큰을 확인한 후 검증하는 작업**을 해 볼텐데, 이 작업을 미들웨어를 통해 처리해 보도록 하자. 
 
 src 디렉터리에 lib라는 디렉터리를 만들고, 그 안에 jwtMiddleware.js라는 파일을 생성해서 다음과 같이 입력해 준다.
 
@@ -535,7 +535,7 @@ export const check = async (ctx) => {
 
 위에서 iat 값은 이 토큰이 언제 만들어졌는지 알려 주는 값이고, exp 값은 언제 만료되는지 알려주는 값이다.
 
-exp에 표현된 날짜가 3.5일 미만이라면 토큰을 새로운 토큰으로 재발급해 주는 기능을 구현해 보도록 하자.
+**exp에 표현된 날짜가 3.5일 미만이라면 토큰을 새로운 토큰으로 재발급해 주는 기능을 구현**해 보도록 하자.
 
 ```jsx
 import jwt from 'jsonwebtoken';
@@ -576,7 +576,7 @@ export default jwtMiddleware;
 
 #### 23.4.5 로그아웃 기능 구현
 
-마지막으로 로그아웃기능을 구현해보자. 이 API는 단순히 쿠키를 지워주기만 하면 된다.
+마지막으로 로그아웃기능을 구현해보자. 이 API는 **단순히 쿠키를 지워주기만 하면 된다.**
 
 logout 함수를 다음과 같이 작성해 준다.
 
@@ -593,4 +593,272 @@ Postman으로 이 API를 호출하게 되면 아래와 같은 화면이 나타�
 <img src="./images/23_10.png" />
 
 ## 23.5 posts API에 회원 인증 시스템 도입
+
+이번에는 기존에 구현했던 post API에 회원 인증 시스템을 도입해 보자. **새 포스트는 이제 로그인해야만 작성할 수 있고, 삭제와 수정은 작성자만 할 수 있도록 구현**할 예정이다.
+
+각각의 함수를 직접 수정해서 이 기능을 구현해도 되지만, 여기서는 미들웨어를 만들어서 관리해 보도록 하겠다. 또한, 각 포스트를 어떤 사용자가 작성했는지 알아야 하기 때문에 기존의 Post 스키마를 수정해 줘야 한다.
+
+#### 23.5.1 스키마 수정
+
+스키마에 사용자 정보를 넣어줘야 하는데, 보통 MariaDB, PostgreSQL 같은 관계형 데이터베이스에서는 데이터의 id만 관계 있는 데이터에 넣어 주는 반면, MongoDB에서는 필요한 데이터를 통째로 집어넣는다.
+
+여기서는 Post 스키마 안에 사용자의 id와 username을 전부 넣어 주어야 한다.
+
+```jsx
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
+
+const PostSchema = new Schema({
+  title: String,
+  body: String,
+  tags: [String], // 문자열로 이루어진 배열
+  publishedDate: {
+    type: Date,
+    default: Date.now, // 현재 날짜를 기본값으로 지정
+  },
+  user: {
+    _id: mongoose.Types.ObjectId,
+    username: String,
+  },
+});
+
+const Post = mongoose.model('Post', PostSchema);
+export default Post;
+```
+
+#### 23.5.2 posts 컬렉션 비우기
+
+이제 포스트 데이터에는 사용자 정보가 필요하다. 우리가 이전에 생성한 데이터들은 더 이상 유효하지 않으므로 모두 삭제해 준다. Compass를 열어 좌측 컬렉션 리스트를 보면 posts 컬렉션이 있다. 이 posts 컬렉션을 삭제해주면 된다. 
+
+#### 23.5.3 로그인했을 때만 API를 사용할 수 있게 하기
+
+checkLoggedIn이라는 미들웨어를 만들어서 **로그인해야만 글쓰기, 수정, 삭제를 할 수 있도록 구현**해 보도록 하자.
+
+lib 디렉터리에 checkLoggedIn.js 파일을 생성하고 다음 미들웨어를 작성한다.
+
+이 미들웨어는 lib 디렉터리에 저장하는 이유는 다른 라우트에서도 사용될 가능성이 있기 때문이다. 물론 이 프로젝트에서 auth를 제외한 라우트는 posts가 유일하기 때문에 auth.ctrl.js에서 구현해도 상관없지만, 로그인 상태 확인 작업은 자주 사용하는 기능이므로 더 쉽게 재사용할 수 있도록 lib 디렉터리에 작성하는 것이다.
+
+```jsx
+const checkLoggedIn = (ctx, next) => {
+  if (!ctx.state.user) {
+    ctx.status = 401; // Unauthorized
+    return;
+  }
+  return next();
+};
+
+export default checkLoggedIn;
+```
+
+이 미들웨어는 로그인 상태가 아니라면 401 HTTP Status를 반환하고, 그렇지 않으면 그다음 미들웨어를 실행하는 코드다.
+
+이제 이 미들웨어를 posts 라우터에 적용하도록 하자.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+import checkLoggedIn from '../../lib/checkLoggedIn';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', checkLoggedIn, postsCtrl.write);
+posts.get('/:id', postsCtrl.checkObjectId, postsCtrl.read);
+posts.delete('/:id', checkLoggedIn, postsCtrl.checkObjectId, postsCtrl.remove);
+posts.patch('/:id', checkLoggedIn, postsCtrl.checkObjectId, postsCtrl.update);
+
+export default posts;
+```
+
+#### 23.5.4 포스트 작성시 사용자 정보 넣기
+
+로그인된 사용자만 포스트를 작성할 수 있게 했으니, 지금부터는 **포스트를 작성할 때 사용자 정보를 넣어 데이터베이스에 저장하도록 구현**해 보자.
+
+```jsx
+export const write = async (ctx) => {
+	(...)
+  const { title, body, tags } = ctx.request.body;
+  const post = new Post({
+    title,
+    body,
+    tags,
+    user: ctx.state.user,
+  });
+
+  try {
+    await post.save();
+    ctx.body = post;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+
+```
+
+이제 포스트 작성 API를 요청하게 되면 아래와 같이 사용자 정보가 들어간 상태로 잘 등록되는 것을 확인할 수 있다.
+
+<img src="./images/23_11.png" />
+
+#### 23.5.5 포스트 수정 및 삭제 시 권한 확인하기
+
+마지막으로 **작성자만 포스트를 수정하거나 삭제할 수 있도록 구현**해 보자. 이 작업을 미들웨어에서 처리하고 싶다면 id로 포스트를 조회하는 작업도 미들웨어로 해줘야 한다. 따라서 기존에 만들었던 checkObjectId를 getPostById로 바꾸고, 해당 미들웨어에서 id로 포스트를 찾은 후 ctx.state에 담아 준다.
+
+```jsx
+export const getPostById = async (ctx, next) => {
+  const { id } = ctx.params;
+  if (!ObjectId.isValid(id)) {
+    ctx.status = 400; // Bad Request
+    return;
+  }
+  try {
+    const post = await Post.findById(id);
+    // 포스트가 존재하지 않을 때
+    if (!post) {
+      ctx.status = 404; // Not Found
+      return;
+    }
+    ctx.state.post = post;
+    return next();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+```
+
+미들웨어 이름과 코드를 수정한 뒤 posts 라우터에 반영하고 read 함수 내부에서 id로 포스트를 찾는 코드를 간소화해 준다.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+import checkLoggedIn from '../../lib/checkLoggedIn';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', checkLoggedIn, postsCtrl.write);
+posts.get('/:id', postsCtrl.getPostById, postsCtrl.read);
+posts.delete('/:id', checkLoggedIn, postsCtrl.getPostById, postsCtrl.remove);
+posts.patch('/:id', checkLoggedIn, postsCtrl.getPostById, postsCtrl.update);
+
+export default posts;
+```
+
+```jsx
+/*
+  GET /api/posts/:id
+*/
+export const read = async (ctx) => {
+  ctx.body = ctx.state.post;
+};
+```
+
+getPostById를 구현하고 적용했다면 이번에는 checkOwnPost라는 미들웨어를 만든다. 이 미들웨어는 **id로 찾은 포스트가 로그인 중인 사용자가 작성한 포스트인지 확인** 시켜 준다. 만약 사용자의 포스트가 아니라면 403 Error를 발생시킨다.
+
+```jsx
+export const checkOwnPost = (ctx, next) => {
+  const { user, post } = ctx.state;
+  if (post.user._id.toString() !== user._id) {
+    ctx.status = 403;
+    return;
+  }
+  return next();
+};
+```
+
+MongoDB에서 조회한 데이터의 id 값을 문자열과 비교할 때는 반드시 toString()을 사용해야 한다. 
+
+이어서 이 미들웨어를 수정 및 삭제 API에 적용시킨다. 주의할 점은 checkLoggedIn 다음 미들웨어로 등록해 주어야 한다.
+
+```jsx
+import Router from 'koa-router';
+import * as postsCtrl from './posts.ctrl';
+import checkLoggedIn from '../../lib/checkLoggedIn';
+
+const posts = new Router();
+
+posts.get('/', postsCtrl.list);
+posts.post('/', checkLoggedIn, postsCtrl.write);
+posts.get('/:id', postsCtrl.getPostById, postsCtrl.read);
+posts.delete(
+  '/:id',
+  checkLoggedIn,
+  postsCtrl.checkOwnPost,
+  postsCtrl.getPostById,
+  postsCtrl.remove,
+);
+posts.patch(
+  '/:id',
+  checkLoggedIn,
+  postsCtrl.checkOwnPost,
+  postsCtrl.getPostById,
+  postsCtrl.update,
+);
+
+export default posts;
+```
+
+이제 새로운 계정을 만든 다음, 그 계정을 사용하여 다른 계정으로 작성된 포스트를 삭제해보면
+
+<img src="./images/23_12.png" />
+
+403 Forbidden Error가 잘 나타난 것을 확인할 수 있다. 이제 posts API에 회원 인증 시스템을 도입하는 과정을 모두 끝냈다.
+
+> 💬
+>
+> src/api/posts/index.js 파일 안에 미들웨어들을 등록할 때 책에서 나온 리팩토링을 하지 않고 해도 가능하다고 말해서 
+>
+> ```jsx
+> import Router from 'koa-router';
+> import * as postsCtrl from './posts.ctrl';
+> import checkLoggedIn from '../../lib/checkLoggedIn';
+> 
+> const posts = new Router();
+> 
+> posts.get('/', postsCtrl.list);
+> posts.post('/', checkLoggedIn, postsCtrl.write);
+> posts.get('/:id', postsCtrl.getPostById, postsCtrl.read);
+> posts.delete(
+>   '/:id',
+>   checkLoggedIn,
+>   postsCtrl.checkOwnPost,
+>   postsCtrl.getPostById,
+>   postsCtrl.remove,
+> );
+> posts.patch(
+>   '/:id',
+>   checkLoggedIn,
+>   postsCtrl.checkOwnPost,
+>   postsCtrl.getPostById,
+>   postsCtrl.update,
+> );
+> 
+> export default posts;
+> ```
+>
+> 위와 같이 checkLoggedIn 미들웨어 다음에 checkOwnPost 미들웨어를 등록해줬는데 계속해서 user가 정의되지 않았다고 말하면서 next()함수가 발생하지 않는 것을 확인했다.
+>
+> 그래서 책에 서술된 대로 리팩토링을 마치니 정상적으로 수행이 된 것 또한 확인했다.
+>
+> ```jsx
+> import Router from 'koa-router';
+> import * as postsCtrl from './posts.ctrl';
+> import checkLoggedIn from '../../lib/checkLoggedIn';
+> 
+> const posts = new Router();
+> 
+> posts.get('/', postsCtrl.list);
+> posts.post('/', checkLoggedIn, postsCtrl.write);
+> 
+> const post = new Router(); // /api/posts/:id
+> post.get('/', postsCtrl.read);
+> post.delete('/', checkLoggedIn, postsCtrl.checkOwnPost, postsCtrl.remove);
+> post.patch('/', checkLoggedIn, postsCtrl.checkOwnPost, postsCtrl.update);
+> 
+> posts.use('/:id', postsCtrl.getPostById, post.routes());
+> 
+> export default posts;
+> ```
+>
+> 
 
