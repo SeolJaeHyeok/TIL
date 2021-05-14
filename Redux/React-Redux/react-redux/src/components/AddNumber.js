@@ -1,7 +1,8 @@
 import React, { Component } from "react";
+import store from "../store";
 
 export default class AddNumber extends Component {
-  state = { size: 5 };
+  state = { size: 1 };
   render() {
     return (
       <div>
@@ -10,7 +11,7 @@ export default class AddNumber extends Component {
           type="button"
           value="+"
           onClick={function () {
-            this.props.onClick(this.state.size);
+            store.dispatch({ type: "INCREMENT", size: this.state.size });
           }.bind(this)}
         ></input>
         <input
