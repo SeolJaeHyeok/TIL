@@ -17,7 +17,6 @@ const configureStore = () => {
             : applyMiddleware(sagaMiddleware),
     );
     sagaMiddleware.run(rootSaga);
-    store.dispatch({ type: 'HELLO' });
     return store;
 };
 
