@@ -28,6 +28,12 @@ function reducer(state = initState, action) {
       selected_content_id: parseInt(action.id),
     };
   }
+  if (action.type === "CREATE") {
+    return {
+      ...state,
+      mode: "CREATE",
+    };
+  }
   return state;
 }
 
