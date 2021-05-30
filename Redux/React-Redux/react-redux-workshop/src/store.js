@@ -49,6 +49,27 @@ function reducer(state = initState, action) {
       selected_content_id: newId,
     };
   }
+  if (action.type === "UPDATE") {
+    return {
+      ...state,
+      mode: "UPDATE",
+    };
+  }
+  if (action.type === "UPDATE_PROCESS") {
+    var updatedContent = [...state.contents];
+    for (let i = 0; i < updatedContent.length; i++) {
+      if (updatedContent[i].id === action.id) {
+        updatedContent[i].title = action.title;
+        updatedContent[i].desc = action.desc;
+      }
+    }
+    return {
+      ...state,
+      contents: updatedContent,
+      mode: "READ",
+      selected_content_id: action.id,
+    };
+  }
   return state;
 }
 

@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import NavContainer from "./containers/NavContainer";
 import ControlContainer from "./containers/ControlContainer";
 import CreateContainer from "./containers/CreateContainer";
+import UpdateContainer from "./containers/UpdateContainer";
 
 class App extends Component {
   render() {
@@ -16,6 +17,9 @@ class App extends Component {
         break;
       case "CREATE":
         article = <CreateContainer />;
+        break;
+      case "UPDATE":
+        article = <UpdateContainer />;
         break;
       default:
         article = <ReadContainer />;
