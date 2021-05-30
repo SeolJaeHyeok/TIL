@@ -1,5 +1,5 @@
 import { connect } from "react-redux";
-import Article from "../components/article";
+import Read from "../components/Read";
 
 function mapStateToProps(state) {
   var title, desc;
@@ -23,4 +23,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(Article);
+export default connect(mapStateToProps)(Read);
