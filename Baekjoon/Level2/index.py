@@ -1,48 +1,48 @@
 # # 1330번
-# A, B = map(int, input().split())
-# if A > B:
-#     print('>')
-# elif A < B:
-#     print('<')
-# else:
-#     print('==')
+A, B = map(int, input().split())
+if A > B:
+    print('>')
+elif A < B:
+    print('<')
+else:
+    print('==')
 
 # 9498번
-# score = int(input())
-# if score >= 90:
-#     print('A')
-# elif score >= 80:
-#     print('B')
-# elif score >= 70:
-#     print('C')
-# elif score >= 60:
-#     print('D')
-# else:
-#     print('F')
+score = int(input())
+if score >= 90:
+    print('A')
+elif score >= 80:
+    print('B')
+elif score >= 70:
+    print('C')
+elif score >= 60:
+    print('D')
+else:
+    print('F')
 
 # 2753번
-# year = int(input())
-#
-# if (year % 400 == 0) or (year % 4 == 0 and year % 100 != 0):
-#     print('1')
-# else:
-#     print('0')
+year = int(input())
+
+if (year % 400 == 0) or (year % 4 == 0 and year % 100 != 0):
+    print('1')
+else:
+    print('0')
 
 # 14681번
-# x = int(input())
-# y = int(input())
-#
-# if x > 0 and y > 0:
-#     print('1')
-# elif x < 0 and y > 0:
-#     print('2')
-# elif x < 0 and y < 0:
-#     print('3')
-# else:
-#     print('4')
+x = int(input())
+y = int(input())
+
+if x > 0 and y > 0:
+    print('1')
+elif x < 0 and y > 0:
+    print('2')
+elif x < 0 and y < 0:
+    print('3')
+else:
+    print('4')
 
 # 2884번
-# My Solution
+# 1
 H, M = map(int, input().split())
 
 if H == 0:
@@ -60,7 +60,7 @@ else:
 
 print(H, M)
 
-# Other Solution
+# 2
 H, M = map(int, input().split())
 
 if M < 45:  # 분단위가 45분보다 작을 때
