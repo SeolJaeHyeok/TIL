@@ -2,24 +2,24 @@
 """
 알파벳 소문자, 대문자, 숫자 0-9중 하나가 주어졌을 때, 주어진 글자의 아스키 코드값을 출력하는 프로그램
 """
-# value = input()
-# print(ord(value))
+value = input()
+print(ord(value))
 
 # 11720번
 """
 N개의 숫자가 공백 없이 쓰여있다. 이 숫자를 모두 합해서 출력하는 프로그램을 작성하시오.
 """
-# N = int(input())
-# num = input()
-# sumOfNum = 0
-# if len(num) == N:
-#     for i in num:
-#         sumOfNum += int(i)
-# else:
-#     print('Error Occurred')
-#     pass
-#
-# print(sumOfNum)
+N = int(input())
+num = input()
+sumOfNum = 0
+if len(num) == N:
+    for i in num:
+        sumOfNum += int(i)
+else:
+    print('Error Occurred')
+    pass
+
+print(sumOfNum)
 
 # 10809번
 """
@@ -33,9 +33,9 @@ N개의 숫자가 공백 없이 쓰여있다. 이 숫자를 모두 합해서 출
 => find 함수를 이용해서 원하는 출력과 똑같은 결과를 도출할 수 있음. 
 => find와 비슷한 index 함수가 있지만 index 함수는 해당하는 문자열이 없으면 -1 반환하는 대신 Attribute Error 발생시킴 
 """
-# value = input()  # 입력
-# lowerCase = value.lower()  # 소문자로 변환
-# initialTable = list(range(97, 123))  # 알파벳 소문자 아스키 코드 97~122의 리스트 생성
-#
-# for alpha in initialTable:
-#     print(lowerCase.find(chr(alpha)))  # 각각의 아스키코드에 해당하는 숫자를 chr함수를 이용해 문자열로 바꾼 뒤 그 문자를 입력한 단어 안에서 찾고 해당하는 위치 반환
+value = input()  # 입력
+lowerCase = value.lower()  # 소문자로 변환
+initialTable = list(range(97, 123))  # 알파벳 소문자 아스키 코드 97~122의 리스트 생성
+
+for alpha in initialTable:
+    print(lowerCase.find(chr(alpha)))  # 각각의 아스키코드에 해당하는 숫자를 chr함수를 이용해 문자열로 바꾼 뒤 그 문자를 입력한 단어 안에서 찾고 해당하는 위치 반환
