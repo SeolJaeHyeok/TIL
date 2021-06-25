@@ -10,7 +10,7 @@ const jwtMiddleware = async (ctx, next) => {
       _id: decoded._id,
       username: decoded.username,
     };
-    // 토큰의 유효 기간이 3.5일 미만이면 재발급
+    // 토큰 3.5일 미만 남으면 재발급
     const now = Math.floor(Date.now() / 1000);
     if (decoded.exp - now < 60 * 60 * 24 * 3.5) {
       const user = await User.findById(decoded._id);
@@ -20,6 +20,7 @@ const jwtMiddleware = async (ctx, next) => {
         httpOnly: true,
       });
     }
+
     return next();
   } catch (e) {
     // 토큰 검증 실패

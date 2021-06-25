@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import { isRef } from '../../../node_modules/joi/lib/index';
 import User from '../../models/user';
 
 /*
