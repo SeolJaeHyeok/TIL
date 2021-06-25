@@ -15,7 +15,7 @@ mongoose
   .then(() => {
     console.log('Connected to MongoDB');
   })
-  .catch(e => {
+  .catch((e) => {
     console.error(e);
   });
 

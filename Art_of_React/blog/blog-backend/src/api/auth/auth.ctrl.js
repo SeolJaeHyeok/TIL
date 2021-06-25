@@ -4,8 +4,8 @@ import User from '../../models/user';
 /*
   POST /api/auth/register
   {
-    username: 'velopert',
-    password: 'mypass123'
+    username: 'milkboy',
+    password: '123456'
   }
 */
 export const register = async (ctx) => {
@@ -51,8 +51,8 @@ export const register = async (ctx) => {
 /*
   POST /api/auth/login
   {
-    username: 'velopert',
-    password: 'mypass123'
+    username: 'milkboy2564',
+    password: '123456'
   }
 */
 export const login = async (ctx) => {
