@@ -10,6 +10,26 @@
 첫째 줄에 이 단어에서 가장 많이 사용된 알파벳을 대문자로 출력한다. 단, 가장 많이 사용된 알파벳이 여러 개 존재하는 경우에는 ?를 출력한다.
 
 풀이방법
-
+입력받은 단어를 중복없이 리스트로 만들고 입력받은 단어 안에서 리스트의 각 요소들의 개수들을 찾아 리스트에 저장한다.
+그런 다음 개수를 저장한 리스트에서 최대값의 개수를 찾아 해당 값이 1보다 크면 ?를 출력하고
+값이 하나라면 최대값의 인덱스를 찾은 뒤 중복없는 리스트안에서 해당 인덱스를 가지고 값을 출력한다.
 """
 
+
+def solution(word):  # mississipi
+    word_list = list(set(word))  # ['m', 'i', 's', 'p']
+    cnt = []
+
+    for i in word_list:
+        count = word.count(i)
+        cnt.append(count)  # [1, 4, 4, 1]
+
+    if cnt.count(max(cnt)) > 1:  # 최대값의 개수가 1개 이상이면 ?출력
+        print("?")
+    else:
+        # 각 단어의 개수를 가진 리스트와 중복 없는 word_list의 순서는 일치한다. 따라서 word_list[최대값의 인덱스] == 최대값
+        print(word_list[(cnt.index(max(cnt)))].upper())
+
+
+N = input().lower()
+solution(N)
