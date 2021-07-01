@@ -1,18 +1,3 @@
-이번에는 글쓰기 페이지 기능을 구현할 차례다. 글쓰기에 관련된 컴포넌트들은 write라는 이름으로 분류할 예정이다.
-
-이번 실습은 다음과 같은 흐름으로 진행된다.
-
-> 에디터 UI 구현하기 -> 에디터 하단 UI 구현하기 -> 리덕스로 글쓰기 상태 관리하기 -> API 연동하기
-
-## 25.1 에디터 UI 구현
-
-글을 작성하는 에디터는 Quill이라는 라이브러리를 사용하여 구현하도록 하자. 먼저 yarn을 이용하여 해당 라이브러리를 설치해 준다.
-
-`$ yarn add quill`
-
-다음으로 components/write 디렉터리에 Editor 컴포넌트를 만들어 준다. 이 컴포넌트에서는 제목과 내용을 입력할 수 있다. 제목은 input을 사용하고, 내용은 Quill 에디터를 사용할 예정이다.
-
-```jsx
 import React, { useEffect, useRef } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.bubble.css';
@@ -80,28 +65,3 @@ const Editor = () => {
 };
 
 export default Editor;
-```
-
-Editor 컴포넌트를 WritePage에 렌더링하고 /write 주소로 들어가 보면
-
-```jsx
-import React from 'react';
-import Responsive from '../components/common/Responsive';
-import Editor from '../components/write/Editor';
-
-const WritePage = () => {
-  return (
-    <Responsive>
-      <Editor />
-    </Responsive>
-  );
-};
-
-export default WritePage;
-```
-
-<img src="./images/25_01.png" />
-
-위와 같은 화면이 나타나고 텍스트를 드래그하면 스타일을 변경할 수도 있다. Editor 컴포넌트에서 사용되는 값을 추후 리덕스에서도 관리할 수 있도록 props를 설정해 주어야 한다.
-
-## 25.2 에디터 하단 컴포넌트 UI 구현하기
