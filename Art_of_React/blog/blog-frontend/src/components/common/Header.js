@@ -49,7 +49,7 @@ const Header = ({ user, onLogout }) => {
       <HeaderBlock>
         <Wrapper>
           <Link to="/" className="logo">
-            MILKBOY
+            Hyeok's Blog
           </Link>
           {user ? (
             <div className="right">
