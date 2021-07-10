@@ -1,30 +1,56 @@
 import React from "react";
 import { useState } from "../context";
-import Add from "./Add";
+import ToDoForm from "./ToDoForm";
 import List from "./List";
-import ToDo from "./ToDo";
+import ListItems from "./ListItems";
+import Progress from "./Progress";
+import Wrapper from "./Wrapper";
+import styled from "@emotion/styled";
+
+const Lists = styled.section`
+  display: grid;
+  grid-template-rows: 50vh;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 30px;
+  justify-items: center;
+  @media (max-width: 768px) {
+    width: 70%;
+    grid-auto-flow: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(2, 1fr);
+    justify-items: start;
+  }
+  @media (max-width: 414px) {
+    width: 95%;
+  }
+`;
 
 function App() {
   const { toDos, completed } = useState();
+
   return (
-    <>
-      <Add />
-      <List name={"To Dos"}>
-        {toDos.map((toDo) => (
-          <ToDo key={toDo.id} text={toDo.text} id={toDo.id} />
-        ))}
-      </List>
-      <List name={completed.length !== 0 ? "Completed" : ""}>
-        {completed.map((toDo) => (
-          <ToDo
-            key={toDo.id}
-            text={toDo.text}
-            id={toDo.id}
-            isCompleted={true}
-          />
-        ))}
-      </List>
-    </>
+    <Wrapper>
+      <ToDoForm />
+      <Progress />
+
+      <Lists>
+        <List title={toDos.length > 0 ? "To Dos" : ""}>
+          {toDos.map((toDo) => (
+            <ListItems key={toDo.id} id={toDo.id} text={toDo.text} />
+          ))}
+        </List>
+        <List title={completed.length > 0 ? "Completed!" : ""}>
+          {completed.map((complete) => (
+            <ListItems
+              key={complete.id}
+              id={complete.id}
+              text={complete.text}
+              isCompleted
+            />
+          ))}
+        </List>
+      </Lists>
+    </Wrapper>
   );
 }
 
