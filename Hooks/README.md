@@ -4,7 +4,9 @@
 
 ### - hooks1
 
-useContext와 useReducer를 사용한 ToDo app
+Simple ToDo App using useContext and useReducer
+
+You can check [Here](https://seoljaehyeok.github.io/MyToDo/index.html) 
 
 
 
