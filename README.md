@@ -36,5 +36,5 @@
 
 #### HyeokFlix
 
-- 현재 작업 중인 프로젝트 -> [Click](https://blissful-colden-d3fd0d.netlify.app/)
+- 현재 작업 중인 프로젝트 -> [Click](https://github.com/SeolJaeHyeok/Hyeokflix)
 
