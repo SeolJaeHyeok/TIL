@@ -13,19 +13,25 @@
 첫째 줄에 단어의 개수를 출력한다.
 
 풀이방법
+입력 받은 문장을 공백을 구분자로 해서 split 하면 단어로 이루어 리스트가 반환되므로 해당 리스트의 길이를 구해 결과 도출
 
+의문점
+문제가 너무 간단한거 같아서 아스키코드를 이용해 space를 만날 때마다 count를 1씩 증가시켜주는 방법을 사용했으나 결과는 같지만 틀리다고 함
 """
 
-# 1
 
-# def solution1(word):
-#     count = 1
-#     for i in word:
-#         if ord(i) == 32:
-#             count += 1
-#     return count
-#
-#
-# N = input()
-# print(solution1(N))
+# 1  -> x
+def solution1(word):
+    count = 1
+    for i in word:
+        if ord(i) == 32:
+            count += 1
+    return count
 
+
+N = input()
+print(solution1(N))
+
+# 2 -> o
+word = input().split()
+print(len(word))
