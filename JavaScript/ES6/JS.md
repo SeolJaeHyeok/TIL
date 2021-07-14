@@ -151,3 +151,59 @@ Object안에 Object가 있다면 해당 Object의 property name을 variable로 �
 
 [Example](https://codesandbox.io/s/happy-sky-h0btf?file=/src/OD.js)
 
+# Spread Operator
+
+Spread Operator는 특정 객체 또는 배열의 값을 다른 객체, 배열로 복제하거나 옮길 때 사용하고 연산자의 모양은 `...` 이렇게 생겼다.
+
+```javascript
+const days = ["Mon", "Tue", "Wed"];
+const otherDays = ["Thu", "Fri", "Sat"];
+
+const allDays = days + otherDays;
+
+console.log(allDays); // output: Mon,Tue,WedThu,Fri,Sat
+```
+
+위와 같이 배열끼리 더하게 되면 새로운 배열이 만들어지는 것이 아니라 배열 안의 요소를 가진 문자열(string)으로 나타나게 된다. 이렇게 되면 더이상 배열이 아니기 때문에 `array[0]`과 같이 배열 안의 요소에 접근을 할 수 없게 된다.
+
+Spread Operator는 배열들을 Unpack할 때 유용하게 사용할 수 있다. 예를 들어, days 배열과 otherDays 배열이 필요로 한게 아니라 배열 안의 요소들만 필요로 하다면 Spread Operator는 아주 좋은 선택지가 될 것이다. 왜냐하면 내가 원하는 것은 배열을 없애고 배열 안에 들어 있는 요소들만 사용하기를 원하기 때문이다.
+
+Spread Operator는 배열 안의 요소들을 가져와서 Unpack해 준다. 그렇기 때문에 배열 안의 요소들을 전달할 뿐 배열을 전달하지 않는다.
+
+```jsx
+const days = ["Mon", "Tue", "Wed"];
+const otherDays = ["Thu", "Fri", "Sat"];
+
+const allDays = [...days, ...otherDays];
+
+console.log(allDays); // output: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+```
+
+위와 같이 Spread Operator를 사용하게 되면 두 배열이 가진 요소들을 하나의 배열이 가지게 된다. 또한 Spread Operator는 객체에서도 동작한다.
+
+```javascript
+const ob = {
+  first: "hi",
+  second: "hello"
+};
+
+const ab = {
+  third: "bye bye"
+};
+
+const two = { ...ob, ...ab };
+
+console.log(two); // output: {first: "hi", second: "hello", third: "bye bye"}
+```
+
+이렇게 Object에서도 배열에서와 마찬가지로 객체 내의 요소들만 Unpack하여 사용할 수 있게 해 준다.
+
+Spread Operator는 Function와 Argument에서도 동작한다. 
+
+```javascript
+const fn = (something, args) => console.log(...args);
+```
+
+위와 같이 사용하게 되면 누군가가 제공한 모든 argument에 대하여 `console.log` 를 할 수 있게 된다.
+
+정리하면 Spread Operator는 두 개의 객체나 배열을 병합하거나, 복사본을 만들거나, 어떤 대상의 콘텐츠를 다른 대상으로 넣을 때 유용하게 쓸 수 있는 문법이다.
