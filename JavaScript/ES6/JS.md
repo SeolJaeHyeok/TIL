@@ -207,3 +207,106 @@ const fn = (something, args) => console.log(...args);
 위와 같이 사용하게 되면 누군가가 제공한 모든 argument에 대하여 `console.log` 를 할 수 있게 된다.
 
 정리하면 Spread Operator는 두 개의 객체나 배열을 병합하거나, 복사본을 만들거나, 어떤 대상의 콘텐츠를 다른 대상으로 넣을 때 유용하게 쓸 수 있는 문법이다.
+
+[Example](https://codesandbox.io/s/happy-sky-h0btf?file=/src/SO.js:153-288)
+
+# Array Method - [MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array)
+
+공부하면서 계속 추가할 예정
+
+## 1. Array.map
+
+`map()` 메서드는 배열 내의 모든 요소 각각에 대하여 주어진 함수를 호출한 결과를 모아 새로운 배열을 반환한다. 다시 말해 `map()` 메서드는 배열의 모든 요소들에 대해 function을 실행하고 그 함수의 결과 값으로 새로운 배열을 만드는 메서드를 뜻한다.
+
+```javascript
+const array1 = [1, 4, 9, 16];
+
+// pass a function to map
+const map1 = array1.map(x => x * 2);
+
+console.log(map1);
+// expected output: Array [2, 8, 18, 32]
+```
+
+ [MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
+
+>✅
+>
+>1. Map 메서드의 경우는 주로 API를 통해 배열을 받아오면 해당 배열의 요소들로 여러 Component들을 만드는 경우가 있는데 이런 경우에 많이 사용했다.
+
+## 2. Array.filter
+
+`filter()` 메서드는 주어진 함수의 테스트를 통과하는 모든 요소를 모아 새로운 배열로 반환한다. 다시 말해, `filter()` 메서드는 배열의 모든 요소들에 대하여 조건식을 통과한 요소들로 이루어진 새로운 배열을 만드는 메서드를 뜻한다. 
+
+```javascript
+const words = ['spray', 'limit', 'elite', 'exuberant', 'destruction', 'present'];
+
+const result = words.filter(word => word.length > 6);
+
+console.log(result);
+// expected output: Array ["exuberant", "destruction", "present"]
+```
+
+[MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/filter)
+
+> ✅
+>
+> 1. 여러 리액트 프로젝트를 진행하며 느꼈던 점은 filter는 주로 조건을 주고 해당하지 않는 경우를 삭제할 때 요컨대, id나 다른 고유한 값을 주고 그에 해당하는 값와 일치하지 않으면 제거하는 등의 로직(logout, 정보 삭제 등)에서 많이 사용했었다.
+
+## 3. Array.forEach
+
+`forEach()` 메서드는 주어진 함수를 배열 요소 각각에 대해 실행한다. 단순히 실행을 할뿐 **새로운 배열을 return 하지 않는다.** 
+
+`forEach()` 를 통해 Local Storage에 저장을 하거나 API로 보내거나 경고를 보여주거나 하는 등의 기능을 할 수 있다. **단순 시행!!**
+
+```javascript
+const array1 = ['a', 'b', 'c'];
+
+array1.forEach(element => console.log(element));
+
+// expected output: "a"
+// expected output: "b"
+// expected output: "c"
+```
+
+[MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach)
+
+## 4. Array.push
+
+`push()` 메서드는 **배열의 끝에 하나 이상의 요소를 추가**하고, 배열의 새로운 길이를 반환한다. 
+
+```javascript
+const animals = ['pigs', 'goats', 'sheep'];
+
+const count = animals.push('cows');
+console.log(count);
+// expected output: 4
+console.log(animals);
+// expected output: Array ["pigs", "goats", "sheep", "cows"]
+
+animals.push('chickens', 'cats', 'dogs');
+console.log(animals);
+// expected output: Array ["pigs", "goats", "sheep", "cows", "chickens", "cats", "dogs"]
+```
+
+[MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/push)
+
+## 5. Array.includes
+
+**`includes()`** 메서드는 배열이 특정 요소를 포함하고 있는지 판별한다. 해당하는 string이 배열 안에 존재하는지 확인하는 메서드.
+
+```javascript
+const array1 = [1, 2, 3];
+
+console.log(array1.includes(2));
+// expected output: true
+
+const pets = ['cat', 'dog', 'bat'];
+
+console.log(pets.includes('cat'));
+// expected output: true
+
+console.log(pets.includes('at'));
+// expected output: false
+```
+
