@@ -539,3 +539,181 @@ console.log(max, min); // 45 3
 ```
 
 `call/apply` 메서드는 명시적으로 별도의 `this` 를 바인딩하면서 함수 또는 메서드를 실행하는 훌륭한 방법이지만 오히려 이로 인해 `this` 를 예측하기 어렵게 만들어 코드 해석을 방해한다는 단점이 있다. 하지만 ES5 이하의 환경에서는 마땅한 대안이 없기때문에 실무에서 광범위하게 사용되고 있다고 한다.
+
+#### 2-4 bind 메서드
+
+[MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
+
+`bind` 메서드는 ES5에 추가된 기능으로, `call` 과 비슷하지만 즉시 호출하지는 않고 넘겨 받은 `this` 및 인수들을 바탕으로 새로운 함수를 반환하기만 하는 메서드다. 다시 새로운 함수를 호출할 때 인수를 넘기면 그 인수들은 기존 `bind` 메서드를 호출할 때 전달했던 인수들의 뒤에 이어서 등록된다. 즉 `bind` 메서드는 함수에 `this` 를 미리 적용하는 것과 부분 적용 함수를 구현하는 두 가지 목적을 모두 지닌다. 
+
+**3-25** bind 메서드 - this 지정과 부분 적용 함수 구현
+
+```javascript
+var func = function(a, b, c, d) {
+  console.log(this, a, b, c, d);
+};
+func(1, 2, 3, 4); // Window{ ... } 1 2 3 4
+
+var bindFunc1 = func.bind({ x: 1 });
+bindFunc1(5, 6, 7, 8); // { x: 1 } 5 6 7 8
+
+var bindFunc2 = func.bind({ x: 1 }, 4, 5);
+bindFunc2(6, 7); // { x: 1 } 4 5 6 7
+bindFunc2(8, 9); // { x: 1 } 4 5 8 9
+```
+
+6번째 줄에서 bindFunc1 변수에는 func에 `this` 를 { x: 1 }로 지정한 새로운 함수가 담긴다. 이제 7번째 줄에서 bindFunc1을 호출하면 원하는 결과를 얻을 수 있게 된다. 한편 9번째 줄의 bindFunc2 변수에는 func에 `this` 를 { x: 1 }로 지정하고, 앞에서부터 두 개의 인수를 각각 4, 5로 지정한 새로운 함수를 담았다. 이후 10번째 줄에서 매개변수로 6, 7을 넘기면 `this` 값이 바뀐 것을 제외하고는 최초 func 함수에 4, 5, 6, 7을 넘긴 것과 같은 동작을 한다. 11번째 줄에서도 마찬가지고 6번째 줄의 `bind` 는 `this` 만을 지정한 것이고, 9번째 줄의 `bind` 는 `this` 지정과 함께 부분 적용 함수를 구현한 것이다.
+
+**name 프로퍼티**
+
+`bind` 메서드를 적용해서 새로 만든 함수는 한 가지 독특한 성질이 있다. 바로 `name` 프로퍼티에 동사 `bind`의 수동태인 `bound` 라는 접두어가 붙는다는 점이다. 어떤 함수의 `name` 프로퍼티가 'bound xxx' 라면 이는 곧 함수명이 xxx인 원본 함수에 `bind` 메서드를 적용한 새로운 함수라는 의미가 되므로 기존의 `call` 이나 `apply` 보다 코드를 추적하기에 더욱 수월해진 면이 있다.
+
+**3-26** bind 메서드 - name 프로퍼티
+
+```javascript
+var func = function(a, b, c, d) {
+  console.log(this, a, b, c, d);
+};
+var bindFunc = func.bind({ x: 1 }, 4, 5);
+console.log(func.name); // func
+console.log(bindFunc.name); // bound func
+```
+
+**상위 컨텍스트의 this를 내부함수나 콜백 함수에 전달하기**
+
+1-3 절에서 메서드의 내부함수에서 메서드의 `this` 를 그대로 바라보게 하기 위한 방법으로 self 등의 변수를 활용한 우회법은 얘기했는데, `call`, `apply` 또는 `bind` 메서드를 이용하면 더 깔끔하게 처리할 수 있다.
+
+**3-27** 내부함수에 this 전달 - call vs bind
+
+```javascript
+var obj = {
+  outer: function() {
+    console.log(this);
+    var innerFunc = function() {
+      console.log(this);
+    };
+    innerFunc.call(this);
+  },
+};
+obj.outer();
+```
+
+```javascript
+var obj = {
+  outer: function() {
+    console.log(this);
+    var innerFunc = function() {
+      console.log(this);
+    }.bind(this);
+    innerFunc();
+  },
+};
+obj.outer();
+```
+
+또한 콜백 함수를 인자로 받는 함수나 메서드 중에서 기본적으로 콜백 함수 내에서의 `this` 에 관여하는 함수 또는 메서드에 대해서도 `bind` 메서드를 이용하면 `this` 값을 사용자의 맛에 맞게 바꿀 수 있다.
+
+**3-28** bind 메서드 - 내부함수에 this 전달
+
+```javascript
+var obj = {
+  logThis: function() {
+    console.log(this);
+  },
+  logThisLater1: function() {
+    setTimeout(this.logThis, 500);
+  },
+  logThisLater2: function() {
+    setTimeout(this.logThis.bind(this), 1000);
+  },
+};
+obj.logThisLater1(); // Window { ... }
+obj.logThisLater2(); // obj { logThis: f, ... }
+```
+
+#### 2-5 화살표 함수의 예외사항
+
+ES6에 새롭게 도입된 화살표 함수는 실행 컨텍스트 생성 시 `this` 를 바인딩하는 과정이 제외됐다. 즉 이 함수 내부에는 `this` 가 아예 없으며, 접근하고자 하면 스코프체인상 가장 가까운 `this` 에 접근하게 된다.
+
+**3-29** 화살표 함수 내부에서의 this
+
+```javascript
+var obj = {
+  outer: function() {
+    console.log(this);
+    var innerFunc = () => {
+      console.log(this);
+    };
+    innerFunc();
+  },
+};
+obj.outer();
+```
+
+위 예제는 3-27의 예제의 내부함수를 화살표 함수로 바꾼 것이다. 이렇게 하면 별도의 변수로 `this` 를 우회하거나 `call/apply/bind` 를 적용할 필요가 없어 더욱 간결한 코드 작성이 가능하다.
+
+#### 2-6 별도의 인자로 this를 받는 경우(콜백 함수 내에서의 this)
+
+콜백 함수에 대해서는 뒤에서 자세히 다루도록 하고 여기서는 `this` 와 관련 있는 부분만 간략하게 살펴보자. 콜백 함수를 인자로 받는 메서드 중 일부는 추가로 `this` 로 지정할 객체(thisArg)를 인자로 지정할 수 있는 경우가 있다. 이러한 메서드의 `thisArg` 값을 지정하면 콜백 함수 내부에서 `this` 값을 원하는 대로 변경할 수 있다. 이런 형태는 여러 내부 요소에 대해 같은 동작을 반복 수행해야 하는 **배열 메서드** 에 많이 포진돼 있으며, 같은 이유로 ES6에서 새로 등장한 `Set`,`Map` 등의 메서드에도 일부 존재한다. 그 중 대표적인 예인 `forEach`에 대해서 살펴보자.
+
+**3-30** thisArg를 받는 경우 예시 - forEach 메서드
+
+```javascript
+var report = {
+  sum: 0,
+  count: 0,
+  add: function() {
+    var args = Array.prototype.slice.call(arguments);
+    args.forEach(function(entry) {
+      this.sum += entry;
+      ++this.count;
+    }, this);
+  },
+  average: function() {
+    return this.sum / this.count;
+  },
+};
+report.add(60, 85, 95);
+console.log(report.sum, report.count, report.average()); // 240 3 80
+```
+
+report 객체에는 sum, count 프로퍼티가 있고, add, average 메서드가 있다. 5번째 줄에서 add 메서드는 arguments를 배열로 변환해서 args 변ㅅ에 담고, 6번째 줄에서는 이 배열을 순회하면서 콜백 함수를 실행하는데, 이때 콜백 함수 내부에서의 `this` 는 `forEach` 함수의 두 번째 인자로 전달해준 `this`(9번째 줄)가 바인딩된다. 11번째 줄의 average는 sum 프로퍼티를 count 프로퍼티로 나눈 결과를 반환하는 메서드다.
+
+15번째 줄에서 60, 85, 95를 인자로 삼아 add 메서드를 호출하면 이 세 인자를 배열로 만들어 `forEach` 메서드가 실행된다. 콜백 함수 내부에서의 `this` 는 add 메서드에서의 `this` 가 전달된 상태이므로 add 메서드의 `this` (report)를 그대로 가리키고 있다. 따라서 배열의 세 요소를 순회하면서 report.sum 값 및 report.count 값이 차례로 바뀌고, 순회를 마친 결과 report.sum에는 240이, report.count에는 3이 담기게 된다.
+
+배열의 `forEach` 를 예로 들었지만, 이 밖에도 `thisArg` 를 인자로 받는 메서드는 많이 있는데 이를 나열하면 아래와 같다.
+
+**3-31** 콜백 함수와 함께 thisArg를 인자로 받는 메서드
+
+```javascript
+Array.prototype.forEach(callback[, thisArg])
+Array.prototype.map(callback[, thisArg])
+Array.prototype.filter(callback[, thisArg])
+Array.prototype.some(callback[, thisArg])
+Array.prototype.every(callback[, thisArg])
+Array.prototype.find(callback[, thisArg])
+Array.prototype.findIndex(callback[, thisArg])
+Array.prototype.flatMap(callback[, thisArg])
+Array.prototype.from(arrayLike[, callback[, thisArg]])
+Set.prototype.forEach(callback[, thisArg])
+Map.prototype.forEach(callback[, thisArg])
+```
+
+### 3. 정리
+
+다음 규칙은 명시적 `this` 바인딩이 없는 한 늘 성립한다.
+
+- 전역공간에서의 `this` 는 전역객체(브라우저에서는 Window, Node.js에서는 global)을 참조한다.
+- 어떤 함수를 메서드로서 호출한 경우 `this` 는 메서드 호출 주체(메서드명 앞의 객체)를 참조한다.
+- 어떤 함수를 함수로서 호출한 경우 `this` 는 전역객체를 참조한다. 메서드의 내부함수에서도 동일하다.
+- 콜백 함수 내부에서의 `this` 는 해당 콜백 함수의 제어권을 넘겨받은 함수가 정의한 바에 따르며, 정의하지 않은 경우에는 전역객체를 참조한다.
+- 생성자 함수에서의 `this` 는 생성될 인스턴스를 참조한다.
+
+다음은 명시적 `this` 바인딩이다. 위 규칙의 부합하지 않는 경우에는 다음 내용을 바탕으로 `this` 를 예측할 수 있다.
+
+- `call`, `apply` 메서드는 `this` 를 명시적으로 지정하면서 함수 또는 메서드를 호출한다.
+- `bind` 메서드는 `this` 및 함수에 넘길 인수를 일부 지정하여 새로운 함수를 만든다.
+- 요소를 순회하면서 콜백 함수를 반복 호출하는 내용의 일부 메서드는 별도의 인자로 `this` 를 받기도 한다.
+
+
+
