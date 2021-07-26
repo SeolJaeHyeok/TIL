@@ -322,3 +322,220 @@ Cat { bark: '야옹', name: '나비', age: 5 }
 ```
 
 Cat이라는 변수에 익명함수를 할당했다. 이 함수 내부에서는 `this` 에 접근해서 `bark`, `name`, `age` 프로퍼티에 각각 값을 대입한다. 6번째 줄과 7번째 줄에서는 `new` 명령어와 함께 Cat 함수를 호출해서 변수 `choco`, `nabi` 에 각각 할당했다. 8번째 줄에서 `choco`, `nabi` 를 출력해보면 각각 Cat 클래스의 인스턴스 객체가 출력이 된다. 7번째 줄에서 실행한 생성자 함수 내부에서의 `this` 는 `nabi` 인스턴스를 가리킴을 알 수 있다.
+
+### 2. 명시적으로 this를 바인딩하는 방법
+
+앞 절에서는 상황별로 `this` 에 어떤 값이 바인딩되는지를 살펴봤지만 이러한 규칙을 깨고 `this` 에 별도의 대상을 바인딩하는 방법도 있다. 앞에서 얘기했던 규칙에 부합하지 않으면 다음 방법 중 하나를 사용했을 것이라고 추측할 수 있다.
+
+#### 2-1 call 메서드
+
+[MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Function/call)
+
+`call` 메서드는 메서드의 호출 주체인 함수를 즉시 실행하도록 하는 명령이다. 이때 `call` 메서드의 첫 번째 인자를 `this`로 바인딩하고, 이후 인자들을 호출할 함수의 매개변수로 한다. 함수를 그냥 실행하면 `this` 는 전역객체를 참조하지만 `call` 메서드를 이용하면 임의의 객체를 `this`로 지정할 수 있다.
+
+**3-14**  `call` 메서드
+
+```javascript
+var func = function(a, b, c) {
+  console.log(this, a, b, c);
+};
+
+func(1, 2, 3); // Window{ ... } 1 2 3
+func.call({ x: 1 }, 4, 5, 6); // { x: 1 } 4 5 6
+```
+
+메서드에 대해서도 마찬가지로 객체의 메서드를 그냥 호출하면 `this` 는 객체를 참조하지만 `call` 메서드를 이용하면 임의의 객체를 `this`로 지정할 수 ㅣ있다.
+
+**3-15**  `call` 메서드(2)
+
+```javascript
+var obj = {
+  a: 1,
+  method: function(x, y) {
+    console.log(this.a, x, y);
+  },
+};
+
+obj.method(2, 3); // 1 2 3
+obj.method.call({ a: 4 }, 5, 6); // 4 5 6
+```
+
+#### 2-2 apply 메서드
+
+`apply` 메서드는 기능적으로 `call` 메서드와 완전히 동일하다. `call` 메서드는 첫 번째 인자를 제외한 나머지 모든 인자들을 호출할 함수의 매개변수로 지정하는 반면, `apply` 메서드는 **두 번째 인자를 배열**로 받아 그 배열의 요소들을 호출할 함수의 매개변수로 지정한다는 점에서만 차이가 있다.
+
+**3-16**  `apply` 메서드
+
+```javascript
+var func = function(a, b, c) {
+  console.log(this, a, b, c);
+};
+func.apply({ x: 1 }, [4, 5, 6]); // { x: 1 } 4 5 6
+
+var obj = {
+  a: 1,
+  method: function(x, y) {
+    console.log(this.a, x, y);
+  },
+};
+obj.method.apply({ a: 4 }, [5, 6]); // 4 5 6
+```
+
+#### 2-3 call/apply 메서드의 활용
+
+`call` 이나 `apply` 메서드를 잘 활용하면 자바스크립트를 더욱 다채롭게 사용할 수 있다. 아래의 몇 가지 예시를 통해 알아보자.
+
+**유사배열객체(array-like object)에 배열 메서드를 적용**
+
+**3-17** call/apply 메서드의 활용1-1) 유사배열객체(array-like object)에 배열 메서드를 적용 
+
+```javascript
+var obj = {
+  0: 'a',
+  1: 'b',
+  2: 'c',
+  length: 3,
+};
+Array.prototype.push.call(obj, 'd');
+console.log(obj); // { 0: 'a', 1: 'b', 2: 'c', 3: 'd', length: 4 }
+
+var arr = Array.prototype.slice.call(obj);
+console.log(arr); // [ 'a', 'b', 'c', 'd' ]
+```
+
+먼저 객체에는 배열메서드를 직접 적용할 수 없다. 그러나 **키가 0 또는 양의 정수인 프로퍼티가 존재하고** `length` **프로퍼티의 값이 0 또는 양의 정수** 인 객체, 즉 배열의 구조와 유사한 객체의 경우(유사배열객체) `call` 또는 `apply` 메서드를 이용해 배열 메서드를 차용할 수 있다. 7번째 줄에서는 배열 메서드인 `push` 를 객체 obj에 적용해 프로퍼티 3에 'd'를 추가했다. 9번째 줄에서는 `slice` 메서드를 적용해 객체를 배열로 전환했다. `slice` 메서드는 원래 시작 인덱스값과 마지막 인덱스값을 받아 시작값부터 마지막값의 앞부분까지의 배열 요소를 추출하는 메서드인데, 매개변수를 아무것도 넘기지 않을 경우에는 그냥 **원본 배열의 얕은 복사본을 반환한다.** 그러니까 `call` 메서드를 이용해 원본인 유사배열객체의 얕은 복사를 수행한 것인데, `slice` 메서드가 배열 메서드이기 때문에 복사본은 배열로 반환하게 된 것이다. 함수 내부에서 접근할 수 있는 arguments 객체도 유사배열객체이므로 위의 방법으로 배열로 전환해서 활용할 수 있다. `querySelectorAll` , `getElementsByClassname` 등의 `Node` 선택자로 선택한 결과인 `NodeList` 도 마찬가지다.
+
+**3-18** call/apply 메서드의 활용1-2) arguments, NodeList에 배열 메서드를 적용
+
+```javascript
+function a() {
+  var argv = Array.prototype.slice.call(arguments);
+  argv.forEach(function(arg) {
+    console.log(arg);
+  });
+}
+a(1, 2, 3);
+
+document.body.innerHTML = '<div>a</div><div>b</div><div>c</div>';
+var nodeList = document.querySelectorAll('div');
+var nodeArr = Array.prototype.slice.call(nodeList);
+nodeArr.forEach(function(node) {
+  console.log(node);
+});
+```
+
+그 밖에도 유사배열객체에는 `call/apply` 메서드를 이용해 모든 배열 메서드를 적용할 수 있다. 배열처럼 인덱스와 `length` 프로퍼티를 지니는 문자열에 대해서도 마찬가지다. 단, 문자열의 경우 `length` 프로퍼티가 읽기 전용이기 때문에 원본 문자열에 변경을 가하는 메서드(`push`, `pop`, `shift`, `unshift`, `splice` 등)는 에러를 던지며, `concat` 처럼 대상이 반드시 배열이어야 하는 경우에는 에러는 나지 않지만 제대로된 결과를 얻을 수 없다.
+
+**3-19** call/apply 메서드의 활용1-3) 문자열에 배열 메서드 적용 예시 
+
+```javascript
+var str = 'abc def';
+
+Array.prototype.push.call(str, ', pushed string');
+// Error: Cannot assign to read only property 'length' of object [object String]
+
+Array.prototype.concat.call(str, 'string'); // [String {"abc def"}, "string"]
+
+Array.prototype.every.call(str, function(char) {
+  return char !== ' ';
+}); // false
+
+Array.prototype.some.call(str, function(char) {
+  return char === ' ';
+}); // true
+
+var newArr = Array.prototype.map.call(str, function(char) {
+  return char + '!';
+});
+console.log(newArr); // ['a!', 'b!', 'c!', ' !', 'd!', 'e!', 'f!']
+
+var newStr = Array.prototype.reduce.apply(str, [
+  function(string, char, i) {
+    return string + char + i;
+  },
+  '',
+]);
+console.log(newStr); // "a0b1c2 3d4e5f6"
+```
+
+이렇게 `call/apply` 를 이용해 형변환하는 것은 '`this`를 원하는 값으로 지정해서 호출한다.' 라는 본래의 메서드의 의도와는 다소 동떨어진 활용법이라고 할 수 있다. `slice` 메서드는 오직 배열 형태로 '복사'하기 위해 차용됐을 뿐이니, 이러한 경험을 해본 사람이 아니고서는 의도를 파악하기 어려울 수 있다. 이에 ES6에서는 유사배열객체 또는 순회 가능한 모든 종류의 데이터 타입을 배열로 전환하는 [Array.from](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/from) 메서드를 새로 도입했다.
+
+**3-20** call/apply 메서드의 활용1-3) ES6의 Array.from 메서드 
+
+```javascript
+var obj = {
+  0: 'a',
+  1: 'b',
+  2: 'c',
+  length: 3,
+};
+var arr = Array.from(obj);
+console.log(arr); // ['a', 'b', 'c']
+```
+
+**생성자 내부에서 다른 생성자를 호출**
+
+생성자 내부에 다른 생성자와 공통된 내용이 있을 경우 `call` 또는 `apply` 를 이용해 다른 생성자를 호출하면 간단하게 반복을 줄일 수 있다. 다음 예제를 살펴보자.
+
+**3-21** call/apply 메서드의 활용 2) 생성자 내부에서 다른 생성자를 호출
+
+```javascript
+function Person(name, gender) {
+  this.name = name;
+  this.gender = gender;
+}
+function Student(name, gender, school) {
+  Person.call(this, name, gender);
+  this.school = school;
+}
+function Employee(name, gender, company) {
+  Person.apply(this, [name, gender]);
+  this.company = company;
+}
+var by = new Student('보영', 'female', '단국대');
+var jn = new Employee('재난', 'male', '구골');
+```
+
+**여러 인수를 묶어 하나의 배열로 전달하고 싶을때 - apply 활용**
+
+여러 개의 인수를 받는 메서드에게 하나의 배열로 인수들을 전달하고 싶을 때 `apply` 메서드를 사용하면 좋다. 예를 들어, 배열에서 최대/최솟값을 구해야 할 경우 `apply` 메서드를 사용하지 않는다면 아래와 같은 방식으로 구현할 수밖에 없을 것이다.
+
+**3-22** call/apply 메서드의 활용 3-1) 최대/최솟값을 구하는 코드를 직접 구현
+
+```javascript
+var numbers = [10, 20, 3, 16, 45];
+var max = (min = numbers[0]);
+numbers.forEach(function(number) {
+  if (number > max) {
+    max = number;
+  }
+  if (number < min) {
+    min = number;
+  }
+});
+console.log(max, min); // 45 3
+```
+
+코드가 길고 가독성 또한 떨어진다. 이보다는 `Math.max/Math.min` 메서드에 `apply` 를 적용하면 훨씬 간단해진다.
+
+**3-23** call/apply 메서드의 활용 3-2) 여러 인수를 받는 메서드(Math.max/Math.min)에 apply 적용
+
+```javascript
+var numbers = [10, 20, 3, 16, 45];
+var max = Math.max.apply(null, numbers);
+var min = Math.min.apply(null, numbers);
+console.log(max, min); // 45 3
+```
+
+ES6에서는 펼치기 연산자(spread operator)를 사용하면 훨씬 간편하게 작성할 수 있다.
+
+**3-24** call/apply 메서드의 활용 3-3) ES6의 펼치기 연산자 활용
+
+```javascript
+const numbers = [10, 20, 3, 16, 45];
+const max = Math.max(...numbers);
+const min = Math.min(...numbers);
+console.log(max, min); // 45 3
+```
+
+`call/apply` 메서드는 명시적으로 별도의 `this` 를 바인딩하면서 함수 또는 메서드를 실행하는 훌륭한 방법이지만 오히려 이로 인해 `this` 를 예측하기 어렵게 만들어 코드 해석을 방해한다는 단점이 있다. 하지만 ES5 이하의 환경에서는 마땅한 대안이 없기때문에 실무에서 광범위하게 사용되고 있다고 한다.
