@@ -78,7 +78,7 @@ console.log(outer2()); // 3
 
 정리하자면 **어떤 함수의 lexicalEnvironment가 이를 '참조할' 예정인 다른 실행 컨텍스트가 있는 한 실행 종료 이후에도 GC되지 않는다는 것이다.**
 
-클로저는 어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상이라고 말했다. 예제 5-1과 5-2에서는 일반적인 함수의 경우와 마찬가지로 `outer` 의 `LexicalEnvironment` 에 속하는 변수가 모두 가비지 컬렉팅 대상에 포함된 반면, 예제 5-2의 경우 변수 `a` 가 대상에서 제외됐다. 이처럼 함수의 실행 컨텍스트가 종료된 후에도 `LexicalEnvironment` 가 가비지 컬렉터의 수집 대상에서 제외되는 경우는 5-3과 같이 지역 변수를 참조하는 내부함수가 외부로 전달된 경우가 유일하다. 그러니까 "어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상" 이란 "외부 함수의 `LexicalEnvironment` 가 가비지 컬렉팅되지 않는 현상"을 말하는 것이다.
+클로저는 어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상이라고 말했다. 예제 5-1과 5-2에서는 일반적인 함수의 경우와 마찬가지로 `outer` 의 `LexicalEnvironment` 에 속하는 변수가 모두 가비지 컬렉팅 대상에 포함된 반면, 예제 5-3의 경우 변수 `a` 가 대상에서 제외됐다. **이처럼 함수의 실행 컨텍스트가 종료된 후에도 `LexicalEnvironment` 가 가비지 컬렉터의 수집 대상에서 제외되는 경우는 5-3과 같이 지역 변수를 참조하는 내부함수가 외부로 전달된 경우가 유일하다.** 그러니까 "어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상" 이란 "외부 함수의 `LexicalEnvironment` 가 가비지 컬렉팅되지 않는 현상"을 말하는 것이다.
 
 이를 바탕으로 위에서 정의했던 클로저의 정의를 고쳐보면 다음과 같다.
 
@@ -191,3 +191,98 @@ outer = null; // outer 식별자의 inner 함수 참조를 끊음
 })();
 ```
 
+### 3. 클로저의 활용 사례
+
+#### 5-3-1 콜백 함수 내부에서 외부 데이터를 사용하고자 할 때
+
+다음은 대표적인 콜백 함수 중 하나인 이벤트 리스너에 관한 예시다. 클로저의 '외부 데이터'에 주목하면서 흐름을 따라가 보자.
+
+**5-6** 콜백 함수와 클로저(1)
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul'); // (공통 코드)
+
+fruits.forEach(function(fruit) {
+  // (A)
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', function() {
+    // (B)
+    alert('your choice is ' + fruit);
+  });
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+위 예제에서는 `fruits` 변수를 순회하면 `li` 를 생성하고, 각 `li` 를 클릭하면 해당 리스너에 기억된 콜백 함수를 실행하게 했다. 4번째 줄의 `forEach` 메서드에 넘겨준 익명의 콜백 함수(A)는 그 내부에서 외부 변수를 사용하고 있지 않으므로 클로저가 없지만, 7번째 줄의 `addEventListener` 에 넘겨준 콜백 함수(B)에는 `fruits` 라는 외부 변수를 참조하고 있으므로 클로저가 있다. (A)는 `fruits` 의 개수만큼 실행되며, 그때마다 새로운 실행 컨텍스트가 활성화될 것이다. A의 실행 종료 여부와 무관하게 클릭 이벤트에 의해 각 컨텍스트의 (B)가 실행될 때는 (B)의 `outerEnvironmentReference` 가 (A)의 `LexicalEnvironment` 를 참조하게 될 것이다. 따라서 최소한 (B) 함수가 참조할 예정인 변수 `fruit` 에 대해서는 (A)가 종료된 이후에도 GC의 수집 대상에서 제외되어 계속 참조가 가능할 것이다.
+
+그런데 (B) 함수의 쓰임새가 콜백 함수에 국한되지 않는 경우라면 반복을 줄이기 위해 (B)를 외부로 분리하는 편이 나을 수 있을 것이다. 즉 `fruit` 을 인자로 받아 출력하는 형태로 바꾸는 것이다.
+
+**5-7** 콜백 함수와 클로저(2)
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruit = function(fruit) {
+  alert('your choice is ' + fruit);
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruit);
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+alertFruit(fruits[1]);
+```
+
+위 예제에서는 공통 함수로 쓰고자 콜백 함수를 외부로 꺼내서 `alertFruit` 라는 변수에 담았다. 이제 `alertFruit` 를 직접 실행 할 수 있다. 또한 14번째 줄에서는 정상적으로 `banana` 에 대한 `alert` 이 실행된다. 그런데 각 `li` 를 클릭하면 클릭한 대상의 과일명이 아닌 `[object MouseEvent]` 라는 값이 출력되는데 이는 콜백 함수의 인자에 대한 제어권을 `addEventListener` 가 가진 상태이며, `addEventListener` 는 콜백 함수를 호출할 때 첫 번째 인자에 '이벤트 객체'를 주입하기 때문이다. 이 문제는 `bind` 메서드를 활용하면 손쉽게 해결할 수 있다.
+
+**5-8** 콜백 함수와 클로저(3)
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruit = function(fruit) {
+  alert('your choice is ' + fruit);
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruit.bind(null, fruit));
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+다만 이렇게 하면 이벤트 객체가 인자로 넘어오는 순서가 바뀌는 점 및 함수 내부에서의 `this` 가 원래의 그것과 달라지는 점은 감안해야 한다 (`bind` 메서드의 첫 번째 인자가 바로 새로 바인딩할 `this` 인데 이 값을 생략할 수 없기 때문에 일반적으로 원래의 `this` 를 유지하도록 할 수 없는 경우가 많다. 또한 예제에서는 두 번째 인자에 이벤트 객체가 넘어올 것이다).
+
+이런 변경사항이 발생하지 않게끔 하면서 이슈를 해결하기 위해서는 `bind` 메서드가 아닌 다른 방식으로 풀어내야만하는데 고차함수를 활용하는 것으로 해결할 수 있다.
+
+**5-9** 콜백 함수와 클로저(4)
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruitBuilder = function(fruit) {
+  return function() {
+    alert('your choice is ' + fruit);
+  };
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruitBuilder(fruit));
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+4번째 줄에서 `alertFruit` 함수 대신 `alertFruitBuilder` 라는 이름의 함수를 작성해줬다. 이 함수 내부에서는 다시 익명함수를 반환하는데, 이 익명함수가 바로 기존의 `alertFruit` 함수다. 12번째 줄에서는 `alertFruitBuilder` 함수를 실행하면서 `fruit` 값을 인자로 전달했다. 그러면 이 함수의 실행 결과가 다시 함수가 되며, 이렇게 반환된 함수를 리스너에 콜백 함수로써 전달한 것이다. 이후 언젠가 클릭 이벤트가 발생하면 비로소 이 함수의 실행 컨텍스트가 열리면서 `alertFruitBuilder` 의 인자로 넘어온 `fruilt` 를 `outerEnvironmentReference` 에 의해 참조할 수 있을 것이다. 즉 `alertFruitBuilder` 의 실행 결과로 반환된 함수에는 클로저가 존재한다.
+
+정리하면 예제 5-6은 콜백 함수를 내부함수로 선언해서 외부변수를 직접 참조하는 방법으로, 클로저를 사용한 방법이었다. 예제 5-8은 `bind` 를 활용했는데, `bind` 메서드로 값을 직접 넘겨준 덕분에 클로저는 발생하지 않게 된 반면 여러 가지 제약사항이 따르게 됐다. 예제 5-9는 콜백 함수를 고차함수로 바꿔서 클로저를 적극적으로 활용한 방안이었다. 세 가지 방법 모두 각기 다른 장단점이 존재하는 방법들이기 때문에 어떤 방식을 도입하는 것이 좋을지는 고민을 해봐야 할 것이다.
