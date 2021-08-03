@@ -130,3 +130,64 @@ console.log(outer2()); // 3
 
 (1) 은 별도의 외부객체인 `window` 의 메서드(`setTimeout` 또는 `setInterval` )에 전달할 콜백 함수 내부에서 지역변수를 참조한다. (2)는 별도의 외부객체인 DOM의 메서드(`addEventListener`) 에 등록할 `handler` 함수 내부에서 지역변수를 참조한다. 두 상황 모두 지역변수를 참조하는 내부함수를 외부에 전달했기 때문에 클로저다.
 
+### 2. 클로저와 메모리 관리
+
+클로저는 객체지향과 함수형 모두를 아우르는 매우 중요한 개념이다. 메모리 누수의 위험을 이유로 클로저 사용을 조심해야 한다거나 심지어 지양해야 한다고 주장하는 사람들도 있지만 메모리 소모는 클로저의 본질적인 특성일 뿐이다. 오히려 이러한 특성을 정확히 이해하고 잘 활용할도록 노력해야 한다. '메모리 누수'라는 표현은 개발자의 의도와 달리 어떤 값의 참조 카운트가 0이 되지 않아 GC의 수거 대상이 되지 않게 설계한 경우는 '누수'라고 할 수 없을 것이다.
+
+과거에는 의도치 않게 누수가 발생하는 여러 가지 상황들(순환 참조, 익스플로러의 이벤트 핸들러 등)이 있었지만 그중 대부분은 최근의 자바스크립트 엔진에서는 발생하지 않거나 거의 발견하기 힘들어졌으므로 이제는 의도대로 설계한 '메모리 소모'에 대한 관리법만 잘 파악해서 적용하는 것으로 충분하다.
+
+관리 방법은 정말 간단하다. 클로저는 어떤 필요에 의해 의도적으로 함수의 지역변수를 메모리를 소모하도록 함으로써 발생한다. 그렇다면 그 필요성이 사라진 시점에는 더는 메모리를 소모하지 않게 해주면 된다. 참조 카운트를 0으로 만들면 언젠가 GC가 수거해갈 것이고, 이때 소모됐던 메모리가 회수될 것이다. 
+
+그렇다면 참조 카운트를 0으로 만드는 방법은 무엇일까? 이는 식별자에 참조형이 아닌 기본형 데이터(보통 `null` 이나 `undefined`)를 할당하면 된다. 다음은 예제 5-3과 5-4에 메모리 해제 코드를 추가한 예제다.
+
+**5-5** 클로저의 메모리 관리
+
+```javascript
+// (1) return에 의한 클로저의 메모리 해제
+var outer = (function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner;
+})();
+console.log(outer());
+console.log(outer());
+outer = null; // outer 식별자의 inner 함수 참조를 끊음
+```
+
+```javascript
+// (2) setInterval에 의한 클로저의 메모리 해제
+(function() {
+  var a = 0;
+  var intervalId = null;
+  var inner = function() {
+    if (++a >= 10) {
+      clearInterval(intervalId);
+      inner = null; // inner 식별자의 함수 참조를 끊음
+    }
+    console.log(a);
+  };
+  intervalId = setInterval(inner, 1000);
+})();
+```
+
+```javascript
+// (3) eventListener에 의한 클로저의 메모리 해제
+(function() {
+  var count = 0;
+  var button = document.createElement('button');
+  button.innerText = 'click';
+
+  var clickHandler = function() {
+    console.log(++count, 'times clicked');
+    if (count >= 10) {
+      button.removeEventListener('click', clickHandler);
+      clickHandler = null; // clickHandler 식별자의 함수 참조를 끊음
+    }
+  };
+  button.addEventListener('click', clickHandler);
+  document.body.appendChild(button);
+})();
+```
+
