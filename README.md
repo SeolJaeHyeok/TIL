@@ -1,8 +1,10 @@
-# Today I Learn - 오늘 공부한 것들 
+# Today I Learn - 
 
-## 2021.03.02 ~
+### 강의, 책 또는 구글링을 통하여 얻은 내용을 정리하는 공간
 
-#### Art of React(리액트를 다루는 기술) - 완료
+# 2021.03.02 ~
+
+#### Art of React(리액트를 다루는 기술)
 
 - ''리액트를 다루는 기술''을 보면서 배운 내용들의 정리와 실습 프로젝트들을 모아둔 디렉터리
   - [Blog](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/blog) - Final Project - Blog with CRUD
@@ -41,8 +43,8 @@
 
 #### Python
 
-- Python을 공부하며 정리한 내용에 대한 디렉터리
-  - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 기초 핵심과정
+- 가상환경을 설치해서 Python을 공부하며 정리한 내용에 대한 디렉터리
+  - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 기초
 
 #### HyeokFlix
 
