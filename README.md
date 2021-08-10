@@ -39,6 +39,11 @@
 
 
 
+#### Python
+
+- Python을 공부하며 정리한 내용에 대한 디렉터리
+  - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 기초 핵심과정
+
 #### HyeokFlix
 
 - 현재 작업 중인 프로젝트 -> [Click](https://github.com/SeolJaeHyeok/Hyeokflix)
