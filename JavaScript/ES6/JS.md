@@ -212,7 +212,7 @@ const fn = (something, args) => console.log(...args);
 
 # Array Method - [MDN](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array)
 
-공부하면서 계속 추가할 예정
+이번 MD파일 정리 전 Notion으로 정리했었던 내용 - [Click](https://www.notion.so/07dfed016e914c3a8612fc76dd1542f0?v=7beb7d1004124032ab21d91f60308a21)
 
 ## 1. Array.map
 
