@@ -4,10 +4,11 @@
 
 # CSV : MIME - text/csv
 
+import pandas as pd
 import csv
 
 # 예제1
-with open(r'./resource/sample1.csv', 'r', encoding='cp949') as f:
+with open('./resource/sample1.csv', 'r', encoding='cp949') as f:
     reader = csv.reader(f)
     # next(reader) Header 스킵
     # 확인
@@ -74,9 +75,9 @@ with open('./resource/sample3.csv', 'w', encoding='cp949', newline='') as f:
 
 # openpyxl, xlsxwriter, xlrd, xlwt, xlutils 등 있으나 pandas를 주로 사용(openpyxl, xlrd) 포함
 
-import pandas as pd
 
-xlsx = pd.read_excel('./resource/sample.xlsx') # sheetname='시트명' 또는 숫자, header=3, skiprow=1 실습
+# sheetname='시트명' 또는 숫자, header=3, skiprow=1 실습
+xlsx = pd.read_excel('./resource/sample.xlsx')
 
 # 상위 데이터 확인
 print(xlsx.head())
@@ -87,7 +88,7 @@ print(xlsx.tail())
 print()
 
 # 데이터 구조
-print(xlsx.shape) # 행, 열
+print(xlsx.shape)  # 행, 열
 
 
 # 엑셀 or CSV 다시 쓰기
