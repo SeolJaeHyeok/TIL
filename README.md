@@ -44,7 +44,7 @@
 
 #### [Python](https://github.com/SeolJaeHyeok/TIL/tree/master/Python)
 
-- 가상환경을 설치해서 Python을 공부하며 정리한 내용에 대한 디렉터리
+- Python을 공부하며 사용한 코드들 정리 
   - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 핵심 개념 정리
 
 #### MyBlog Project
