@@ -1,3 +1,4 @@
-./bin
-./include
-./lib/python3.8/site-packages
+lib/python3.8/site-packages/
+include/site/python3.8/
+bin/
+
