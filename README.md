@@ -27,6 +27,12 @@
 
 
 
+#### [DataStructure](https://github.com/SeolJaeHyeok/TIL/tree/master/DataStructure)
+
+- Python으로 자료구조 정리
+
+
+
 #### [Hooks](https://github.com/SeolJaeHyeok/TIL/tree/master/Hooks)
 
 - Hook을 공부하면서  만든 프로젝트 및 내용 정리 디렉터리
