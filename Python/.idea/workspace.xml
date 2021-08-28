@@ -3,7 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="b05bb5fb-b886-419f-b8ea-fe3535406a2e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_basic/basic/section06.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_basic/basic/section06.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_basic/advanced/chapter05_01.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_basic/advanced/chapter05_01.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_basic/basic/section12-1.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_basic/basic/section12-1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_basic/basic/section12-2.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_basic/basic/section12-2.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

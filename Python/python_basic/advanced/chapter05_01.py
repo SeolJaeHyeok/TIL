@@ -69,12 +69,14 @@ print()
 
 # print(id(tl1[2]))
 tl1[1] += [110, 120]
-tl1[2] += (110, 120)
+tl1[2] += (110, 120)  # 튜플 재 할당하는 경우(객체 새로 생성) - (tl1 안의)튜플은 불변이므로 내부적으로 새로 생성됐으므로 새로운 아이디값 할당
+# 그렇기 때문에 리스트 안에 튜플을 사용하는 것은 안전하지 않다.
 
 print('EX4-8 -', tl1)
-print('EX4-9 -', tl2) # 튜플 재 할당(객체 새로 생성)
+print('EX4-9 -', tl2)
 print('EX4-10 -', tl3)
 # print(id(tl1[2]))
+
 
 print()
 print()
@@ -98,9 +100,10 @@ class Basket:
 
 import copy
 
+# 경우에 따라 맞는 복사를 진행해야한다.
 basket1 = Basket(['Apple', 'Bag', 'TV', 'Snack', 'Water'])
-basket2 = copy.copy(basket1)
-basket3 = copy.deepcopy(basket1)
+basket2 = copy.copy(basket1)  # 일반 copy로 복사를 하면 객체는 서로 다른 주소를 가지고 있지만 내부에 존재하는 인스턴스 변수는 같은 주소를 바라본다. 문제가 발생할 수 있음
+basket3 = copy.deepcopy(basket1)  # deepcopy로 복사를 하게 되면 객체 안에 존재하는 인스턴스 변수에 할당된 자료의 id(참조 레퍼런스 주소)까지도 새롭게 복사를 한다.
 
 print('EX5-1 -', id(basket1), id(basket2), id(basket3))
 print('EX5-2 -', id(basket1._products), id(basket2._products), id(basket3._products))
@@ -132,12 +135,12 @@ print()
 a = [10, 100]
 b = [5, 10]
 
-print('EX6-2 -', mul(a, b), a, b) # 가변형 a -> 원본 데이터 변경
+print('EX6-2 -', mul(a, b), a, b) # 가변형 data type(list) a -> 원본 데이터 변경, 주소를 넘김
 
 c = (10, 100)
 d = (5, 10)
 
-print('EX6-2 -', mul(c, d), c, d) # 불변형 c -> 원본 데이터 변경 안됨
+print('EX6-2 -', mul(c, d), c, d) # 불변형 data type(tuple) c -> 원본 데이터 변경 안됨
 
 
 # 파이썬 불변형 예외

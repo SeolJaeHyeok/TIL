@@ -33,6 +33,7 @@ c.execute(
 
 # 데이터 삽입
 c.execute("INSERT INTO users VALUES (1 ,'Kim','Kim@naver.com', '010-0000-0000', 'Kim.com', ?)", (nowDatetime,))
+# 정석대로 하려면 테이블명을 먼저 적어주고 데이터를 추가하는 것이 좋다.
 c.execute("INSERT INTO users(id, username, email, phone, website, regdate) VALUES (?, ?, ?, ?, ?, ?)",
           (2, 'Park', 'Park@naver.com', '010-1111-1111', 'Park.com', nowDatetime))
 
@@ -42,10 +43,14 @@ userList = (
     (4, 'Cho', 'Cho@naver.com', '010-3333-3333', 'Cho.com', nowDatetime),
     (5, 'Yoo', 'Yoo@naver.com', '010-4444-4444', 'Yoo.com', nowDatetime)
 )
+# 한 번에 다량의 데이터를 삽일할 때는 executemany 사용
 c.executemany("INSERT INTO users(id, username, email, phone, website, regdate) VALUES (?, ?, ?, ?, ?, ?)", userList)
 
 
 # 테이블 데이터 삭제
+
+# conn.execute("DELETE from users") # 테이블 데이터 전체 삭제
+# 몇 개의 데이터를 지웠는지 확인
 # print("users db deleted : ", conn.execute("delete from users").rowcount, "rows")
 
 # 커밋 : isolation_level=None 일 경우 자동 반영(Auto Commit)
