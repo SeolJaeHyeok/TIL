@@ -87,9 +87,9 @@ print(type(dic), dic, dic.get('ret3'), dic.items(), dic.keys(), dic.values())
 # 예제4 
 # *args, **kwargs 이해
 
-# *args
+# *args = 가변적으로 인자를 받을 수 있다, *가 1개일 때는 Tuple로 받고 2개일 때는 Dictionary로 받음
 def args_func(*args):  # 매개변수명 자유롭게 변경 가능
-    for i, v in enumerate(args):
+    for i, v in enumerate(args):  # enumerate = index를 부여할 수 있음
         print('{}'.format(i), v, end=' ')
 
 
@@ -100,7 +100,7 @@ args_func('Kim', 'Park', 'Lee')
 print()
 
 
-# kwargs
+# kwargs = keyword arguments, *가 1개일 때는 Tuple로 받고 2개일 때는 Dictionary로 받음
 def kwargs_func(**kwargs):  # 매개변수명 자유롭게 변경 가능
     for v in kwargs.keys():
         print('{}'.format(v), kwargs[v], end=' ')
