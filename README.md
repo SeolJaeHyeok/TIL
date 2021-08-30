@@ -23,13 +23,14 @@
 
 #### [Algorithm](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm) - 2021.06.18~
 
-- Baekjoon - 단계별 풀이 진행 중
+- Baekjoon - 단계별 풀이
+- withPython - "이것이 취업을 위한 코딩테스트다 with 파이썬" 학습 디렉터리
 
 
 
 #### [DataStructure](https://github.com/SeolJaeHyeok/TIL/tree/master/DataStructure)
 
-- Python으로 자료구조 정리
+- 자료구조 with Python
 
 
 
@@ -43,14 +44,14 @@
 #### [JavaScript](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript)
 
 - JS를 공부하면서 헷갈리거나 중요한 내용들을 정리해놓는 디렉터리
-  - [Core](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Core) - Core JavaScript(정재남)를 보며 내용 정리 
+  - [Core](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Core) - "Core JavaScript" 학습 내용 정리 
   - [ES6](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/ES6) - 프로젝트를 진행하거나 구글링, 강의를 통해 학습한 ES5+ 내용 중 헷갈리거나 중요한 개념 및 내용들을 정리
 
 
 
 #### [Python](https://github.com/SeolJaeHyeok/TIL/tree/master/Python)
 
-- Python을 공부하며 사용한 코드들 정리 
+- Python을 공부하며 사용한 코드 및 내용 정리 
   - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 핵심 개념 정리
 
 #### MyBlog Project
