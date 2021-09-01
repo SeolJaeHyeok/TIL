@@ -573,3 +573,124 @@ document.body.addEventListener(
 위에서 구현한 디바운스 함수는 출력 용도로 지정한 `eventName` 과 실행할 함수(func), 마지막으로 발생한 이벤트인지 여부를 판단하기 위한 대기시간(wait(ms))를 받는다. 내부에서는 `timeoutId` 변수를 생성하고, 클로저로 `EventListener` 에 의해 호출될 함수를 반환한다. 반환될 함수 내부에서는, 5번째 줄에서 `setTimeout` 을 사용하기 위해 `this` 를 별도의 변수에 담고, 6번째 줄에서는 무조건 대기큐를 초기화하게 했다. 마지막으로 7번째 줄에서 `setTimeout` 으로 `wait` 시간만큼 지연시킨 다음, 원래의 `func` 를 호출하는 형태다.
 
 이제 최초 `event` 가 발생하면 7번째 줄에 의해 `timeout` 의 대기열에 ' `wait` 시간 뒤에 `func` 를 실행할 것'이라는 내용이 담긴다. 그런데 `wait` 시간이 경과하기 이전에 다시 동일한 `event` 가 발생하면 이번에는 6번째 줄에 의해 앞서 저장했던 대기열을 초기화 하고, 다시 7번째 줄에서 새로운 대기열을 등록한다. 결국 각 이벤트가 바로 이전 이벤트로부터 `wait` 시간 이내에 발생하는 한 마지막에 발생한 이벤트만이 초기화되지 않고 무사히 실행될 것이다. 참고로 예제 5-16의 디바운스 함수에서 클로저로 처리되는 변수에는 `eventName`, `func`, `wait`, `timeoutId` 가 있다.
+
+#### 5-3-4 커링 함수
+
+커링 함수(currying function)란 여러 개의 인자를 받는 함수를 하나의 인자만 받는 함수로 나눠서 순차적으로 호출될 수 있게 체인 형태로 구성한 것을 말한다. 앞서 살펴본 부분 적용 함수와 기본적인 맥락은 일치하지만 몇 가지 다른 점이 있다. 커링은 한 번에 하나의 인자만을 전달하는 것을 원칙으로 한다. 또한 **중간 과정상의 함수를 실행한 결과는 그다음 인자를 받기 위해 대기만 할 뿐으로, 마지막 인자가 전달되기 전까지는 원본 함수가 실행되지 않는다(부분 적용 함수는 여러 개의 인자를 전달할 수 있고, 실행 결과를 재실행할 때 원본 함수가 무조건 실행).**  
+
+**5-17** 커링 함수(1)
+
+```javascript
+var curry3 = function(func) {
+  return function(a) {
+    return function(b) {
+      return func(a, b);
+    };
+  };
+};
+
+var getMaxWith10 = curry3(Math.max)(10);
+console.log(getMaxWith10(8)); // 10
+console.log(getMaxWith10(25)); // 25
+
+var getMinWith10 = curry3(Math.min)(10);
+console.log(getMinWith10(8)); // 8
+console.log(getMinWith10(25)); // 10
+```
+
+위 예제는 커링 함수를 작성한 것이다. 부분 적용 함수와 달리 커링 함수는 필요한 상황에 직접 만들어 쓰기 용이하다. 필요한 인자 개수만큼 함수를 만들어 계속 리턴해주다가 마지막에 조합해서 리턴해주면 되기 때문이다. 다만 인자가 많아질수록 가독성이 떨어진다는 단점이 있다.
+
+**5-18** 커링 함수(2)
+
+```javascript
+var curry5 = function(func) {
+  return function(a) {
+    return function(b) {
+      return function(c) {
+        return function(d) {
+          return function(e) {
+            return func(a, b, c, d, e);
+          };
+        };
+      };
+    };
+  };
+};
+var getMax = curry5(Math.max);
+console.log(getMax(1)(2)(3)(4)(5)); // 5
+```
+
+5개만 받아서 처리했음에도 이를 표현하기 위해 13줄이나 작성했다. 물론 다행히도 ES^에서는 화살표 함수를 써서 같은 내용을 한 줄에 표기할 수 있다.
+
+```javascript
+var curry5 = func => a => b => c => d=> e => func(a,b,c,d,e);  
+```
+
+화살표 함수로 구현하면 커링 함수를 이해하기에 훨씬 수월하다. 화살표 함수의 순서에 따라 함수에 값을 차례로 넘겨주면 마지막에 `func` 가 될 거라는 흐름이 한눈에 파악된다. 각 단계에서 받은 인자들을 모두 마지막 단계에서 참조할 것이므로 GC되지 않고 메모리에 차곡차곡 쌓였다가, 마지막 호출로 실행 컨텍스트가 종료된 후에야 비로소 한꺼번에 GC의 수거 대상이 된다.
+
+이 커링 함수가 유용한 경우가 있다. 당장 필요한 정보만 받아서 전달하고 또 필요한 정보가 들어오면 전달하는 식으로 하면 결국 마지막 인자가 넘어갈 때까지 함수 실행을 미루는 셈이 된다. 이를 함수형 프로그래밍의 지연실행(lazy execution)이라고 칭한다. 원하는 시점까지 지연시켰다가 실행하는 것이 요긴한 상황이라면 커링을 쓰기에 적합할 것이다. 혹은 프로젝트 내에서 자주 쓰이는 함수의 매개변수가 항상 비슷하고 일부만 바뀌는 경우에도 적절한 후보가 될 것이다. 
+
+```javascript
+var getInformation = function(baseUul) { 	// 서버에 요청할 주소의 기본 URL
+	return function(path) {									// path 값
+		return function(id) {									// id 값
+			return fetch(baseUrl + path + '/' + id) // 실제 서버에 정보 요청
+    }
+  }
+};
+// ES6
+var getInformation = baseUrl => path => id => fetch(baseUrl + path + '/' + id);
+```
+
+HTML5의 `fetch` 함수는 `url` 을 받아 해당 `url` 에 HTTP 요청을 한다. 보통 RESP API를 이용할 경우 `baseUrl` 은 몇 개로 고정되지만 나머지 `path` 나 `id` 값은 매우 많을 수 있다. 이런 상황에서 서버에 정보를 요청할 필요가 있을 때마다 매번 `baseUrl` 부터 전부 기입해주기보다는 공통적인 요소를 먼저 기억시켜두고 특정한 값(id)만으로 서버 요청을 수행하는 함수를 만들어두는 편이 개발 효율성이나 가독성 측면에서 더 좋을 것이다.
+
+```javascript
+var imageUrl = 'http://imageAddress.com/';
+var productUrl = 'http://productAddress.com/';
+
+// 이미지 타입별 요청 함수 준비
+var getImage = getInformation(imageUrl);			// http://imageAddress.com/
+var getEmotion = getImage('emoticon');				// http://imageAddress.com/emoticon
+var getIcon = getImage('icon');								// http://imageAddress.com/icon
+
+var getProduct = getInformation(productUrl); 	// http://procutAddress.com/
+var getFruit = getProduct("fruit")						// http://procutAddress.com/fruit
+var getVegetable = getProduct('vegetable');		// http://procutAddress.com/vegetable
+
+// 실제 요청
+var emoticon1 = getEmotion(100);							// http://imageAddress.com/emoticon/100
+var emoticon2 = getEmotion(120);							// http://imageAddress.com/emoticon/120
+var icon1 = getIcon(205);											// http://imageAddress.com/icon/205
+var icon2 = getIcon(245);
+var icon3 = getIcon(221);
+var icon4 = getIcon(223);
+var fruit1 = getFruit(300);
+var fruit2 = getFruit(400);
+var vegetable1 = getVegetable(456);
+var vegetable2 = getVegetable(556);
+```
+
+이런 이유로 최근 여러 프레임워크나 라이브러리 등에서 커링을 상당히 광범위하게 사용하고 있다. Flux 아키텍처의 구현체 중 하나인 Redux의 미들웨어를 예로 들면 다음과 같다.
+
+```javascript
+const Logger = store => next => action => {
+  console.log("dispatching", action);
+  console.log("next State", store.getState());
+  return next(action);
+}
+
+const thunk = store => next => action => {
+  return typeof actino === 'function' ? action(dispatch, store.getState()) : next(action);
+};
+```
+
+위 두 미들웨어는 공통적으로 `store`, `next`, `action` 순서로 인자를 바든ㄴ다. 이 중 `store`는 프로젝트 내에서 한 번 생성된 이후로는 바뀌지 않는 속성이고 `dispatch` 의 의미를 가지는 `next` 역시 마찬가지지만, `action` 의 경우 매번 달라진다. 그러니까 `store` 와 `next` 값이 결정되면 Redux 내부에서 `logger` 또는 `thunk` 에 `store` , `next` 를 미리 넘겨서 반환된 함수를 저장시켜놓고, 이후에는 `action` 만 받아서 처리할 수 있게끔 한 것이다.
+
+## 4. 정리
+
+- 클로저란 어떤 함수에서 선언한 변수를 참조하는 내부함수를 외부로 전달할 경우 함수의 실행 컨텍스트가 종료된 후에도 해당 변수가 사라지지 않는 현상이다.
+- 내부함수를 외부로 전달하는 방법에는 함수를 `return` 하는 경우뿐 아니라 콜백으로 전달하는 경우도 포함된다.
+- 클로저는 그 본질이 메모리를 계속 차지하느 개념이므로 더는 사용하지 않게된 클로저에 대해서는 메모리를 차지하지 않도록 관리해줄 필요가 있다.
+
+
+
