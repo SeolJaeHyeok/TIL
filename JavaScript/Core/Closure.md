@@ -432,3 +432,144 @@ var car = createCar();
 >
 >    -> return한 변수들은 공배 멤버가 되고, 그렇지 않은 변수들은 비공개 멤버가 된다.
 
+#### 5-3-3 부분 적용 함수
+
+부분 적용 함수(partially applied function)란 n개의 인자를 받는 함수에 미리 m개의 인자만 넘겨 기억시켰다가, 나중에 (n-m)개의 인자를 넘기면 비로소 원래 함수의 실행 결과를 얻을 수 있게끔 하는 함수다. `this` 를 바인딩해야 하는 점을 제외하면 앞서 살펴본 `bind` 메서드의 실행결과가 바로 부분 적용 함수다.
+
+**5-13** `bind`  메서드를 활용한 부분 적용 함수
+
+```javascript
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = add.bind(null, 1, 2, 3, 4, 5);
+console.log(addPartial(6, 7, 8, 9, 10)); // 55
+```
+
+위 예제의 `addPartial` 함수는 인자 5개를 미리 적용하고, 추후 추가적으로 인자들을 전달하면 모든 인자를 모아 원래의 함수가 실행되는 부분 적용 함수다. `add` 함수는 `this` 를 사용하지 않으므로 `bind` 메서드만으로도 문제 없이 구현됐다. 그러나 `this` 의 값을 변경할 수 밖에 없기 떄문에 메서드에서는 사용할 수 없다. `this` 에 관여하지 않는 별도의 부분 적용 함수가 있다면 범용성 측면에서 더욱 좋을 것이다.
+
+**5-14** 부분 적용 함수 구현(1)
+
+```javascript
+var partial = function() {
+  var originalPartialArgs = arguments;
+  var func = originalPartialArgs[0];
+  if (typeof func !== 'function') {
+    throw new Error('첫 번째 인자가 함수가 아닙니다.');
+  }
+  return function() {
+    var partialArgs = Array.prototype.slice.call(originalPartialArgs, 1);
+    var restArgs = Array.prototype.slice.call(arguments);
+    return func.apply(this, partialArgs.concat(restArgs));
+  };
+};
+
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = partial(add, 1, 2, 3, 4, 5);
+console.log(addPartial(6, 7, 8, 9, 10)); // 55
+
+var dog = {
+  name: '강아지',
+  greet: partial(function(prefix, suffix) {
+    return prefix + this.name + suffix;
+  }, '왈왈, '),
+};
+dog.greet('입니다!'); // 왈왈, 강아지입니다.
+```
+
+위 예제에서 첫 번째 인자에는 원본 함수를, 두 번째 인자 이후부터는 미리 적용할 인자들을 전달하고, 반환할 함수(부분 적용 함수) 에서는 다시 나머지 인자들을 받아 이들을 모아(concat) 원본 함수를 호출(apply) 한다. 또한 실행 시점의 `this` 를 그대로 반영함으로써 `this` 에는 아무런 영향을 주지 않게 됐다.
+
+보통의 경우 부분 적용 함수는 이 정도로 충분하다 원하는 만큼의 인자를 미리 넘겨놓고, 나중에 추가할 인자를 전달해서 실행하는 목적에 정확하게 부합하기 때문이다. 다만 부분 적용 함수에 넘길 인자를 반드시 앞에서부터 차례로 전달할 수밖에 없다는 점이 아쉽다. 인자들을 원하는 위치에 미리 넣어놓고 나중에는 빈자리에 인자를 채워넣어 실행할 수 있다면 더 좋을 것 같다.
+
+**5-15** 부분 적용 함수 구현(1)
+
+```javascript
+Object.defineProperty(window, '_', {
+  value: 'EMPTY_SPACE',
+  writable: false,
+  configurable: false,
+  enumerable: false,
+});
+
+var partial2 = function() {
+  var originalPartialArgs = arguments;
+  var func = originalPartialArgs[0];
+  if (typeof func !== 'function') {
+    throw new Error('첫 번째 인자가 함수가 아닙니다.');
+  }
+  return function() {
+    var partialArgs = Array.prototype.slice.call(originalPartialArgs, 1);
+    var restArgs = Array.prototype.slice.call(arguments);
+    for (var i = 0; i < partialArgs.length; i++) {
+      if (partialArgs[i] === _) {
+        partialArgs[i] = restArgs.shift();
+      }
+    }
+    return func.apply(this, partialArgs.concat(restArgs));
+  };
+};
+
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = partial2(add, 1, 2, _, 4, 5, _, _, 8, 9);
+console.log(addPartial(3, 6, 7, 10)); // 55
+
+var dog = {
+  name: '강아지',
+  greet: partial2(function(prefix, suffix) {
+    return prefix + this.name + suffix;
+  }, '왈왈, '),
+};
+dog.greet(' 배고파요!'); // 왈왈, 강아지 배고파요!
+```
+
+이번에는 '비워놓음'을 표시하기 위해 미리 전역객체에 _라는 프로퍼티를 준비하면서 삭제 변경 등의 접근에 대한 방어 차원에서 여러 가지 프로퍼티 속성을 설정했다. 예제 5-14와의 실질적인 변화는 17번째부터 21번째까지에 있다. 처음에 넘겨준 인자들 중 _로 비워놓은 공간마다 나중에 넘어온 인자들이 차례대로 끼워넣도록 구현했다. 이렇게 구현하는 것은 부분 적용 함수를 만들 때 미리부터 실행할 함수의 모든 인자 개수를 맞춰 빈 공간을 확보하지 않아도 된다. 실행할 함수 내부 로직에만 문제가 없다면 최종 실행 시 인자 개수가 많든 적든 잘 실행될 것이다.
+
+예제 5-14, 5-15 의 부분 적용 함수들은 모두 클로저를 핵심 기법으로 사용했다. 미리 일부 인자를 넘겨두어 기억하게끔 하고 추후 필요한 시점에 기억했던 인자들까지 함께 실행하게 한다는 개념 자체가 클로저의 정의에 정확히 부합한다.
+
+실무에서 부분 함수를 사용하기에 적합한 예로 디바운스(debounce)가 있다. 디바운스는 짧은 시간 동안 동일한 이벤트가 많이 발생할 경우 이를 전부 처리하지 않고 처음 또는 마지막에 발생한 이벤트에 대해 한 번만 처리하는 것으로, 프런트엔드 성능 최적화에 큰 도움을 주는 기능 중 하나다. `scroll`, `wheel`, `mousemove`, `resize` 등에 적용하기 좋다. Lodash 등의 라이브러리에서는 디바운스를 꽤 복잡하게 구현해 놓았지만, 최소한의 기능(마지막에 발생한 이벤트만 처리해도 괜찮고, 어느 정도의 시간 지연이 크게 문제되지 않은 경우)에 대한 구현은 생각보다 간단하다.
+
+**5-16** 부분 적용 함수 - 디바운스
+
+```javascript
+var debounce = function(eventName, func, wait) {
+  var timeoutId = null;
+  return function(event) {
+    var self = this;
+    console.log(eventName, 'event 발생');
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(func.bind(self, event), wait);
+  };
+};
+
+var moveHandler = function(e) {
+  console.log('move event 처리');
+};
+var wheelHandler = function(e) {
+  console.log('wheel event 처리');
+};
+document.body.addEventListener('mousemove', debounce('move', moveHandler, 500));
+document.body.addEventListener(
+  'mousewheel',
+  debounce('wheel', wheelHandler, 700)
+);
+```
+
+위에서 구현한 디바운스 함수는 출력 용도로 지정한 `eventName` 과 실행할 함수(func), 마지막으로 발생한 이벤트인지 여부를 판단하기 위한 대기시간(wait(ms))를 받는다. 내부에서는 `timeoutId` 변수를 생성하고, 클로저로 `EventListener` 에 의해 호출될 함수를 반환한다. 반환될 함수 내부에서는, 5번째 줄에서 `setTimeout` 을 사용하기 위해 `this` 를 별도의 변수에 담고, 6번째 줄에서는 무조건 대기큐를 초기화하게 했다. 마지막으로 7번째 줄에서 `setTimeout` 으로 `wait` 시간만큼 지연시킨 다음, 원래의 `func` 를 호출하는 형태다.
+
+이제 최초 `event` 가 발생하면 7번째 줄에 의해 `timeout` 의 대기열에 ' `wait` 시간 뒤에 `func` 를 실행할 것'이라는 내용이 담긴다. 그런데 `wait` 시간이 경과하기 이전에 다시 동일한 `event` 가 발생하면 이번에는 6번째 줄에 의해 앞서 저장했던 대기열을 초기화 하고, 다시 7번째 줄에서 새로운 대기열을 등록한다. 결국 각 이벤트가 바로 이전 이벤트로부터 `wait` 시간 이내에 발생하는 한 마지막에 발생한 이벤트만이 초기화되지 않고 무사히 실행될 것이다. 참고로 예제 5-16의 디바운스 함수에서 클로저로 처리되는 변수에는 `eventName`, `func`, `wait`, `timeoutId` 가 있다.
