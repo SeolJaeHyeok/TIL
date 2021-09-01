@@ -286,3 +286,149 @@ document.body.appendChild($ul);
 4번째 줄에서 `alertFruit` 함수 대신 `alertFruitBuilder` 라는 이름의 함수를 작성해줬다. 이 함수 내부에서는 다시 익명함수를 반환하는데, 이 익명함수가 바로 기존의 `alertFruit` 함수다. 12번째 줄에서는 `alertFruitBuilder` 함수를 실행하면서 `fruit` 값을 인자로 전달했다. 그러면 이 함수의 실행 결과가 다시 함수가 되며, 이렇게 반환된 함수를 리스너에 콜백 함수로써 전달한 것이다. 이후 언젠가 클릭 이벤트가 발생하면 비로소 이 함수의 실행 컨텍스트가 열리면서 `alertFruitBuilder` 의 인자로 넘어온 `fruilt` 를 `outerEnvironmentReference` 에 의해 참조할 수 있을 것이다. 즉 `alertFruitBuilder` 의 실행 결과로 반환된 함수에는 클로저가 존재한다.
 
 정리하면 예제 5-6은 콜백 함수를 내부함수로 선언해서 외부변수를 직접 참조하는 방법으로, 클로저를 사용한 방법이었다. 예제 5-8은 `bind` 를 활용했는데, `bind` 메서드로 값을 직접 넘겨준 덕분에 클로저는 발생하지 않게 된 반면 여러 가지 제약사항이 따르게 됐다. 예제 5-9는 콜백 함수를 고차함수로 바꿔서 클로저를 적극적으로 활용한 방안이었다. 세 가지 방법 모두 각기 다른 장단점이 존재하는 방법들이기 때문에 어떤 방식을 도입하는 것이 좋을지는 고민을 해봐야 할 것이다.
+
+#### 5-3-2 접근 권한 제어(정보 은닉)
+
+정보 은닉(information hiding)은 어떤 모듀의 내부 로직에 대해 외부로의 노출을 최소화해서 모듈간의 결합도를 낮추고 유연성을 높이고자 하는 현대 프로그래밍 언어의 중요한 개념 중 하나다. 흔히 접근 권한에는 `public`, `private`, `protected` 의 세 종류가 있다. 각 단어는 의미 그대로, `public` 외부에서 접근 가능한 것이고, `private` 내부에서만 사용하며 외부에 노출되지 않는 것을 의미한다.
+
+자바스크립트는 기본적으로 변수 자체에 이런한 접근 권한을 직접 부여하도록 설계돼 있지 않다. 그렇다고 접근 권한 제어가 불가능한 것은 아니다. 클로저를 이용하면 함수 차원에서 `public` 한 값과 `private` 한 값을 구분하는 것이 가능하다. 
+
+```javascript
+var outer = function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner;
+};
+var outer2 = outer();
+console.log(outer2()); // 2
+console.log(outer2()); // 3
+```
+
+예제 5-3을 다시 보면 `outer` 함수를 종료할 때 `inner` 함수를 반환함으로써 `outer` 함수의 지역변수인 `a` 의 값을 외부에서도 읽을수 있게 됐다. 이처럼 클로저를 활용하면 외부 스코프에서 함수 내부의 변수들 중 선택적으로 일부의 변수에 대한 접근 권한을 부여할 수 있는데 이는   `return` 을 활용하면 된다.
+
+closure라는 영어 단어는 사전적으로 '닫혀있음, 폐쇄성, 완결성' 정도의 의미를 가진다. 이 폐쇄성에 주목하면 위 예제를 조금 다르게 받아들일 수 있다.  `outer` 함수는 외부(전역 스코프)로부터 철저하게 격리된 공간이다. 외부에서는 외부 공간에 노출돼 있는 `outer` 라는 변수를 통해 `outer` 함수를 실행할 수 있지만, `outer` 함수 내부에는 어떠한 개입도 할 수 없다. 외부에서는 오직 `outer` 함수가 `return` 한 정보에만 접근할 수 있는 것이다. 즉, `return` 값이 외부에 정보를 제공하는 유일한 수단인 것이다.
+
+그러니까 외부에 제공하고자 하는 정보들을 모아서 `return` 하고 내부에서만 사용할 정보들은 `return` 하지 않는 것으로 접근 권한 제어가 가능한 것이다. `return` 한 변수들은 공개 멤버(public member)가 되고, 그렇지 않은 변수들은 비공개 멤버(private member)가 되는 것이다.
+
+접근 권한 제어에 대해 알아보기 위해 간단한 게임을 만들어서 적용해보도록 하자.
+
+> - 각 턴마다 주사위를 굴려 나온 숫자(km)만큼 이동
+> - 차량별로 연료량(fuel)과 연비(power)는 무작위로 생성
+> - 남은 연료가 이동할 거리에 필요한 연료보다 부족하면 이동하지 못함
+> - 모든 유저가 이동할 수 없는 턴에 게임이 종료
+> - 게임 종료 시점에 가장 멀리 이동해 있는 사람이 승리
+
+위 규칙에 따라 간단한 자동차 객체를 만들어 준다.
+
+```javascript
+var car = {
+  fuel: Math.ceil(Math.random() * 10 + 10), // 연료(L)
+  power: Math.ceil(Math.random() * 3 + 2), // 연비(km/L)
+  moved: 0, // 총 이동거리
+  run: function() {
+    var km = Math.ceil(Math.random() * 6);
+    var wasteFuel = km / this.power;
+    if (this.fuel < wasteFuel) {
+      console.log('이동불가');
+      return;
+    }
+    this.fuel -= wasteFuel;
+    this.moved += km;
+    console.log(km + 'km 이동 (총 ' + this.moved + 'km)');
+  },
+};
+```
+
+`car` 변수에 직접 객체를 할당하였고 `fuel` 과 `power` 는 무작위로 생성하며,  `moved` 라는 프로퍼티에 총 이동거리를 부여했으며, `run` 메서드를 실행할 때마다 `car` 객체의 `fuel`, `moved` 값이 변하게 했다. 이런 `car` 객체를 사람 수만큼 생성해서 각자의 턴에 `run` 을 실행하면 게임을 즐길 수 있다.
+
+모두가 `run` 메서드만 호출한다는 가정하에는 이 정도만으로도 충분하다. 그러나 무작위로 정해지는 연료, 연비, 이동거리 등을 마음대로 바꾼다면 일방적인 게임이 되고 말 것이다. 그렇다면 이렇게 값을 바꾸지 못하도록 방어할 필요가 있을 것이다. 바로 이때 클로저를 활용하면 된다. 즉, 객체가 아닌 함수로 만들고, 필요한 멤버만을 `return` 하는 것이다.
+
+**5-11** 클로저 변수로 보호한 자동차 객체(1)
+
+```javascript
+var createCar = function() {
+  var fuel = Math.ceil(Math.random() * 10 + 10); // 연료(L)
+  var power = Math.ceil(Math.random() * 3 + 2); // 연비(km / L)
+  var moved = 0; // 총 이동거리
+  return {
+    get moved() {
+      return moved;
+    },
+    run: function() {
+      var km = Math.ceil(Math.random() * 6);
+      var wasteFuel = km / power;
+      if (fuel < wasteFuel) {
+        console.log('이동불가');
+        return;
+      }
+      fuel -= wasteFuel;
+      moved += km;
+      console.log(km + 'km 이동 (총 ' + moved + 'km). 남은 연료: ' + fuel);
+    },
+  };
+};
+var car = createCar();
+```
+
+이번에는 `createCar` 라는 함수를 실행함으로써 객체를 생성하게 했다. `fuel`, `power` 변수는 비공개 멤버로 지정해서 외부에서의 접근을 제한했고, `moved` 변수는 getter만을 부여함으로써 읽기 전용 속성을 부여했다. 이제 외부에서는 오직 `run` 메서드를 실행하는 것과 현재의 `moved` 값을 확인하는 두 가지 동작만 할 수 있다. 그러므로 다음과 같이 값을 변경하고자 하는 시도는 대부분 실패하게 된다.
+
+```javascript
+car.run(); // 3km 이동(총 3km). 남은 연료: 17.4
+console.log(car.moved); // 3 
+console.log(car.fuel); // undefined
+console.log(car.power); // undefined
+
+car.fuel = 1000;
+console.log(car.fuel); // 1000
+car.run(); 							// 1km 이동(총 4km). 남은 연료: 17.2
+
+car.power = 100;
+console.log(car.power); // 100
+car.run(); 							// 4km 이동(총 8km). 남은 연료: 16.4
+
+car.moved = 1000;
+console.log(car.moved); // 8
+car.run(); 							// 2km 이동(총 10km). 남은 연료: 16
+```
+
+비록 `run` 메서드를 다른 내용으로 덮어씌우는 어뷰징은 여전히 가능한 상태이긴 하지만 앞서의 코드보다는 훨씬 안전한 코드가 됐다. 이런 어뷰징까지 막기 위해서는 객체를 `return` 하기 전에 미리 변경할 수 없게끔 조치를 취해야 한다.
+
+**5-12** 클로저 변수로 보호한 자동차 객체(2)
+
+```javascript
+var createCar = function() {
+  var fuel = Math.ceil(Math.random() * 10 + 10); // 연료(L)
+  var power = Math.ceil(Math.random() * 3 + 2); // 연비(km / L)
+  var moved = 0; // 총 이동거리
+  var publicMembers = {
+    get moved() {
+      return moved;
+    },
+    run: function() {
+      var km = Math.ceil(Math.random() * 6);
+      var wasteFuel = km / power;
+      if (fuel < wasteFuel) {
+        console.log('이동불가');
+        return;
+      }
+      fuel -= wasteFuel;
+      moved += km;
+      console.log(km + 'km 이동 (총 ' + moved + 'km). 남은 연료: ' + fuel);
+    },
+  };
+  Object.freeze(publicMembers); // 객체 동결
+  return publicMembers;
+};
+var car = createCar();
+```
+
+정리하면 클로저를 활용해 접근권한을 제어하는 방법은 다음과 같다.
+
+> 1. 함수에서 지역변수 및 내부함수 등을 생성한다.
+>
+> 2. 외부에 접근권한을 주고자 하는 대상들로 구성된 참조형 데이터(대상이 여럿일 때는 객체 또는 배열, 하나일 때는 함수)를 return 한다.
+>
+>    -> return한 변수들은 공배 멤버가 되고, 그렇지 않은 변수들은 비공개 멤버가 된다.
+
