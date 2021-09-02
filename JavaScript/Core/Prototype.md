@@ -249,3 +249,211 @@ Object.getPrototypeOf([instance]).construcor
 Object.getPrototypeOf([instance])
 ```
 
+### 2. 프로토타입 체인
+
+#### 6-2-1 메서드 오버라이드
+
+`prototype` 객체를 참조하는 `__proto__` 를 생략하면 인스턴스는 `prototype` 에 정의된 프로퍼티나 메서드를 마치 자신의 것처럼 사용할 수 있다고 했다. 그런데 만약 인스턴스가 동일한 이름의 프로퍼티 또는 메서드를 가지고 있는 상황이라면 어떨까?
+
+**6-6** 메서드 오버라이드
+
+```javascript
+var Person = function(name) {
+  this.name = name;
+};
+Person.prototype.getName = function() {
+  return this.name;
+};
+
+var iu = new Person('지금');
+iu.getName = function() {
+  return '바로 ' + this.name;
+};
+console.log(iu.getName()); // 바로 지금
+```
+
+`iu.__proto__.getName` 이 아닌 `iu` 객체에 있는 `getName` 메서드가 호출됐다. 당연한 결과인 것 같지만 의외로 혼란스러울 수 있는 상황이다. 여기서 일어난 현상을 메서드 오버라이드라고 한다. 메서드 위에 메서드를 덮어씌웠다는 표현이다. 원본을 제거하고 다른 대상으로 교체하는 것이 아니라 원본이 그대로 있는 상태에서 다른 대상을 그 위에 얹는 이미지를 떠올리면 된다.
+
+자바스크립트 엔진이 `getName` 이라는 메서드를 찾는 방식은 가장 가까운 대상인 자신의 프로퍼티를 검색하고 없으면 그다음으로 가까운 대상인 `__proto__` 를 검색하는 검색하는 순서로 진행된다. 그러니까 `__proto__` 에 있는 메서드는 자신에게 있는 메서드보다 검색순서에서 밀려 호출되지 않으 것이다. 앞 문단에서 '교체'가 아니라 '얹는' 이미지라고 말했는데, 이 둘을 구분할 필요가 있다. 교체하는 형태라면 원본에는 접근할 수 없는 형태가 되겠지만 얹는 형태라면 원본이 아래에 유지되고 있으니 원본에 접근할 수 있는 방법도 있을 것이다. 그렇다면 메서드 오버라이딩이 이뤄져 있는 상황에서 `prototype` 에 있는 메서드에 접근하려면 어떻게 하면 될까?
+
+```javascript
+console.log(iu.__proto__.getName()); // undefined
+```
+
+`iu.__proto__.getName()` 를 호출했더니 `undefined` 가 출력됐다. `this` 가 `prototype` 객체(iu.\__proto__)를 가리키는데 `prototype` 상에는 `name` 프로퍼티가 없기 떄문이다. 만약 `prototype` 에 `name` 프로퍼티가 있다면 그 값을 출력할 것이다.
+
+```javascript
+Person.prototype.name = '이지금';
+console.log(iu.__proto__.getName()); // 이지금
+```
+
+원하는 메서드(`prototype` 에 있는 `getName` )가 호출되고 있다는 게 확인됐다. 다만 `this` 가 `prototype` 을 바라보고 있는데 그걸 인스턴스를 바라보도록 바꿔주면 될 것이다. 이는 `call` 이나 `apply` 를 사용하면 해결이 된다.
+
+```javascript
+console.log(iu.__proto__.getName.call(iu)); // 지금
+```
+
+즉 일반적으로 메서드가 오버라이드된 경우에는 자신으로부터 가장 가까운 메서드에만 접근할 수 있지만, 그다음으로 가까운 `__proto__` 의 메서드도 우회적인 방법을 통해서이긴 하지만 접근이 불가능한 것은 아니다.
+
+#### 6-2-2 프로토타입 체인
+
+프로토타입 체인을 설명하기에 앞서 이번에는 객체의 내부 구조를 살펴보자
+
+```javascript
+console.dir({a: 1});
+```
+
+<img src="./images/6-7.png" height=600 />
+
+첫 줄을 통해 `Object` 의 인스턴스임을 알 수 있고, 프로퍼티 a의 값 1이 보이고, `__proto__ == [[Prototype]]` 내부에는 `hasOwnProperty`, `isPrototypeOf`, `toLocaleString`, `toString`, `valueOf` 등의 메서드가 보인다. `constructor` 는 생성자인 `Object` 를 가리키고 있다.
+
+이번에는 다시 한 번 배열의 구조를 살펴보자. `__proto__` 내부의 다양한 메서드들을 생략하고 나머지 부분 위주로 표기했다.
+
+<img src="./images/6-8.png" height=600 />
+
+배열 리터럴 `__proto__` 에는 `pop`, `push` 등의 익숙한 배열 메서드 및 `constructor` 가 있다는 것은 이미 알아봤었고, 추가로, 이 `__proto__` 안에는 또다시 `__proto__` 가 등장한다. 열어보니 이전 그림에서 살펴본 객체의 `__proto__` 와 동일한 내용으로 이뤄져 있는 것을 확인할 수 있다. 이는 바로 `prototype` 객체가 '객체'이기 때문이다. 기본적으로 모든 객체의 `__proto__` 에는 `Object.prototype` 이 연결된다. `prototype` 객체도 예외가 아니다. 이를 그림으로 표현하면 다음과 같다.
+
+<img src="./images/6-9.jpeg" height=600 />
+
+`__proto__` 생략이 가능하다고 했다. 그렇기 때문에 배열리 `Array.__proto__` 내부의 메서드를 마치 자신의 것처럼 실행할 수 있다. 마찬가지로 `Object.prototype` 내부의 메서드도 자신의 것처럼 실행할 수 있다. 생략 가능한 `__proto__` 를 한 번 더 따라가면 `Object.prototype` 을 참조할 수 있기 때문이다.
+
+**6-7** 배열에서 배열 메서드 및 객체 메서드 실행
+
+```javascript
+var arr = [1, 2];
+arr.push(3);
+arr.hasOwnProperty(2); // true
+```
+
+어떤 데이터의 `__proto__` 프로퍼티 내부에 다시 `__proto__` 프로퍼티가 연쇄적으로 이어진 것을 프로토타입 체인(prototype chain)이라 하고, 이 체인을 따라가며 검색하는 것을 프로토타입 체이닝(prototype chaining)이라 한다.
+
+프로토타입 체이닝은 6-2절에서 소개한 메서드 오버라이드와 동일한 맥락이다. 어떤 메서드를 호출하면 자바스크립트 엔진은 데이터 자신의 프로퍼티들을 검색해서 원하는 메서드가 있으면 그 메서드를 실행하고, 없으면 `__proto__` 를 검색해서 있으면 그 메서드를 실행하고, 없으면 다시 `__proto__` 를 검색해서 실행하는 식으로 진행한다.
+
+**6-8** 메서드 오버라이드와 프로토타입 체이닝
+
+```javascript
+var arr = [1, 2];
+Array.prototype.toString.call(arr); // 1,2
+Object.prototype.toString.call(arr); // [object Array]
+arr.toString(); // 1,2
+
+arr.toString = function() {
+  return this.join('_');
+};
+arr.toString(); // 1_2
+```
+
+`arr` 변수는 배열이므로 `arr.__proto__` 는 `Array.prototype` 을 참조하고, `Array.prototype` 은 객체이므로 `Array.prototype.__proto__` 는 `Object.prototype` 을 참조할 것이다. `toString` 이라는 이름을 가진 메서드는 `Array.prototype` 뿐만 아니라 `Object.prototype` 에도 있다. 이 둘 중 어떤 값이 출력되는지를 확인하기 위해 우선 2, 3 번째 줄에서 `Array`, `Object` 의 각 프로토타입에 있는 `toString` 메서드를 `arr` 에 적용했을 때의 출력값을 미리 확인해 봤다. 4번째 줄에서 `arr.toString` 을 실행했더니 결과가 `Array.prototype.toString` 을 적용한 것과 동일하다. 6번쨰 줄에서는 `arr` 에 직접 `toString` 메서드를 부여했다. 이제 9번째 줄에서는 `Array.prototype.toString` 이 아닌 `arr.toString` 이 바로 실행될 것이다.
+
+비단 배열만이 아니라, 자바스크립트 데이터는 모두 아래 그림처럼 동일한 형태의 프로토타입 체인 구조를 지닌다.
+
+<img src="./images/6-10.jpeg" height=600 />
+
+#### 6-2-3 객체 전용 메서드의 예외사항
+
+어떤 생성자 함수이든 `prototype` 은 반드시 객체이기 때문에 `Object.prototype` 이 언제나 프로토타입 체인의 최상단에 존재하게 된다. 따라서 객체에서만 사용할 메서드는 다른 여느 데이터 타입처럼 프로토타입 객체 안에 정의할 수가 없다. 객체에서만 사용할 메서드를 `Object.prototype` 내부에 정의한다면 다른 데이터 타입도 해당 메서드를 사용할 수 있게 되기 때문이다.
+
+**6-9** `Object.prototype` 에 추가한 메서드에서의 접근
+
+```javascript
+Object.prototype.getEntries = function() {
+  var res = [];
+  for (var prop in this) {
+    if (this.hasOwnProperty(prop)) {
+      res.push([prop, this[prop]]);
+    }
+  }
+  return res;
+};
+var data = [
+  ['object', { a: 1, b: 2, c: 3 }], // [["a",1], ["b", 2], ["c",3]]
+  ['number', 345], // []
+  ['string', 'abc'], // [["0","a"], ["1","b"], ["2","c"]]
+  ['boolean', false], // []
+  ['func', function() {}], // []
+  ['array', [1, 2, 3]], // [["0", 1], ["1", 2], ["2", 3]]
+];
+data.forEach(function(datum) {
+  console.log(datum[1].getEntries());
+});
+```
+
+위 예제의 1번째 줄에서는 객체에서만 사용할 의도로 `getEntries` 라는 메서드를 만들었다. 18번째 줄의 `forEach` 에 따라 11번째 줄부터 16번째 줄의 각 데이터마다 `getEntries` 를 실행해 보니, 모든 데이터가 오류 없이 결과를 반환하고 있다. 원래 의도대로라면 객체가 아닌 다른 데이터 타입에 대해서는 오류를 던지게끔 돼야 할 텐데, 어느 데이터 타입이건 거의 무조건 프로토타입 체이닝을 통해 `getEntries` 메서드에 접근할 수 있으니 그렇게 동작하지 않는 것이다.
+
+이 같은 이유로 객체만을 대상으로 동작하는 객체 전용 메서드들은 부들이 `Object.prototype` 이 아닌 `Object` 에 스태틱 메서드(static method)로 부여할 수 밖에 없었다. 또한 생성자 함수인 `Object` 와 인스턴스인 객체 리터럴 사이에는 `this` 를 통한 연결이 불가능하기 때문에 여느 전용 메서드처럼 '메서드명 앞의 대상이 곧 `this`' 가 되는 방식 대신 `this` 의 사용을 포기하고 대상 인스턴스를 인자로 직접 주입해야 하는 방식으로 구현돼 있다.
+
+만약 객체 전용 메서드에 대해서도 다른 데이터 타입과 마찬가지의 규칙을 적용할 수 있다면, 예를 들어 `Object.freeze(instance)` 의 경우 `instance.freeze()` 처럼 표현할 수 있었을 것이다. 그러니까 `instance.__proto__` (생성자 함수의 prototype)에 `freeze` 라는 메서드가 있었을 것이다. 또한 앞서 말한 `Object.getPrototypeOf(instance)` 의 경우에도 `instance.getPrototype()` 정도로 충분했을 것이다. 객체 한정 메서드들은 `Object.prototype` 이 아닌 `Object` 에 직접 부여할 수 밖에 없었던 이유를 다시 얘기하면, `Object.prototype` 이 여타의 참조형 데이터뿐 아니라 기본형 데이터조차 `__proto__` 에 반복 접근함으로써 도달할 수 있는 최상위 존재이기 때문이다.
+
+반대로 같은 이유에서 `Object.prototype` 에는 어떤 데이터에서도 활용할 수 있는 범용적인 메서드들만 있다. `toString`, `hasOwnProperty`, `valueOf`, `isPrototypeOf` 등은 모든 변수가 마치 자신의 메서드인 것처럼 호출할 수 있다.
+
+> ❗️
+>
+> 앞서 '프로토타입 체인상 가장 마지막에는 언제나 `Object.prototype` 이 있다'고 했는데, 예외적으로 `Object.create` 를 사용하면 `Object.prototype` 의 메서드에 접근할 수 없는 경우가 있다. `Object.create(null)` 은 `__proto__` 가 없는 객체를 생성한다.
+>
+> ```javascript
+> var _proto = Object.create(null);
+> _proto.getValue = function(key) {
+> 	return this[key];
+> }
+> var obj = Object.create(_proto);
+> obj.a = 1;
+> console.log(obj.getValue('a'));  // 1
+> console.dir(obj);
+> ```
+>
+> <img src="./images/6-11.png" />
+>
+> \_proto에는 \__proto\__ 프로퍼티가 없는 객체를 할당했다. 다시 obj는 앞서 만든 \_proto 를 \__proto__로 하는 객체를 할당했다. 이제 obj를 출력해보면,     \_proto\_ 에는 오직 getValue 메서드만 존재하며, \__proto\_ 및 constructor 프로퍼티는 보이지 않는다. 이 방식으로 만든 객체는 일반적인 데이터에서 반드시 존재하던 내장 메서드 및 프로퍼티들이 제거됨으로써 기본 기능에 제약이 생긴 대신 객체 자체의 무게가 가벼워짐으로써 성능상의 이점을 가진다.
+
+#### 6-2-4 다중 프로토타입 체인
+
+자바스크립트의 기본 내장 데이터 타입들은 모두 프로토타입 체인이 1단계(객체)이거나 2단계(나머지)로 끝나는 경우만 있었지만 사용자가 새롭게 만드는 경우에는 그 이상도 얼마든지 가능하다. 대각선의 `__proto__` 를 연결해나가기만 하면 무한대로 체인 관계를 이어나갈 수 있다. 이 방법으로부터 다른 언어의 클래스와 비슷하게 동작하는 구조를 만들 수도 있다.
+
+대각선의 `__proto__` 를 연결하는 방법은 `__proto__` 가 가리키는 대상, 즉 생성자 함수의 `prototype` 이 연결하고자 하는 상위 생성자 함수의 인스턴스를 바라보게끔 해주면 된다. 말로는 설명이 어려우니 예제를 통해 알아보자.
+
+```javascript
+var Grade = function() {
+  var args = Array.prototype.slice.call(arguments);
+  for (var i = 0; i < args.length; i++) {
+    this[i] = args[i];
+  }
+  this.length = args.length;
+};
+var g = new Grade(100, 80);
+```
+
+변수 `g` 는 `Grade` 의 인스턴스를 바라본다. `Grade` 의 인스턴스는 여러 개의 인자를 받아 각 순서대로 인덱싱해서 저장하고  `length` 프로퍼티가 존재하는 등으로 배열의 형태를 지니지만, 배열의 메서드를 사용할 수 는 없는 유사배열객체다. 일전에 유사배열객체에 배열 메서드를 적용하는 방법으로 `call/apply` 를 소개했지만, 이번에는 생성자 함수를 직접 만들었기에 인스턴스에서 배열 메서드를 직접 쓸 수 있게끔 해보자. 그러기 위해서는 `g.__proto__`, 즉 `Grade.prototype` 이 배열의 인스턴스를 바라보게 하면 된다.
+
+```javascript
+Grade.prototype = [];
+```
+
+이 명령에 의해 아래 그림과 같이 서로 별개로 분리돼 있던 데이터가 연결되어 프로토 타입 체인 형태를 띄게 된다.
+
+<img src="./images/6-12.jpeg" />
+
+​																													⬇️ 
+
+<img src="./images/6-13.png" />
+
+이제 `Grade` 의 인스턴스인 `g` 에서 직접 배열의 메서드를 사용할 수 있다.
+
+```javascript
+console.log(g); // Grage(2) [100, 80]
+g.pop();
+console.log(g); // Grade(1) [100]
+g.push(90);
+console.log(g); // Grade(2) [100,90]
+```
+
+`g` 인스턴스의 입장에서는 프로토타입 체인에 따라 `g` 객체 자신이 지니는 멤버, `Grade` 의 `prototype` 에 있는 멤버, `Array.prototype` 에 있는 멤버, 끝으로 `Object.prototype` 에 있는 멤버에까지 접근할 수 있게 됐다. 
+
+이번 절은 '두 단계 이상의 체인을 지니는 다중 프로토타입 체인'도 가능하다를 확인하는 것에 목적을 두었고 이렇게 하는 이유는 7장에서 살펴보도록 하자.
+
+### 3. 정리
+
+- 어떤 생성자 함수를 `new` 연산자와 함께 호출하면 `Constructor` 에서 정의된 내용을 바탕으로 새로운 인스턴스가 생성되는데, 이 인스턴스에는 `__proto__` 라는,  `Constructor` 의 `prototype` 프로퍼티를 참조하는 프로퍼티가 자동으로 부여된다. `__proto__` 는 생략 가능한 속성이라서, 인스턴스는 `Constructor.prototype` 의 메서드를 마치 자신의 메서드인 것처럼 호출할 수 있다.
+- `Constructor.prototype` 에는 `constructor` 라는 프로퍼티가 있는데, 이는 다시 생성자 함수 자신을 가리킨다. 이 프로퍼티는 인스턴스가 자신의 생성자 함수가 무엇인지 알고자 할 때 필요한 수단이다.
+- 직각삼각형의 대각선 방향, 즉 `__proto__` 방향을 계속 찾아가면 최종적으로는 `Object.prototype` 에 도달하게 된다. 이런 식으로 `__proto__` 안에 다시 `__proto__` 를 찾아가는 과정을 프로토타입 체이닝이라고 하며, 이 프로토타입 체이닝을 통해 각 프로토타입 메서드를 자신의 것처럼 호출할 수 있다. 이때 접근 방식은 자신으로부터 가장 가까운 대상부터 점차 먼 대상으로 나아가며, 원하는 값을 찾으면 검색을 중단한다.
+- `Object.prototype` 에 모든 데이터 타입에서 사용할 수 있는 범용적인 메서드만이 존재하며, 객체 전용 메서드는 여는 데이터 타입과 달리 `Object` 생성자 함수에 스태틱하게 담겨있다.
+- 프로토타입 체인은 반드시 2단계로만 이뤄지는 것이 아니라 무한대의 단계를 생성할 수 있다. 
