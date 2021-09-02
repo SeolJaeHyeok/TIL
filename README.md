@@ -23,8 +23,8 @@
 
 #### [Algorithm](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm) - 2021.06.18~
 
-- Baekjoon - 단계별 풀이
-- withPython - "이것이 취업을 위한 코딩테스트다 with 파이썬" 학습 디렉터리
+- [Baekjoon](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/Baekjoon) - 단계별 풀이
+- [withPython](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/withPython) - "이것이 취업을 위한 코딩테스트다 with 파이썬" 학습 디렉터리
 
 
 
