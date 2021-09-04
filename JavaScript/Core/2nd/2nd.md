@@ -385,3 +385,132 @@ console.log(user === user2); // false
 
 #### 얕은 복사와 깊은 복사
 
+얕은 복사(shallow copy)는 바로 아래 단계의 값만 복사하는 방법이고, 깊은 복사(deep copy)는 내부의 모든 값들을 하나하나 찾아서 전부 복사하는 방법이다. 위 예제에서 `copyObject` 함수는 얕은 복사만을 수행하는 함수였다. **이 말은 중첩된 객체에서 참조형 데이터가 저장된 프로퍼티를 복사할 때 그 주솟값만 복사한다는 의미다.** 그러면 해당 프로퍼티에 대해 원본과 사본이 모두 동일한 참조형 데이터의 주소를 가리키게 되고 사본을 바꾸면 원본이 바뀌고, 원본을 바꾸면 사본도 바뀌게 된다.
+
+```javascript
+var copyObject = function(target) {
+  var result = {};
+  for (var prop in target) {
+    result[prop] = target[prop];
+  }
+  return result;
+};
+
+var user = {
+  name: 'Jaenam',
+  urls: {
+    portfolio: 'http://github.com/abc',
+    blog: 'http://blog.com',
+    facebook: 'http://facebook.com/abc',
+  },
+};
+var user2 = copyObject(user);
+user2.name = 'Jung';
+
+console.log(user.name === user2.name); // false
+
+user.urls.portfolio = 'http://portfolio.com';
+console.log(user.urls.portfolio === user2.urls.portfolio); // true
+
+user2.urls.blog = '';
+console.log(user.urls.blog === user2.urls.blog); // true
+```
+
+위 예제에서 사본인 `user2` 의 `name` 프로퍼티를 바꿔도 `user` 의 `name` 프로퍼티는 바뀌지 않았다. 반면 14번째 줄과 17번째 줄에서는 원본과 사본 어느 쪽을 바꾸더라도 다른 한쪽의 값도 함께 바뀐 것을 확인할 수 있다. 즉 `user` 객체에 직접 속한 프로퍼티에 대해서는 복사해서 완전히 새로운 데이터가 만들어진 반면, 한 단계 더 들어간 `urls` 의 내부 프로퍼티들은 **기존의 데이터를 그대로 참조** 하는 것이다. 이런 현상을 방지하기 위해 `user.urls` 프로퍼티에 대해서도 불변객체로 만들 필요가 있다.
+
+```javascript
+# 중첩된 객체에 대한 깊은 복사
+var user2 = copyObject(user);
+user2.urls = copyObject(user.urls);
+
+user.urls.portfolio = 'http://portfolio.com';
+console.log(user.urls.portfolio === user2.urls.portfolio); // false
+
+user2.urls.blog = '';
+console.log(user.urls.blog === user2.urls.blog); // false
+```
+
+3번째 줄에서 `urls` 프로퍼티에 `copyObject` 함수를 실행한 결과를 새로 할당해줬다. 이제 `urls` 프로퍼티의 내부까지 복사해서 새로운 데이터가 만들어졌으므로 값이 서로 다르다는 결과를 얻을 수 있다.
+
+그러니까 어떤 객체를 복사할 때 객체 내부의 모든 값을 복사해서 완전히 새로운 데이터를 만들고자 할 때, 객체의 프로퍼티 중에서 그 값이 **기본형 데이터일 경우에는 그대로 복사** 하면 되지만 **참조형 데이터는 다시 그 내부의 프로퍼티들을 복사** 해야 한다. 이 과정을 참조형 데이터가 있을 때마다 재귀적으로 수행해야만 비로소 깊은 복사가 되는 것이다. 이런 개념을 바탕으로 `copyObject` 함수를 고치면 아래와 같다.
+
+```javascript
+# 객체의 깊은 복사를 수행하는 범용 함수
+var copyObjectDeep = function(target) {
+  var result = {};
+  if (typeof target === 'object' && target !== null) {
+    for (var prop in target) {
+      result[prop] = copyObjectDeep(target[prop]);
+    }
+  } else {
+    result = target;
+  }
+  return result;
+};
+```
+
+4번째 줄에서 `target` 이 객체인 경우에는 내부 프로퍼티들을 순회하며 `copyObjectDeep` 함수를 재귀적으로 호출하고, 객체가 아닌 경운에는 8번째 줄에서 `target` 을 그대로 지정하게끔 했다. 이 함수를 사용해 객체를 복사한 다음에는 원본과 사본이 서로 와전히 다른 객체를 참조하게 되어 어느 쪽의 프로퍼티를 변경하더라도 다른 쪽에 영향을 주지 않는다.
+
+```javascript
+# 결과 확인
+var copyObjectDeep = function(target) {
+  var result = {};
+  if (typeof target === 'object' && target !== null) {
+    for (var prop in target) {
+      result[prop] = copyObjectDeep(target[prop]);
+    }
+  } else {
+    result = target;
+  }
+  return result;
+};
+
+var obj = {
+  a: 1,
+  b: {
+    c: null,
+    d: [1, 2],
+  },
+};
+var obj2 = copyObjectDeep(obj);
+
+obj2.a = 3;
+obj2.b.c = 4;
+obj.b.d[1] = 3;
+
+console.log(obj); // { a: 1. b: { c: null, d: [1, 3] } }
+console.log(obj2); // { a: 3. b: { c: 4, d: { 0: 1, 1: 2 } } }
+```
+
+추가로 `hasOwnProperty` 메서드를 활용해 프로토타입 체이닝을 통해 상속된 프로퍼티들을 복사하지 않게끔 할 수도 있다. ES5의 getter/setter를 복사하는 방법은 ES6의 `Object.getOwnPropertyDescriptor` 또는 ES2017의 `Object.getOwnPropertyDescripotrs` 외에는 마땅한 방법이 없다.
+
+끝으로 간단하게 깊은 복사를 처리할 수 있는 방법이 또 하나 있다. 객체를 JSON 문법으로 표현된 문자열로 전환했다가 다신 JSON 객체로 바꾸는 것이다. 이 방법은 단순하면서도 강력하다. 다만 메서드(함수)나 숨겨진 프로퍼티인 `__proto__` 나 getter/setter 등과 같이 JSON으로 변경할 수 없는 프로퍼티들은 모두 무시한다. `httpRequest` 로 받은 데이터를 저장한 객체를 복사할 때 등 순수한 정보만 다룰 때 활용하기 좋은 방법이다.
+
+```javascript
+# JSON을 활용한 간단한 깊은 복사
+var copyObjectViaJSON = function(target) {
+  return JSON.parse(JSON.stringify(target));
+};
+var obj = {
+  a: 1,
+  b: {
+    c: null,
+    d: [1, 2],
+    func1: function() {
+      console.log(3);
+    },
+  },
+  func2: function() {
+    console.log(4);
+  },
+};
+var obj2 = copyObjectViaJSON(obj);
+
+obj2.a = 3;
+obj2.b.c = 4;
+obj.b.d[1] = 3;
+
+console.log(obj); // { a: 1. b: { c: null, d: [1, 3], func1: f() }, func2: f() }
+console.log(obj2); // { a: 3. b: { c: 4,    d: [1, 2] } }
+```
+
