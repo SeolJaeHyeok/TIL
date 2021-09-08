@@ -922,7 +922,7 @@ multiply = function(a, b) {
 
 `outerEnvironmentReference` 는 현재 호출된 함수가 선언될 당시의 `LexicalEnvironment` 를 참조한다. 여기서 '선언될 당시'라는 말에 주목해야 한다. '선언하다'라는 행위가 실제로 일어날 시점이란 콜 스택 상테서 어떤 실행 컨텍스트가 활성화된 상태일 때뿐이다. 어떤 함수를 선언(정의)하는 행위 자체도 하나의 코드에 지나지 않으며, 모든 코드는 실행 컨텍스트가 활성화 상태일 때 실행되기 때문이다.
 
-예를 들어, A 함수 내부에 B 함수를 선언하고 다시 B 함수 내부에 C 함수를 선언한 경우, 함수 C의 `outerEnvironmentReference` 는 함수 B의 `LexicalEnvironment` 를 참조한다. 함수 B의 `LexicalEnvironment` 에 있는 `outerEnvironmentReference` 는 다시 함수 B가 선언되던 때(A)의 `LexicalEnvironment` 를 참조할 것이다. 이처럼 `outerEnvironmentReference` 는 연결리스트 형태를 띈다. ㅏㅇ 머
+예를 들어, A 함수 내부에 B 함수를 선언하고 다시 B 함수 내부에 C 함수를 선언한 경우, 함수 C의 `outerEnvironmentReference` 는 함수 B의 `LexicalEnvironment` 를 참조한다. 함수 B의 `LexicalEnvironment` 에 있는 `outerEnvironmentReference` 는 다시 함수 B가 선언되던 때(A)의 `LexicalEnvironment` 를 참조할 것이다. 이처럼 `outerEnvironmentReference` 는 연결리스트 형태를 띈다. 
 
 '선언 시점의 `LexicalEnvironment` '를 계속 찾아 올라가면 마지막엔 전역 컨텍스트의 `LexicalEnvironment` 가 있을 것이다. 또한 각 `outerEnvironmentReference` 는 오직 자신이 선언된 시점의 `LexicalEnvironment` 만 참조하고 있으므로 가장 가까운 요소부터 차례대로만 접근할 수 있고 다른 순서로 접근하는 것은 불가능할 것이다. 이런 구조적 특성 덕분에 여러 스코프에서 동일한 식별자를 선언한 경우에는 **무조건 스코프 체인 상에서 가장 먼저 발견된 식별자에만 접근 가능** 하게 된다.
 
@@ -2114,4 +2114,122 @@ coffeeMaker();
 - 비동기 제어를 위해 콜백 함수를 사용하다 보면 콜백 지옥에 빠지기 쉽다. 최근 ECMASript 에는 `Promise`, `Generator`, `async/await` 등 콜백 지옥을 빠져나갈 수 있는 많은 방법들이 생겼다.
 
 ----
+
+
+
+# 5. 클로저
+
+#### 클로저의 의미 및 원리 이해
+
+클로저(Closure)는 함수형 프로그래밍 언어에서 등장하는 보편적인 특성이다. 자바스크립트 고유의 개념이 아니라 ECMAScript 명세에서도 클로저의 정의를 다루지 않고 있고, 다양한 문헌에서도 제각각 클로저를 다르게 정의 또는 설명하고 있다. 클로저를 한 문장으로 요약해서 설명하는 부분들을 소개하면 아래와 같다.
+
+> - 자신을 내포하는 함수의 컨텍스트에 접근할 수 있는 함수
+> - 함수가 특정 스코프에 접근할 수 있도록 의도적으로 그 스코프에서 정의하는 것
+> - 함수를 선언할때 만들어지는 유효범위가 사라진 후에도 호출할 수 있는 함수
+> - 이미 생명 주기상 끝난 외부 함수의 변수를 참조하는 함수
+> - 자유변수가 있는 함수와 자유변수를 알 수 있는 환경의 결합
+> - 로컬 변수를 참조하고 있는 함수 내의 함수
+> - 자신이 생성될 떄의 스코프에서 알 수 있었던 변수들 중 언젠가 자신이 실행될 때 사용할 변수들만을 기억하여 유지시키는 함수
+
+MDN에서는 클로저에 대해 "A closure is the combination of a function and the lexical environment within which that function was declared" 라고 소개한다. 직역하면 "클로저는 함수와 그 함수가 선언될 당시의 lexical Environment의 상호관계에 따른 현상" 정도로 설명하고 있다.
+
+'선언될 당시의 lexical environment'는 2장에서 소개한 실행 컨텍스트의 구성 요소 중 하나인 `outerEnvironmentReference` 에 의해 변수의 유효범위인 스코프가 결정되고 스코프 체인이 가능해진다고 했다. 어떤 컨텍스트 A에서 선언한 내부함수 B의 실행 컨텍스트가 활성화된 시점에는 B의 `outerEnvironmentReference` 가 참조하는 대상인 `LexicalEnvironment` 에도 접근이 가능할 것이다. A에서는 B에서 선언한 변수에 접근할 수 없지만 B에서는 A에서 선언한 변수에 접근 가능하다.
+
+여기서 'combination'의 의미를 파악할 수 있다. 내부함수 B가 A의 `LexicalEnvironment` 를 언제나 사용하는 것은 아니다. 내부함수에서 외부 변수를 참조하지 않는 경우라면 combination이라고 할 수 없다. 내부함수에서 외부 변수를 참조하는 경우에 한해서만 combination, 즉 '선언될 당시의 `LexicalEnvironment` 와의 상호관계'가 의미가 있을 것이다.
+
+지금까지 파악한 내용에 따르면 클로저란 "어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상"이라고 볼 수 있다. 예제를 통해 개념을 좀 더 명확히 해보자. 
+
+```javascript
+var outer = function() {
+  var a = 1;
+  var inner = function() {
+    console.log(++a);
+  };
+  inner();
+};
+outer();
+```
+
+위 예제는 외부함수에 변수를 선언하고 내부함수에서 해당 변수를 참조하는 형태의 간단한 코드다. `outer` 함수에서 변수 `a` 를 선언했고, `outer` 의 내부함수인 `inner` 함수에서 `a` 의 값을 1만큼 증가시킨 다음 출력한다. `inner` 함수 내부에서는 `a`를 선언하지 않았기 때문에 `environmentRecord` 에서 값을 찾지 못하므로 `outerEnvironmentReference`에 지정된 상위 컨텍스트인 `outer` 의 `LexicalEnvironment`에 접근해서 다시 `a` 를 찾는다. 4번째 줄에서는 2가 출력된다. `outer` 함수의 실행 컨텍스트가 종료되면 `LexicalEnvironment` 에 저장된 식별자들(a, inner)에 대한 참조를 지운다. 그러면 각 주소에 저장돼 있던 값들은 자신을 참조하는 변수가 하나도 없게 되므로 가비지 컬렉터의 수집 대상이 될 것이다.
+
+<img src="../images/5-1.jpeg" />
+
+위 그림은 예제의 콜스택 및 실행 컨텍스트를 도식화한 것이다. `VariablbeEnvironment` 및 `ThisBinding` 은 생략했다. 별다른 특별한 현상을 보이지 않는다. 예제코드를 조금 바꿔보도록 하자.
+
+```javascript
+var outer = function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner();
+};
+var outer2 = outer();
+console.log(outer2); // 2
+```
+
+이번에도 `inner` 함수 내부에서 외부변수인 `a` 를 사용했다. 그런데 6번째 줄에서는 `inner` 함수를 실행한 결과를 리턴하고 있으므로 결과적으로 `outer` 함수의 실행 컨텍스트가 종료된 시점에는 `a` 변수를 참조하는 대상이 없어진다. 예제 5-1과 마찬가지로 `a`, `inner` 변수의 값들은 언젠가 가비지 컬렉터에 의해 소멸할 것이다. 이 역시 일반적인 함수 및 내부 함수에서의 동작과 차이가 없다.
+
+앞선 두 예제는 `outer` 함수의 실행 컨텍스트가 종료되기 이전에 `inner` 함수의 실행 컨텍스트가 종료돼 있으며, 이후 별도로 `inner` 함수를 호출할 수 없다는 공통점이 있다. 그렇다면 `outer` 함수의 실행 컨텍스트가 종료된 이후에도 `inner` 함수를 호출할 수 있게 만들면 어떻게 될까?
+
+```javascript
+var outer = function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner;
+};
+var outer2 = outer();
+console.log(outer2()); // 2
+console.log(outer2()); // 3
+```
+
+이번에는 6번째 줄에서 `inner` 함수의 실행 결과가 아닌 `inner` 함수 자체를 반환했다. 그러면 `outer` 함수의 실행 컨텍스트가 종료될 때(8번째 줄) `outer2` 변수는 `outer` 의 실행 결과인 `inner` 함수를 참조하게 될 것이다. 이후 9번째 줄에서 `outer2` 를 호출하면 앞서 반환된 함수인 `inner` 가 실행될 것이다.
+
+`inner` 함수의 실행 컨텍스트의 `environmentRecord` 에는 수집할 정보가 없다. `outerEnvironmentReference` 에는 `inner` 함수가 선언된 위치의 `LexicalEnvironment` 가 참조복사된다. `inner` 함수는 `outer` 함수 내부에서 선언됐으므로, `outer` 함수의 `LexicalEnvironment` 가 담길 것이다. 이제 스코프 체이닝에 따라 `outer` 에서 선언한 변수 `a` 에 접근해서 1만큼 증가시킨 후 그 값인 2를 반환하고, `inner` 함수의 실행 컨텍스트가 종료된다. 10번째 줄에서 다시 `outer2` 를 호출하면 같은 방식으로 `a` 의 값을 1 증가시키고 3을 반환한다.
+
+*그런데 이상한 점이 있다. `inner` 함수의 실행 시점에는 `outer` 함수는 이미 실행이 종료된 상태인데 `outer` 함수의 `LexicalEnvironment` 에 어떻게 접근할 수 있는 것일까? 이는 가비지 컬렉터의 동작방식 때문이다. 가비지 컬렉터는 어떤 값을 참조하는 변수가 하나라도 있다면 그 값은 수집 대상에 포함시키지 않는다. 위 예제의 `outer` 함수는 실행 종료 시점에 `inner` 함수를 반환한다. 외부함수인 `outer` 의 실행이 종료되더라도 내부함수인 `inner` 함수는 언젠가 `outer2` 를 실행함으로써 호출될 가능성이 열린 것이다. 언젠가 `inner` 함수의 실행 컨텍스트가 활성화되면 `outerEnvironmentReference` 가 `outer` 함수의 `LexicalEnvironment` 를 필요로 할 것이므로 수집 대상에서 제외된다. 그 덕에 `inner` 함수가 이 변수에 접근할 수 있는 것이다.*
+
+<img src="../images/5-2.jpeg" />
+
+클로저는 어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상이라고 언급했었다. 예제 5-1과 5-2에서는 일반적인 함수의 경우와 마찬가지로 `outer` 의 `LexicalEnvironment` 에 속하는 변수가 모두 가비지 컬렉팅 대상에 포함된 반면, 위 예제의 경우 변수 `a` 가 대상에서 제외됐다. **이처럼 함수의 실행 컨텍스트가 종료된 후에도 `LexicalEnvironment` 가 가비지 컬렉터의 수집 대상에서 제외되는 경우는 위 예제와 같이 지역변수를 참조하는 내부함수가 외부로 전달된 경우가 유일하다.** 그러니까 "어떤 함수에서 선언한 변수를 참조하는 내부함수에서만 발생하는 현상"이란 "외부 함수의 `LexicalEnvironment` 가 가비지 컬렉팅되지 않는 현상"을 말하는 것이다.
+
+이를 바탕으로 정의를 다시 고쳐보면 이렇다. **클로저란 어떤 함수 A에서 선언한 변수 `a`를 참조하는 내부함수 B를 외부로 전달할 경우 A의 실행 컨텍스트가 종료된 이후에도 변수 `a`가 사라지지 않는 현상**을 말한다. 앞서 살펴본 클로저의 정의들 중 다음 세 표현이 클로저의 정의에 가장 근접하다.
+
+> - 함수를 선언할 때 만들어지는 유효 범위가 사라진 후에도 호출할 수 있는 함수
+> - 이미 생명 주기가 끝난 외부 함수의 변수를 참조하는 함수
+> - 자신이 생성될 때의 스코프에서 알 수 있었던 변수들 중 언젠가 자신이 실행될 때 사용할 변수들만을 기억하여 유지시키는 함수
+
+여기서 한가지 주의할 점이 있다. 바로 '외부로의 전달'이 곧 `return` 만을 의미하는 것은 아니라는 점이다.
+
+```javascript
+// (1) setInterval/setTimeout
+(function() {
+  var a = 0;
+  var intervalId = null;
+  var inner = function() {
+    if (++a >= 10) {
+      clearInterval(intervalId);
+    }
+    console.log(a);
+  };
+  intervalId = setInterval(inner, 1000);
+})();
+```
+
+```javascript
+// (2) eventListener
+(function() {
+  var count = 0;
+  var button = document.createElement('button');
+  button.innerText = 'click';
+  button.addEventListener('click', function() {
+    console.log(++count, 'times clicked');
+  });
+  document.body.appendChild(button);
+})();
+```
+
+위 두 예제 모두 `return` 없이도 클로저가 발생하는 다양한 경우에 속한다. (1)은 별도의 외부객체인 `window` 메서드(`setTimeout` 또는 `setInterval`)에 전달한 콜백 함수 내부에서 지역변수를 참조한다. (2)는 별도의 외부객체인 DOM의 메서드(`addEventListener`)에 등록할 `handler` 함수 내부에서 지역변수를 참조한다. 두 상황 모두 지역변수를 참조하는 내부함수를 외부에 전달했기 때문에 클로저다.
 
