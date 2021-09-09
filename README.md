@@ -7,9 +7,9 @@
 #### [Art of React](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React)
 
 - ''리액트를 다루는 기술''을 보면서 배운 내용들의 정리와 실습 프로젝트들을 모아둔 디렉터리
-  - [Blog](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/blog) - Final Project - Blog with CRUD
-  - [News Viewer](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/news-viewer) - Axios와 usePromise Custom Hooks를 사용한 뉴스 뷰어
-  - [TODO App](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/todo-app) - useRef, useCallback, useReducer 그리고 React.memo와 react-virtualized를 사용한 컴포넌트 성능 최적화를 연습한  TODO App
+  - [Blog](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/1st/blog) - Final Project - Blog with CRUD
+  - [News Viewer](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/1st/news-viewer) - Axios와 usePromise Custom Hooks를 사용한 뉴스 뷰어
+  - [TODO App](https://github.com/SeolJaeHyeok/TIL/tree/master/Art_of_React/1st/todo-app) - useRef, useCallback, useReducer 그리고 React.memo와 react-virtualized를 사용한 컴포넌트 성능 최적화를 연습한  TODO App
 
 
 
