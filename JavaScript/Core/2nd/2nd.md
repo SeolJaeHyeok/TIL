@@ -2233,3 +2233,290 @@ console.log(outer2()); // 3
 
 위 두 예제 모두 `return` 없이도 클로저가 발생하는 다양한 경우에 속한다. (1)은 별도의 외부객체인 `window` 메서드(`setTimeout` 또는 `setInterval`)에 전달한 콜백 함수 내부에서 지역변수를 참조한다. (2)는 별도의 외부객체인 DOM의 메서드(`addEventListener`)에 등록할 `handler` 함수 내부에서 지역변수를 참조한다. 두 상황 모두 지역변수를 참조하는 내부함수를 외부에 전달했기 때문에 클로저다.
 
+---
+
+#### 클로저와 메모리 관리
+
+클로저는 객체지향과 함수형 모두를 아우르는 중요한 개념이다. 메모리 소모 또는 누수의 위험은 클로저의 본질적인 특성일 뿐 오히려 이러한 특성을 정확히 이해하고 활용하도록 해야 한다. '메모리 누수'라는 표현은 개발자의 의도와 달리 어떤 값의 참조 카운트가 0이 되지 않아 GC의 수거 대상이 되지 않는 경우에는 맞는 표현이지만 개발자가 의도적으로 참조 카운트를 0이 되지 않게 설계한 경우는 '누수'라고 할 수 없다. 그렇기 때문에 의도대로 설계한 '메모리 소모'에 대한 관리법을 잘 파악해서 적용하는 것이 중요하다.
+
+클로저는 어떤 필요에 의해 의도적으로 함수의 지역변수를 메모리를 소모하도록 함으로써 발생한다. 그렇다면 그 필요성이 사라진 시점에는 더는 메모리를 소모하지 않게 해주면 된다. 참조 카운트를 0으로 만들면 언젠가 GC의 수거 대상이 되고, 이때 메모리가 회수될 것이기 때문이다. 그렇다면 참조 카운트를 0으로 만드는 방법은 무엇일까? 바로 식별자에 참조형이 아닌 기본형 데이터(보통 `null`,  `undefined`)를 할당하면 된다. 다음은 위에서 본 예제들에 메모리 해제 코드를 추가한 것이다.
+
+```javascript
+// (1) return에 의한 클로저의 메모리 해제
+var outer = (function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner;
+})();
+console.log(outer());
+console.log(outer());
+outer = null; // outer 식별자의 inner 함수 참조를 끊음
+```
+
+```javascript
+// (2) setInterval에 의한 클로저의 메모리 해제
+(function() {
+  var a = 0;
+  var intervalId = null;
+  var inner = function() {
+    if (++a >= 10) {
+      clearInterval(intervalId);
+      inner = null; // inner 식별자의 함수 참조를 끊음
+    }
+    console.log(a);
+  };
+  intervalId = setInterval(inner, 1000);
+})();
+```
+
+```javascript
+// (3) eventListener에 의한 클로저의 메모리 해제
+(function() {
+  var count = 0;
+  var button = document.createElement('button');
+  button.innerText = 'click';
+
+  var clickHandler = function() {
+    console.log(++count, 'times clicked');
+    if (count >= 10) {
+      button.removeEventListener('click', clickHandler);
+      clickHandler = null; // clickHandler 식별자의 함수 참조를 끊음
+    }
+  };
+  button.addEventListener('click', clickHandler);
+  document.body.appendChild(button);
+})();
+```
+
+----
+
+#### 클로저 활용 사례
+
+**1. 콜백 함수 내부에서 외부 데이터를 사용하고자 할 때**
+
+다음은 대표적인 콜백 함수 중 하나인 이벤트 리스너에 관한 예시다. 클로저의 '외부 데이터'에 주목하면서 흐름을 따라가보자.
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul'); // (공통 코드)
+
+fruits.forEach(function(fruit) {
+  // (A)
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', function() {
+    // (B)
+    alert('your choice is ' + fruit);
+  });
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+위 예제에서는 `fruits` 변수를 순회하면 `li` 를 만들고, 각 `li` 를 클릭하면 해당 리스너에 기억된 콜백 함수를 실행하게 했다. 4번째 줄의 `forEach` 메서드에 넘겨준 익명의 콜백 함수(A)는 그 내부에서 외부 변수를 사용하지 않고 있으므로 클로저가 없지만, 7번째 줄의 `addEventListener` 에 넘겨준 콜백 함수(B)에는 `fruit` 라는 외부 변수를 참조하고 있으므로 클로저가 있다. (A)는 `fruits` 의 개수만큼 실행되며, 그때마자 새로운 실행 컨텍스트가 활성화될 것이다. A의 실행 종료 여부와 무관하게 클릭 이벤트에 의해 각 컨텍스트의 (B)가 실행될 때는 (B)의 `outerEnvironmentReference` 가 (A)의 `LexicalEnvironment` 를 참조하게 될 것이다. 따라서 최소한 (B) 함수가 참조할 예정인 변수 `fruit`에 대해서는 (A)가 종료된 후에도 GC 대상에서 제외되어 계속 참조가 가능할 것이다. 
+
+그런데 (B) 함수의 쓰임새가 콜백 함수에 국한되지 않는 경우라면 반복을 줄이기 위해 (B)를 외부로 분리하는 편이 좋아보인다. 즉, `fruit`를 인자로 받아 출력하는 형태로 말이다.
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruit = function(fruit) {
+  alert('your choice is ' + fruit);
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruit);
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+alertFruit(fruits[1]);
+```
+
+위 예제는 공통 함수로 쓰고자 콜백 함수를 외부로 꺼내어 `alertFruit` 라는 변수에 담았다. 이제 `alertFruit`을 직접 실행할 수 있다. 또한 14번째 줄에서는 정상적으로 'banana'에 대한 얼럿이 실행된다. 그런데 각 `li` 를 클릭하면 클릭한 대상의 과일명이 아닌 `[object MouseEvent]` 라는 값이 출력된다. 콜백 함수의 인자에 대한 제어권을 `addEventListener` 가 가진 상태이며, `addEventListener` 는 콜백 함수를 호출할 때 첫 번째 인자에 '이벤트 객체'를 주입하기 때문이다. 이 문제는 `bind` 를 사용하면 쉽게 해결할 수 있다. 
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruit = function(fruit) {
+  alert('your choice is ' + fruit);
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruit.bind(null, fruit));
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+다만 이렇게 하면 이벤트 객체가 인자로 넘어오는 순서가 바뀌는 점 및 함수 내부에서의 `this` 가 원래의 그것과 달라지는 점은 감안해야 한다. 
+
+> ❗️
+>
+> `bind` 메서드의 첫 번째 인자가 바로 새로 바인딩할 `this` 인데, 이 값을 생략할 수 없기 때문에 일반적으로 원래의 `this` 를 유지하도록 할 수 없는 경우가 많다. 위 예제에서는 두 번째 인자에 이벤트 객체가 넘어올 것이다.
+
+이런 변경사항이 발생하지 않게끔 하면서 이슈를 해결하기 위해서는 `bind` 메서드가 아닌 다른 방식으로 풀어내야 한다. 여기서  다른 방식이란 '고차함수'를 활용하는 것이다.
+
+```javascript
+var fruits = ['apple', 'banana', 'peach'];
+var $ul = document.createElement('ul');
+
+var alertFruitBuilder = function(fruit) {
+  return function() {
+    alert('your choice is ' + fruit);
+  };
+};
+fruits.forEach(function(fruit) {
+  var $li = document.createElement('li');
+  $li.innerText = fruit;
+  $li.addEventListener('click', alertFruitBuilder(fruit));
+  $ul.appendChild($li);
+});
+document.body.appendChild($ul);
+```
+
+`alertFruit` 대신 `alertFruiltBuilder` 라는 함수를 작성했다. 이 함수 내부에서는 다시 익명 함수를 반환하는데, 이 익명함수가 바로 기존의 `alertFruit` 함수다. `addEventListener` 의 콜백 함수 위치에  `alertFruitBuilder` 를 호출하면서 인자로 `fruit` 값을 전달했다. 그러면 이 함수의 실행 결과가 다시 함수가 되며, 이렇게 반환된 함수를 리스너에 콜백 함수로써 전달할 것이다. 이후 언젠가 클릭 이벤트가 발생하면 비로소 이 함수의 실행 컨텍스트가 열리면서 `alertFruitBuilder` 의 인자로 넘어온 `fruit` 를 `outerEnvironmentReference` 에 의해 참조할 수 있을 것이다. 즉 `alertFruitBuilder` 의 실행 결과로 반환된 함수에는 클로저가 존재한다.
+
+지금까지 콜백 함수를 내부함수로 선언하여 외부변수를 참조하기 위한 세 가지 방법을 살펴봤다. 첫 번째는 콜백 함수를 내부함수로 선언해서 외부변수를 직접 참조하는 방법으로, 클로저를 사용한 방법이었고 두 번째로 `bind` 를 활용했는데, `bind` 메서드로 값을 직접 넘겨준 덕분에 클로저가 발생하게 되지 않은 반면 여러 가지 제약사항이 따르게 됐다. 마지막은 콜백 함수를 고차 함수로 바꿔서 클로저를 적극적으로 활용한 방식이었다.
+
+**2. 접근 권한 제어(정보 은닉)**
+
+정보 은닉은 어떤 모듈로 내부 로직에 대해 외부로의 노출을 최소화해서 모듈 간의 결합도를 낮추고 유연성을 높이고자 하는 현대 프로그래밍 언어의 중요한 개념 중 하나다. 흔히 접근 권한에는 `public`, `private`, `protected` 의 세 종류가 있다. 각 단어는 의미 그대로 외부에서 접근 가능한 것, 내부에서만 사용하여 외부로 노출되지 않는 것을 말한다.
+
+자바스크립트는 기본적으로 변수 자체에 이러한 접근 권한을 직접 부여하도록 설계되어 있지 않다. 하지만 접근 제어가 불가능한 것만은 아니다. 클로저를 이용하면 함수 차원에서 `public` 한 값과 `private` 한 값을 구분하는 것이 가능하다. 
+
+```javascript
+var outer = function() {
+  var a = 1;
+  var inner = function() {
+    return ++a;
+  };
+  return inner;
+};
+var outer2 = outer();
+console.log(outer2()); // 2
+console.log(outer2()); // 3
+```
+
+`outer` 함수를 종료할 때 `inner` 함수를 반환함으로써 `outer` 함수의 지역변수인 `a` 의 값을 외부에서도 읽을 수 있게 됐다. 이처럼 클로저를 활용하면 `return` 을 활용해서 외부 스코프에서 함수 내부의 변수들 중 선택적으로 일부의 변수에 대한 접근 권한을 부여할 수 있다. 
+
+closure라는 단어는 사전적으로 '닫혀있음', '폐쇄성', '완결성' 정도의 의미를 가진다. 이 폐쇄성에 주목해보면 위 예제를 조금 다르게 받아들일 수 있다. `outer` 함수는 외부(전역 스코프)로부터 철저하게 격리된 닫힌 공간이다. 외부에서는 외부 공간에 노출돼 있는 `outer` 라는 변수를 통해 `outer` 함수를 실행할 수 있지만, `outer` 함수 내부에는 어떠한 개입도 할 수 없다. 외부에서는 오직 `outer` 함수가 `return` 한 정보에만 접근할 수 있다. `return` 값이 외부에 정보를 제공하는 유일한 수단인 것이다.
+
+그러니까 외부에 제공하고자 하는 정보들은 모아서 `return` 하고, 내부에서만 사용할 정보들은 `return` 하지 않는 것으로 접근 권한 제어가 가능한 것이다. `return` 한 변수들은 공개 멤버가 되고, 그렇지 않은 변수들은 비공개 멤버가 되는 것이다.
+
+이번에는 간단한 게임을 만들면서 접근 권한을 제어해 보자. 친구들과 즐길 보드 게임을 만들고자 한다. 자동자 경주 게임으로, 규칙은 다음과 같다.
+
+> - 각 턴마다 주사위를 굴려 나온 숫자(km)만큼 이동한다.
+> - 차량별로 연료량(fuel)과 연비(power)는 무작위로 생성된다.
+> - 남은 연료가 이동할 거리에 필요한 연료보다 부족하면 이동하지 못한다.
+> - 모든 유저가 이동할 수 없는 턴에 게임이 종료된다.
+> - 게임 종료 시점에 가장 멀리 이동해 있는 사람이 승리
+
+위 규칙에 따라 간단하게 자동차 객체를 만들어 준다.
+
+```javascript
+var car = {
+  fuel: Math.ceil(Math.random() * 10 + 10), // 연료(L)
+  power: Math.ceil(Math.random() * 3 + 2), // 연비(km/L)
+  moved: 0, // 총 이동거리
+  run: function() {
+    var km = Math.ceil(Math.random() * 6);
+    var wasteFuel = km / this.power;
+    if (this.fuel < wasteFuel) {
+      console.log('이동불가');
+      return;
+    }
+    this.fuel -= wasteFuel;
+    this.moved += km;
+    console.log(km + 'km 이동 (총 ' + this.moved + 'km)');
+  },
+};
+```
+
+`car` 변수에 객체를 직접 할당했다. `fuel` 과 `power` 는 무작위로 생성하고, `moved` 라는 프로퍼티에 총 이동거리를 부여했으며, `run` 메서드를 실행할 때마다 `car` 객체의 `fuel`, `moved` 값이 변하게 했다. 이런 `car` 객체를 사람 수만큼 생성해서 각자의 턴에 `run` 을 실행하면 게임을 즐길 수 있을 것이다.
+
+모두가 `run` 메서드만 호출한다는 가정하에는 이 정도만으로도 충분하다. 하지만 만약 게임 참가자가 `car` 객체를 마음대로 본인에게 유리하게 바꾼다면 일방적인 게임이 되고 말 것이다. 이렇게 값을 바꾸지 못하도록 방어할 필요가 있을 것 같다. 여기서 바로 클로저를 활용하면 된다. 즉, 객체가 아닌 함수로 만들고, 필요한 멤버만을 `return` 하는 것이다.
+
+```javascript
+var createCar = function() {
+  var fuel = Math.ceil(Math.random() * 10 + 10); // 연료(L)
+  var power = Math.ceil(Math.random() * 3 + 2); // 연비(km / L)
+  var moved = 0; // 총 이동거리
+  return {
+    get moved() {
+      return moved;
+    },
+    run: function() {
+      var km = Math.ceil(Math.random() * 6);
+      var wasteFuel = km / power;
+      if (fuel < wasteFuel) {
+        console.log('이동불가');
+        return;
+      }
+      fuel -= wasteFuel;
+      moved += km;
+      console.log(km + 'km 이동 (총 ' + moved + 'km). 남은 연료: ' + fuel);
+    },
+  };
+};
+var car = createCar();
+```
+
+이번에는 `createCar` 라는 함수를 실행하게 함으로써 객체를 생성하게 했다. `fuel`, `power` 변수는 비공개 멤버로 지정해 외부에서의 접근을 제한했고, `moved` 변수는 `getter` 만을 부여함으로써 읽기 전용 속성을 부여했다. 이제 외부에서는 오직 `run` 메서드를 실행하는 것과 현재의 `moved` 값을 확인하는 두 가지 동작만 할 수 있다. 다음과 같이 값을 변경하려는 시도는 실패하게 될 것이다.
+
+```javascript
+car.run()								// 3km 이동 (총 3km). 남은 연료: 17.4
+console.log(car.moved)  // 3
+console.log(car.fuel)  	// undefined
+console.log(car.power)  // undefined
+
+car.fuel = 1000;
+console.log(car.fuel)		// 1000
+car.run(); 							// 1km 이동 (총 4km). 남은 연료: 17.2
+
+...
+```
+
+비록 `run` 메서드를 다른 내용으로 덮어씌우는 어뷰징은 여전히 가능한 상태지만 앞서의 코드보다는 훨씬 안정적인 코드가 됐다. 이런 어뷰징까지 막기 위해서는 객체를 `return` 하기 전에 미리 변경할 수 없게끔 조치를 하면 된다.
+
+```javascript
+var createCar = function() {
+  var fuel = Math.ceil(Math.random() * 10 + 10); // 연료(L)
+  var power = Math.ceil(Math.random() * 3 + 2); // 연비(km / L)
+  var moved = 0; // 총 이동거리
+  var publicMembers = {
+    get moved() {
+      return moved;
+    },
+    run: function() {
+      var km = Math.ceil(Math.random() * 6);
+      var wasteFuel = km / power;
+      if (fuel < wasteFuel) {
+        console.log('이동불가');
+        return;
+      }
+      fuel -= wasteFuel;
+      moved += km;
+      console.log(km + 'km 이동 (총 ' + moved + 'km). 남은 연료: ' + fuel);
+    },
+  };
+  Object.freeze(publicMembers);
+  return publicMembers;
+};
+var car = createCar();
+```
+
+정리하자면 클로저를 활용해 접근권한을 제어하는 방법은 다음과 같다.
+
+1. 함수에서 지역 변수 및 내부함수 등을 생성한다.
+
+2. 외부에 접근권한을 주고자 하는 대상들로 구성된 참조형 데이터(대상이 여럿일 때는 객체 또는 배열, 하나일 때는 함수)를 return 한다.
+
+   -> return한 변수들은 공개 멤버가 되고, 그렇지 않은 변수들은 비공개 멤버가 된다.
+
+****
