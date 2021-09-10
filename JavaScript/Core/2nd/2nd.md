@@ -2519,4 +2519,253 @@ var car = createCar();
 
    -> return한 변수들은 공개 멤버가 되고, 그렇지 않은 변수들은 비공개 멤버가 된다.
 
-****
+**3. 부분 적용 함수**
+
+부분 적용 함수란 n개의 인자를 받는 함수에 미리 m개의 인자만 넘겨 기억시켰다가, 나중에 (n-m)개의 인자를 넘기면 비로소 원래 함수의 실행 결과를 얻을 수 있게끔 하는 함수다. `this` 를 바인딩해야 하는 점을 제외하면서 앞서 살펴본 `bind` 메서드의 실행 결과가 바로 부분 적용 함수다. 
+
+```javascript
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = add.bind(null, 1, 2, 3, 4, 5);
+console.log(addPartial(6, 7, 8, 9, 10)); // 55
+```
+
+위 예제의 `addPartial` 함수는 인자 5개를 미리 적용하고, 추후 추가적으로 인자들을 전달하면 모든 인자를 모아 원래의 함수가 실행되는 부분 적용 함수다.  `add` 함수는 `this` 를 사용하지 않으므로 `bind` 메서드만드로도 문제 없이 구현됐다. 그러나 `this` 의 값을 변경할 수 밖에 없기 때문에 메서드에서는 사용할 수 없을 것이다. `this` 에 관여하지 않는 별도의 부분 적용 함수가 있다면 범용성 측면에서 더욱 좋을 것이다.
+
+```javascript
+var partial = function() {
+  var originalPartialArgs = arguments;
+  var func = originalPartialArgs[0];
+  if (typeof func !== 'function') {
+    throw new Error('첫 번째 인자가 함수가 아닙니다.');
+  }
+  return function() {
+    var partialArgs = Array.prototype.slice.call(originalPartialArgs, 1);
+    var restArgs = Array.prototype.slice.call(arguments);
+    return func.apply(this, partialArgs.concat(restArgs));
+  };
+};
+
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = partial(add, 1, 2, 3, 4, 5);
+console.log(addPartial(6, 7, 8, 9, 10)); // 55
+
+var dog = {
+  name: '강아지',
+  greet: partial(function(prefix, suffix) {
+    return prefix + this.name + suffix;
+  }, '왈왈, '),
+};
+dog.greet('입니다!'); // 왈왈, 강아지입니다.
+```
+
+위 예제는 간단히 구현한 부분 적용 함수다. 첫 번째 인자에는 원본 함수를, 두 번째 인자 이후부터는 미리 적용할 인자들을 전달하고, 반환할 함수(부분 적용 함수)에서는 다시 나머지 인자들을 받아 이들을 한데 모아(`concat`) 원본 함수를 호출(`apply`)한다. 또한 실행 시점의 `this` 를 그대로 반영함으로써 `this`에는 아무런 영향을 주지 않게 됐다.
+
+보통의 경우 부분 적용 함수는 이 정도로 충분하다. 원하는 만큼의 인자를 미리 넘겨놓고, 나중에 추가할 인자를 전달해서 실행하는 목적에는 정확히 부합하기 때문이다.  다만 부분 적용 함수에 넘길 인자를 반드시 앞에서부터 차례로 전달할 수 밖에 없는 점이 아쉽다. 인자들을 원하는 위치에 미리 넣어놓고 나중에는 빈 자리에 인자를 채워넣어 실행할 수 있다면 더 좋을 것 같다.
+
+```javascript
+Object.defineProperty(window, '_', {
+  value: 'EMPTY_SPACE',
+  writable: false,
+  configurable: false,
+  enumerable: false,
+});
+
+var partial2 = function() {
+  var originalPartialArgs = arguments;
+  var func = originalPartialArgs[0];
+  if (typeof func !== 'function') {
+    throw new Error('첫 번째 인자가 함수가 아닙니다.');
+  }
+  return function() {
+    var partialArgs = Array.prototype.slice.call(originalPartialArgs, 1);
+    var restArgs = Array.prototype.slice.call(arguments);
+    for (var i = 0; i < partialArgs.length; i++) {
+      if (partialArgs[i] === _) {
+        partialArgs[i] = restArgs.shift();
+      }
+    }
+    return func.apply(this, partialArgs.concat(restArgs));
+  };
+};
+
+var add = function() {
+  var result = 0;
+  for (var i = 0; i < arguments.length; i++) {
+    result += arguments[i];
+  }
+  return result;
+};
+var addPartial = partial2(add, 1, 2, _, 4, 5, _, _, 8, 9);
+console.log(addPartial(3, 6, 7, 10)); // 55
+
+var dog = {
+  name: '강아지',
+  greet: partial2(function(prefix, suffix) {
+    return prefix + this.name + suffix;
+  }, '왈왈, '),
+};
+dog.greet(' 배고파요!'); // 왈왈, 강아지 배고파요!
+```
+
+이번에는 '비워놓음'을 표시하기 위해 미리 전역객체의 `_` 라는 프로퍼티를 준비하면서 삭제 변경 등의 접근에 대한 방어 차원에서 여러 가지 프로퍼티 속성을 설정했다. 앞서 예제와의 실질적인 변화는 17~21번째 줄에 있다. 처음에 넘겨준 인자들 중 `_` 로 비워놓은 공간마다 나중에 넘어온 인자들이 차례대로 끼워넣도록 구현했다. 이렇게 함으로써 부분 적용 함수를 만들 때 미리부터 실행할 함수의 모든 인자 개수를 맞춰 빈 공간을 확보하지 않아도 된다. 실행할 함수 내부 로직에만 문제가 없다면 최종 실행 시 인자 개수가 많든 적든 잘 실행될 것이다.
+
+앞선 두 예제 모두 부분 적용 함수들은 클로저를 핵심 기법으로 사용했다. 미리 일부 인자를 넘겨두어 기억하게끔 하고 추후 필요한 시점에 기억했던 인자들까지 함께 실행하게 한다는 개념 자체가 클로저의 정의에 정확하게 부합한다.
+
+마지막으로 디바운스(debounce)에 대해서 살펴보자. 디바운스는 짧은 시간 동안 동일한 이벤트가 많이 발생할 경우 이를 전부 처리하지 않고 처음 또는 마지막에 발생한 이벤트에 대해 한 번만 처리하는 것으로, 프런트엔드 성능 최적화에 큰 도움을 주는 기능 중 하나다. `scroll`, `wheel`, `mousemove`, `resize` 등에 적용하기 좋다. Lodash 등의 라이브러리에서는 디바운스를 꽤 복잡하게 구현해 놓았지만, 최소한의 기능(마지막에 발생한 이벤트만 처리해도 괜찮고, 어느 정도의 시간 지연이 큰 문제가 되지 않는 경우)에 대한 구현은 간단하다.
+
+```javascript
+var debounce = function(eventName, func, wait) {
+  var timeoutId = null;
+  return function(event) {
+    var self = this;
+    console.log(eventName, 'event 발생');
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(func.bind(self, event), wait);
+  };
+};
+
+var moveHandler = function(e) {
+  console.log('move event 처리');
+};
+var wheelHandler = function(e) {
+  console.log('wheel event 처리');
+};
+document.body.addEventListener('mousemove', debounce('move', moveHandler, 500));
+document.body.addEventListener(
+  'mousewheel',
+  debounce('wheel', wheelHandler, 700)
+);
+```
+
+위 예제는 출력 용도로 지정한 `eventName` 과 실행할 함수(`func`), 마지막으로 발생한 이벤트인지 여부를 판단하기 위한 대기시간(`wait`)를 받는다. 내부에서는 `timeoutId` 변수를 생성하고, 클로저로 `EventListener` 에 의해 호출될 함수를 반환한다. 반환될 함수 내부에서는, 5번쨰 줄에서 `setTimeout` 을 사용하기 위해 `this` 를 별도의 변수에 담고, 6번째 줄에서 무조건 대기큐를 초기화하게 했다. 마지막으로 7번째 줄에서 `setTimeout` 으로 `wait` 시간 만큼 지연시킨 다음, 원래의 `func` 를 호출하는 형태다. 
+
+이제 최초 event가 발생하면 7번째 줄에 의해 `timeout` 의 대기열에 '`wait` 시간 뒤에 `func` 를 실행할 것'이라는 내용이 담긴다. 그런데 `wait` 시간이 경과되기 전에 다시 동일한 `event`가 발생했다면 이번에는 6번째 줄에 의해 앞서 저장했던 대기열을 초기화하고, 다시 7번째 줄에서 새로운 대기열을 등록한다. 결국 각 이벤트가 바로 이전 이벤트로부터 `wait` 시간 이내에 발생하는 한 마지막에 발생한 이벤트만이 초기화되지 않고 무사히 실행될 것이다. 참고로 여기서 클로저로 처리되는 변수에는 `eventName`, `func`, `wait`, `timeoutId` 가 있다. 
+
+**4. 커링 함수**
+
+커링 함수란 여러 개의 인자를 받는 함수를 하나의 인자만 받는 함수로 나눠서 순차적으로 호출될 수 있게 체인 형태로 구성한 것을 말한다. 앞서 살펴본 부분 적용 함수와 기본적인 맥락은 일치하지만 몇 가지 차이점이 있다. 커링은 한 번에 하나의 인자만 전달하는 것을 원칙으로 한다. 또한 중간 과정상의 함수를 실행한 결과는 그다음 인자를 받기 위해 대기만 할 뿐으로, 마지막 인자가 전달되기 전까지는 원본 함수가 실행되지 않는다(부분 적용 함수는 여러 개의 인자를 전달할 수 있고, 실행 결과를 재실행할 때 원본 함수가 무조건 실행된다).
+
+```javascript
+var curry3 = function(func) {
+  return function(a) {
+    return function(b) {
+      return func(a, b);
+    };
+  };
+};
+
+var getMaxWith10 = curry3(Math.max)(10);
+console.log(getMaxWith10(8)); // 10
+console.log(getMaxWith10(25)); // 25
+
+var getMinWith10 = curry3(Math.min)(10);
+console.log(getMinWith10(8)); // 8
+console.log(getMinWith10(25)); // 10
+```
+
+부분 적용 함수와 달리 커링 함수는 필요한 상황에 직접 만들어 쓰기 용이하다. 필요한 인자 개수만큼 함수를 만들어 계속 리턴해주다가 마지막에만 리턴해주면 되기 때문이다. 다만 인자가 많아질수록 가독성이 떨어진다는 단점이 있다.
+
+```javascript
+var curry5 = function(func) {
+  return function(a) {
+    return function(b) {
+      return function(c) {
+        return function(d) {
+          return function(e) {
+            return func(a, b, c, d, e);
+          };
+        };
+      };
+    };
+  };
+};
+var getMax = curry5(Math.max);
+console.log(getMax(1)(2)(3)(4)(5));
+```
+
+5개의 인자만 받아서 처리했음에도 13줄이나 작성했다. 하지만 다행히 ES6에서는 화살표 함수를 써서 같은 내용을 단 한 줄로 표현할 수 있다.
+
+```javascript
+var curry 5 = func => a => b => c => d => e => func(a, b, c, d, e);
+```
+
+화살표 함수로 구현하면 커링 함수를 이해하기가 훨씬 쉬워진다. 화살표 순서에 따라 함수에 값을 차례로 넘겨주면 마지막에 `func` 가 호출될 것이라는 흐름이 한눈에 파악된다. 각 단계에서 받은 인자들은 모두 마지막 단계에서 참조할 것이므로 GC되지 않고 메모리에 쌓였다가, 마지막 호출로 실행 컨텍스트가 종료된 후에야 비로소 한꺼면에 GC의 수거 대상이 될 것이다.
+
+이 커링 함수가 유용한 경우가 있다. 당장 필요한 정보만 받아서 전달하고 또 필요한 정보가 들어오면 전달하는 식으로 결국 마지막에 인자가 넘어갈 때까지 함수 실행을 미루는 셈이 된다. 이를 함수형 프로그래밍의 지연실행이라고 한다. 원하는 시점까지 지연시켰다가 실행하는 것이 요긴한 상황이라면 커링을 쓰기에 적합할 것이다. 혹은 프로젝트 내에서 자주 쓰이는 함수의 매개변수가 항상 비슷하고 일부만 바뀌는 경우에도 적절한 후보가 될 것이다.
+
+```javascript
+var getInformation = function(baseUrl) {
+return function(path){
+  	return function(id) {
+      return fetch(baseUrl + path + '/' + id); 
+    }
+	}
+};
+==
+var getInformation = baseUrl => path => id => fetch(baseUrl + path + '/' + id);
+```
+
+`fetch` 함수는 `url` 을 받아 해당 `url`에 HTTP 요청을 한다. 보통 REST API를 이용할 경우 `baseUrl` 은 몇 개로 고정되지만 나머지 `path` 나 `id` 값은 매우 많을 수 있다. 이런 상황에서 서버에 정보를 요청할 필요가 있을 때마다 매번 `baseUrl` 부터 전부 기입해주기보다는 공통적인 요소를 먼저 기억시켜두고 특정한 값(`id`)만으로 서버에 요청을 수행하는 함수를 만들어 두는 편이 개발 효율성이나 가독성 측면에서 좋을 것이다.
+
+```javascript
+var imageUrl = 'http://imageAddress.com/';
+var productUrl = 'http://productAddress.com/';
+
+// 이미지 타입별 요청 함수 준비
+var getImage = getInformation(imageUrl);			// http://imageAddress.com/
+var getEmotion = getImage('emoticon');				// http://imageAddress.com/emoticon
+var getIcon = getImage('icon');								// http://imageAddress.com/icon
+
+var getProduct = getInformation(productUrl); 	// http://procutAddress.com/
+var getFruit = getProduct("fruit")						// http://procutAddress.com/fruit
+var getVegetable = getProduct('vegetable');		// http://procutAddress.com/vegetable
+
+// 실제 요청
+var emoticon1 = getEmotion(100);							// http://imageAddress.com/emoticon/100
+var emoticon2 = getEmotion(120);							// http://imageAddress.com/emoticon/120
+var icon1 = getIcon(205);											// http://imageAddress.com/icon/205
+var icon2 = getIcon(245);
+var icon3 = getIcon(221);
+var icon4 = getIcon(223);
+var fruit1 = getFruit(300);
+var fruit2 = getFruit(400);
+var vegetable1 = getVegetable(456);
+var vegetable2 = getVegetable(556);
+```
+
+이런 이유로 최근의 여러 프레임워크나 라이브러리 등에서 커링을 광범위하게 사용하고 있다. Redux의 미들웨어를 예로 들면 다음과 같다.
+
+```javascript
+const Logger = store => next => action => {
+  console.log("dispatching", action);
+  console.log("next State", store.getState());
+  return next(action);
+}
+
+const thunk = store => next => action => {
+  return typeof action === 'function' ? action(dispatch, store.getState()) : next(action);
+};
+```
+
+위의 두 미들웨어는 공통적으로 `store`, `next`, `action` 순서로 인자를 받는다. 이 중 `store`는 프로젝트 내에서 한 번 생성된 이후로는 바뀌지 않는 속성이고 `dispatch` 의 의미를 가지는 `next` 역시 마찬가지지만, `action` 의 경우 매번 달라진다. 그러니까 `store` 와 `next` 값이 결정되면 Redux 내부에서 `logger` 또는 `thunk` 에 `store` , `next` 를 미리 넘겨서 반환된 함수를 저장시켜놓고, 이후에는 `action` 만 받아서 처리할 수 있게끔 한 것이다.
+
+----
+
+#### 정리
+
+- 클로저란 어떤 함수에서 선언한 변수를 참조하는 내부함수를 외부로 전달할 경우, 함수의 실행 컨텍스트가 종료된 후에도 해당 변수가 사라지지 않는 현상을 말한다.
+- 내부함수를 외부로 전달하는 방법에는 함수를 `return` 하는 경우뿐 아니라 콜백으로 전달하는 경우도 포함된다.
+- 클로저는 그 본질이 메모리를 계속 차지하는 개념이므로 더는 사용하지 않게 된 클로저에 대해서는 메모리를 차지하지 않도록 관리해줄 필요가 있다.
+- 클로저는 매우 다양한 곳에서 활용할 수 있는 중요한 개념이므로 확실하게 알아두어야 한다.
