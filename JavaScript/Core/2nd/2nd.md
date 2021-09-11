@@ -2769,3 +2769,97 @@ const thunk = store => next => action => {
 - 내부함수를 외부로 전달하는 방법에는 함수를 `return` 하는 경우뿐 아니라 콜백으로 전달하는 경우도 포함된다.
 - 클로저는 그 본질이 메모리를 계속 차지하는 개념이므로 더는 사용하지 않게 된 클로저에 대해서는 메모리를 차지하지 않도록 관리해줄 필요가 있다.
 - 클로저는 매우 다양한 곳에서 활용할 수 있는 중요한 개념이므로 확실하게 알아두어야 한다.
+
+----
+
+# 6. 프로토타입
+
+자바스크립트는 프로토타입 기반 언어다. 클래스 기반 언어에서는 '상속'을 사용하지만 프로토타입 기반 언어에서는 어떤 객체를 원형(prototype)으로 삼고 이를 복제(참조)함으로써 상속과 비슷한 효과를 얻는다. 대다수의 유명 프로그래밍 언어의 상당수가 클래스 기반인 것에 비교하면 프로토타입은 꽤나 독특한 개념이다.
+
+#### 프로토타입의 개념 이해
+
+<img src="../images/6-1.png" width=400 height=400 />
+
+위 그림은 프로토타입을 설명하는 그림이다. 이 그림으로부터 전체 구조를 파악할 수 있고, 반대로 전체 구조로부터 이 그림을 도출해낼 수 있으면 된다. 위 그림 사실 아래 코드를 추상화한 것이다.
+
+```javascript
+var instance = new Constructor();
+```
+
+위 그림의 윗변(실선)의 왼쪽 꼭짓점에는 `Constructor`(생성자 함수)를, 오른쪽 꼭짓점에는 `Constructor.prototype`이라는 프로퍼티를 위치시켰다. 왼쪽 꼭짓점으로부터 아래를 향한 화살표 중간에 `new`가 있고, 화살표의 종점에는 `instance` 가 있다. 오른쪽 꼭짓점으로부터 대각선 아래로 향하는 화살표의 종점에는 `instance.__proto__` 이라는 프로퍼티를 위치시켰다. 위 코드와 그림을 번갈아 보며 흐름을 따라가 보자.
+
+- 어떤 생성자 함수<sup>Constructor</sup>를 `new` 연산자와 함께 호출하면
+- `Constructor`에서 정의된 내용을 바탕으로 새로운 인스턴스<sup>instance</sup> 가 생성된다.
+- 이때 `instance`에는 `__proto__` 라는 프로퍼티가 자동으로 부여되는데
+- 이 프로퍼티는 `Constructor`의 `prototype` 이라는 프로퍼티를 참조한다.
+
+`prototype` 이라는 프로퍼티와 `__proto__` 라는 프로퍼티가 새로 등장했는데, 이 둘의 관계가 프로토타입의 핵심이다. 이를 참조하는 `__proto__`
+
+ 역시 당연히 객체다. `prototype` 객체 내부에는 인스턴스가 사용할 메서드를 저장한다. 그러면 인스턴스에서도 숨겨진 프로퍼티인 `__proto__`를 통해 이 메서드들에 접근할 수 있게 된다.
+
+예를 들어, `Person` 이라는 생성자 함수의 `prototype`에 `getName`이라는 메서드를 지정했다고 하자.
+
+```javascript
+var Person = function(name) {
+  this._name = name;
+};
+Person.prototype.getName = function() {
+  return this._name;
+};
+```
+
+이제 `Person` 의 인스턴스는 `__proto__` 프로퍼티를 통해 `getName`을 호출할 수 있다. 
+
+```javascript
+var suzi = new Person('suzi');
+suzi.__proto__.getName();		// undefined
+```
+
+왜냐하면 `instance`의 `__proto__`가 `Constructor`의 `prototype`을 참조하므로 둘은 결국 같은 객체를 바라보기 때문이다.
+
+여기서 메서드 호출의 결과로 `undefined`가 나온 것에 주목하자. 'suzi' 라는 값이 나오지 않은 것보다 '에러가 발생하지 않았다'는 점이 우선이다. 어떤 변수를 실행해 `undefined` 가 나왔다는 것은 이 변수가 '호출할 수 있는 함수'에 해당한다는 것을 의미한다. 만약 실행할 수 없는 , 즉 함수가 아닌 다른 데이터 타입이었다면 `TypeError` 가 발생했을 것이다. 그러나 에러가 발생하지 않았고 다른 값이 나왔으니까 `getName` 은 실제로 실행이 된 것이고 이로부터 `getName`은 함수라는 것이 입증됐다.
+
+다음으로 함수 내부에서 어떤 값을 반환하는지를 살펴보자. `this.name` 값을 리턴하는 것으로 나와있다. 그렇다면 `this`에 원래 의도와는 다른 값이 할당된 것이 아닐까하는 의문을 가질 수 있다. 앞서 이미 `this` 에 어떤 값이 할당되는지를 살펴본 바 있다. 어떤 함수를 '메서드로서' 호출할 때는 메서드명 바로 앞의 객체가 곧 `this` 가 된다고 했다. 그러니까 `thomas.__proto__.getName()` 에서 `getName` 함수 내부에서의 `this` 는 곧 `thomas` 가 아니라 `thomas.__proto__` 라는 객체가 되는 것이다. 이 객체 내부에는 `name` 프로퍼티가 없으므로 '찾고자 하는 식별자가 정의돼 있지 않을 때는 `Error` 대신 `undefined` 를 반환한다'는 자바스크립트 규칙에 의해 `undefined` 를 반환한 것이다.
+
+`__proto__` 를 빼면 `this` 가 `instance`가 되는 것이 맞지만, 이대로 메서드가 호출되고 원하는 값이 나오는 것은 조금 의아할 수 있다. 하지만 이런 것은 정상이다. 그 이유는 바로 `__proto__` 가 **생략 가능한** 프로퍼티이기 때문이다. 이는 원래부터 생략이 가능하도록 정의돼 있다. 그리고 이 정의를 바탕으로 자바스크립트의 전체 구조가 구성됐다고 봐도 과언이 아니다. **중요한 것은 `__proto__ ` 라는 프로퍼티가 생략이 가능하다는 점이다.**
+
+`__proto__` 를 생략하지 않으면 `this` 는 `suzi.__proto__` 를 바라보게 되지만, 이를 생략하면 `suzi` 를 바라보게 된다. `suzi.__proto__` 에 있는 메서드인 `getName` 을 실행하지만 `this` 는 `suzi` 를 바라보게 할 수 있게 된 것이다. 이를 도식으로 보면 다음과 같다.
+
+<img src="../images/6-3.png" height=600 />
+
+이제부터 프로토타입을 보는 순간 위 그림을 생각하고 그로부터 아래와 같은 문장을 만드는 연습을 하면 된다.
+
+"`new` 연산자로 `Constructor` 를 호출하면 `instance` 가 만들어지는데, 이 `instance` 의 생략 가능한 프로퍼티인 `__proto__` 는 `Constructor` 의 `prototype` 을 참조한다."
+
+프로토타입의 개념을 좀 더 상세히 설명하면 이렇다. 자바스크립트는 함수에 자동으로 객체인 `prototype` 프로퍼티를 생성해 놓는데, 해당 함수를 생성자 함수로서 사용할 경우, 즉 `new` 연산자와 함께 호출할 경우, 그로부터 생성된 인스턴스에는 숨겨진 프로퍼티인 `__proto__` 가 자동으로 생성되며, 이 프로퍼티는 생성자 함수의 `prototype` 프로퍼티를 참조한다. `__proto__` 프로퍼티는 생략 가능하도록 구현돼 있기 때문에  **생성자 함수의 `prototype` 에 어떤 메서드나 프로퍼티가 있다면 인스턴스에서도 마치 자신의 것처럼 해당 메서드나 프로퍼티에 접근할 수 있게 된다.**
+
+```javascript
+var Constructor = function(name) {
+  this.name = name;
+};
+Constructor.prototype.method1 = function() {};
+Constructor.prototype.property1 = 'Constructor Prototype Property';
+
+var instance = new Constructor('Instance');
+console.dir(Constructor);
+console.dir(instance);
+```
+
+개발자 도구에서 위 코드를 실행한 결과는 다음과 같다.
+
+<img src="../images/6-4.png" />
+
+8번째 줄에서는 `Constructor` 의 디렉터리 구조를 출력하라고 했다. 출력 결과의 첫 줄에는 함수라는 의미의 f와 함수 이름인 `Constructor`, 인자 `name` 이 보인다. 그 내부에는 옅은 색의 `arguments`, `caller`, `length`, `name`, `prototype`, `__proto__` 등의 프로퍼티들이 보인다.
+
+> ❗️
+>
+> `[[Prototype]]`과 `__proto__ ` 는 동일한 객체다.
+>
+> ES5.1 명세에는 `__proto__` 가 아니라 `[[prototype]]` 이라는 명칭으로 정의돼 있다. `__proto__` 라는 프로퍼티는 사실 브라우저들이 `[[prototype]]` 을 구현한 대상에 지나지 않았다. 명세에는 또 `instance.__proto__` 와 같은 방식으로 직접 접근하는 것은 허용하지 않고 오직 `Object.getPrototypeOf(instance) / Refelect.getPrototypeOf(instance)` 를 통해서만 접근할 수 있도록 정의했었다. 하지만 이런 명세에도 불구하고 대부분의 브라우저들이 `__proto__` 에 직접 접근하는 방식을 포기하지 않았고, 결국 ES6에서 이를 브라우저에서 동작하는 레거시 코드에 대한 호환성 유지 차원에서 정식으로 인정하기에 이르렀다. 다만 어디까지나 브라우저에서의 호환성을 고려한 지원일 뿐 권장되는 방식은 아니며, 브라우저가 아닌 다른 환경에서는 얼마든지 이 방식이 지원되지 않을 가능성이 있다.
+>
+> 가급적  `__proto__` 를 사용하는 대신 `Object.getPrototypeOf() / Object.create()` 등을 이용하는 것이 권장된다.
+>
+> ❗️
+>
+> 위와 같은 프로퍼티의 색상 차이는 `{ enumerable: false }` 속성이 부여된 프로퍼티인지 여부에 따른다. 짙은색은 enumerable, 즉 열거 가능한 프로퍼티임을 의미하고, 옅은색은 innumerable, 즉 열거할 수 없는 프로퍼티임을 의미한다. `for`, `in` 등으로 객체의 프로퍼티 전체에 접근하고자 할 때 접근 가능 여부를 색상으로 구분지어 표기하는 것이다.
+

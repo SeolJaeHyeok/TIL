@@ -12,7 +12,7 @@
 
 **그림 6-1** 프로토타입 도식(1)
 
-<img src="./images/6-1.png" width=400/>
+<img src="../images/6-1.png" width=400/>
 
 위 그림만 이해하면 프로토타입은 끝이다. 즉, 이 그림으로부터 전체 구조를 파악할 수 있고, 반대로 전체 구조로부터 이 그림을 도출해낼 수 있으면 된다. 위 그림은 사실 아래 코드의 내용을 추상화한 것이다.
 
@@ -75,7 +75,7 @@ carina.__proto__._name = "Carina__proto__";
 carina.__proto__.getName(); // Carina__proto__
 ```
 
-<img src="./images/6-2.png" width=600 height=400 />
+<img src="../images/6-2.png" width=600 height=400 />
 
 예상대로 "Carina\__proto__" 가 잘 출력되는 것을 확인할 수 있다. 그러니까 관건은 `this` 다. `this` 를 인스턴스로 할 수 있다면 좋을 것이다. 그 방법은 `__proto__` 없이 인스턴스에서 곧바로 메서드를 쓰는 것이다.
 
@@ -96,7 +96,7 @@ carina.__proto__.getName
 
 `__proto__` 를 생략하지 않으면 `this` 는 `carina.__proto__` 를 가리키지만, 이를 생략하면 `carina` 를 가리킨다. `carina.__proto__` 에 있는 메서드인 `getName` 을 실행하지만 `this` 는 `carina` 를 바라보게 할 수 있게 된 것이다. 도식으로 보면 다음과 같다.
 
-<img src="./images/6-3.png" height=600 />
+<img src="../images/6-3.png" height=600 />
 
 다시 한번 프로토타입에 대해 정의하면 아래와 같이 정의할 수 있다.
 
@@ -118,7 +118,7 @@ console.dir(Constructor);
 console.dir(instance);
 ```
 
-<img src="./images/6-4.png" height=600 />
+<img src="../images/6-4.png" height=600 />
 
 실행 결과를 보면 예제 6-2의 8번째 줄에서 `Constructor` 의 디렉터리 구조를 출력하라고 했다. 출력 결과의 첫 줄에는 함수라는 의미의 `f` 와 함수 이름인 `Constructor` , 인자 `name` 이 보인다. 그 내부에는 옅은 색의 `arguments, caller, length, name, prototype, [[Prototype]], [[Scopes]]` 등의 프로퍼티들이 보인다. `prototype` 을 열어보면 예제 6-2의 4,5번째 중에서 추가한 `method1`, `property1` 등의 값이 짙은 색으로 보이고 `Constructor` , `[[Prototype]]` 등이 옅은 색으로 보인다.
 
@@ -136,13 +136,13 @@ console.dir(arr);
 console.dir(Array);
 ```
 
-<img src="./images/6-5.png" height=600 />
+<img src="../images/6-5.png" height=600 />
 
 왼쪽은 `arr` 변수를 출력한 결과고, 오른쪽은 생성자 함수인 `Array` 를 출력한 결과다. 왼쪽부터 보면 첫 줄에는 Array(2)라고 표기되고 있다. `Array` 라는 생성자 함수를 원형으로 삼아 생성됐고, `length` 가 2임을 알 수 있다. 인덱스인 0, 1이 짙은 색상으로, `length` 와 `[[Prototype]] == __proto__` 가 옅은 색상으로 표기된다(책에서는 옅은 색상으로 표기되는데 직접 콘솔에서 확인할 때는 짙은 색상으로 확인된다.. 뭐지 ). `[[Prototype]]` 을 열어보니 옅은 색상의 다양한 배열 메서드들이 길게 펼쳐지는 것을 확인할 수 있다.
 
 이제 오른쪽을 보게되면, 첫 줄에는 함수라는 의미의 `f` 가 표시돼 있고, 둘째 줄부터는 함수의 기본적인 프로퍼티들인 `arguments`, `caller`, `length`, `name` 등이 옅은 색으로 보인다.  또한 `Array` 함수의 정적 메서드인 `from`, `isArray`, `of` 등도 보인다. `prototype` 을 열어보니 왼쪽의 `[[Prototype]] == __proto__` 과 완전히 동일한 내용으로 구성돼 있다. 위 출력 결과를 바탕으로 위 그림의 도식을 더욱 구체화하면 다음과 같다.
 
-<img src="./images/6-6.png" height=600 />
+<img src="../images/6-6.png" height=600 />
 
 이제 생성자 함수와 `prototype` , 인스턴스 사이의 관계가 명확히 보이는 것 같다. `Array` 를 `new` 연산자와 함께 호출해서 인스턴스를 생성하든, 그냥 배열 리터럴을 생성하든, 어쨌든 `instance` 인 [1, 2]가 만들어진다. 이 인스턴스의 `__proto__` 은 `Array.prototype` 을 참조하는데, `__proto__` 가 생략 가능하도록 설계돼 있기 때문에 인스턴스가 `push`, `pop`, `forEach` 등의 메서드를 마친 자신의 것처럼 호출할 수 있다. 한편 `Array` 의 `prototype` 프로퍼티 내부에 있지 않은 `from`, `isArray`, `of` 등의 메서드들은 인스턴스가 직접 호출할 수 없는 것들이다. 이들은 `Array` 생성자 함수에서 직접 접근해야 실행이 가능하다.
 
@@ -303,17 +303,17 @@ console.log(iu.__proto__.getName.call(iu)); // 지금
 console.dir({a: 1});
 ```
 
-<img src="./images/6-7.png" height=600 />
+<img src="../images/6-7.png" height=600 />
 
 첫 줄을 통해 `Object` 의 인스턴스임을 알 수 있고, 프로퍼티 a의 값 1이 보이고, `__proto__ == [[Prototype]]` 내부에는 `hasOwnProperty`, `isPrototypeOf`, `toLocaleString`, `toString`, `valueOf` 등의 메서드가 보인다. `constructor` 는 생성자인 `Object` 를 가리키고 있다.
 
 이번에는 다시 한 번 배열의 구조를 살펴보자. `__proto__` 내부의 다양한 메서드들을 생략하고 나머지 부분 위주로 표기했다.
 
-<img src="./images/6-8.png" height=600 />
+<img src="../images/6-8.png" height=600 />
 
 배열 리터럴 `__proto__` 에는 `pop`, `push` 등의 익숙한 배열 메서드 및 `constructor` 가 있다는 것은 이미 알아봤었고, 추가로, 이 `__proto__` 안에는 또다시 `__proto__` 가 등장한다. 열어보니 이전 그림에서 살펴본 객체의 `__proto__` 와 동일한 내용으로 이뤄져 있는 것을 확인할 수 있다. 이는 바로 `prototype` 객체가 '객체'이기 때문이다. 기본적으로 모든 객체의 `__proto__` 에는 `Object.prototype` 이 연결된다. `prototype` 객체도 예외가 아니다. 이를 그림으로 표현하면 다음과 같다.
 
-<img src="./images/6-9.jpeg" height=600 />
+<img src="../images/6-9.jpeg" height=600 />
 
 `__proto__` 생략이 가능하다고 했다. 그렇기 때문에 배열리 `Array.__proto__` 내부의 메서드를 마치 자신의 것처럼 실행할 수 있다. 마찬가지로 `Object.prototype` 내부의 메서드도 자신의 것처럼 실행할 수 있다. 생략 가능한 `__proto__` 를 한 번 더 따라가면 `Object.prototype` 을 참조할 수 있기 때문이다.
 
@@ -347,7 +347,7 @@ arr.toString(); // 1_2
 
 비단 배열만이 아니라, 자바스크립트 데이터는 모두 아래 그림처럼 동일한 형태의 프로토타입 체인 구조를 지닌다.
 
-<img src="./images/6-10.jpeg" height=600 />
+<img src="../images/6-10.jpeg" height=600 />
 
 #### 6-2-3 객체 전용 메서드의 예외사항
 
@@ -401,7 +401,7 @@ data.forEach(function(datum) {
 > console.dir(obj);
 > ```
 >
-> <img src="./images/6-11.png" />
+> <img src="../images/6-11.png" />
 >
 > \_proto에는 \__proto\__ 프로퍼티가 없는 객체를 할당했다. 다시 obj는 앞서 만든 \_proto 를 \__proto__로 하는 객체를 할당했다. 이제 obj를 출력해보면,     \_proto\_ 에는 오직 getValue 메서드만 존재하며, \__proto\_ 및 constructor 프로퍼티는 보이지 않는다. 이 방식으로 만든 객체는 일반적인 데이터에서 반드시 존재하던 내장 메서드 및 프로퍼티들이 제거됨으로써 기본 기능에 제약이 생긴 대신 객체 자체의 무게가 가벼워짐으로써 성능상의 이점을 가진다.
 
@@ -430,11 +430,11 @@ Grade.prototype = [];
 
 이 명령에 의해 아래 그림과 같이 서로 별개로 분리돼 있던 데이터가 연결되어 프로토 타입 체인 형태를 띄게 된다.
 
-<img src="./images/6-12.jpeg" />
+<img src="../images/6-12.jpeg" />
 
 ​																													⬇️ 
 
-<img src="./images/6-13.png" />
+<img src="../images/6-13.png" />
 
 이제 `Grade` 의 인스턴스인 `g` 에서 직접 배열의 메서드를 사용할 수 있다.
 
