@@ -3226,3 +3226,76 @@ console.log(Rectangle.isRectangle(rect1)); // true
 
 ----
 
+#### ES6의 클래스 및 클래스 상속
+
+앞에서 수차례 언급했듯이 ES6에서는 본격적으로 클래스 문법이 도입됐다. 여기서는 ES5 체계에서의 생성자 함수 및 프로토타입과 ES6의 클래스 문법을 비교하며 살펴보도록 하자. 
+
+```javascript
+var ES5 = function(name) {
+  this.name = name;
+};
+ES5.staticMethod = function() {
+  return this.name + ' staticMethod';
+};
+ES5.prototype.method = function() {
+  return this.name + ' method';
+};
+var es5Instance = new ES5('es5');
+console.log(ES5.staticMethod()); // es5 staticMethod
+console.log(es5Instance.method()); // es5 method
+
+var ES6 = class {
+  constructor(name) {
+    this.name = name;
+  }
+  static staticMethod() {
+    return this.name + ' staticMethod';
+  }
+  method() {
+    return this.name + ' method';
+  }
+};
+var es6Instance = new ES6('es6');
+console.log(ES6.staticMethod()); // es6 staticMethod
+console.log(es6Instance.method()); // es6 method
+```
+
+- 13번째 줄: `class` 라는 명령어 뒤에 바로 `{ }` 가 등장한다. 이 중괄호 묶음 내부가 클래스 본문 영역이다.
+- 14번째 줄: `constructor` 라는 미음 뒤에 바로 `( ) { `가 등장하고 있다. 클래스 본문에서는 `function` 키워드를 생략하더라도 모두 메서드로 인식한다. `constructor` 라는 이름에서 알 수 있듯이, 이 부분은 ES5의 생성자 함수와 동일한 역할을 수행한다.
+- 16번째 줄: 메서드와 다음 메서드 사이에는  콤마로 구분하지 않는다.
+- 17번째 줄: `static` 이라는 키워드 뒤에 `staticMethod` 라는 이름이 등장했고, 뒤이어 `(){}` 가 등장한다. `static` 키워드는 해당 메서드가 `static` 메서드임을 알리는 내용으로, ES5 체계에서 생성자 함수에 바로 할당하는 메서드와 동일하게 생성자 함수(클래스) 자신만이 호출할 수 있다.
+- 20번째 줄: `method` 라는 이름이 등장했다. 이는 자동으로 `prototype` 객체 내부에 할당되는 메서드다. `ES5.prototype.method` 와 동일하게, 인스턴스가 프로토타입 체이닝을 통해 마치 자신의 것처럼 호출할 수 있는 메서드다.
+
+이번에는 클래스 상속에 대해 살펴보자.
+
+```javascript
+var Rectangle = class {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+  getArea() {
+    return this.width * this.height;
+  }
+};
+var Square = class extends Rectangle {
+  constructor(width) {
+    super(width, width);
+  }
+  getArea() {
+    console.log('size is :', super.getArea());
+  }
+};
+```
+
+- 10번째 줄: `Square` 를 `Rectangle` 클래스를 상속받는 `SubClass` 로 만들기 위해 `class` 명령어 뒤에 단순히 '`extends Rectancle`' 이라는 내용을 추가했다. 이렇게 설정하면 상속 관계 설정이 끝난다.
+- 12번째 줄: `constructor` 내부에서는 `super` 라는 키워드를 함수처럼 사용할 수 있는데, 이 함수는 `SuperClass` 의 `constructor` 를 실행한다.
+- 15번째 줄: `constructor` 메서드를 제외한 다른 메서드에서는 `super` 키워드를 마치 객체처럼 사용할 수 있고, 이때 객체는 `SuperClass.prototype` 을 바라보는데, 호출한 메서드의 `this` 는 `super` 가 아닌 원래의 `this` 를 그대로 따른다.
+
+----
+
+#### 정리
+
+- 자바스크립트는 프로토타입 기반 언어라서 클래스 상속 개념은 존재하지 않지만 프로토타입을 기반으로 클래스와 비슷하게 동작하게끔 하는 다양한 기법들이 도입돼 왔다.
+- 클래스는 어떤 사물의 공통 속성을 모아 정의한 추상적인 개념이고, 인스턴스는 클래스의 속성을 지니는 구체적인 사례다. 상위 클래스(superclass)의 조건을 충족하면서 더욱 구체적인 조건이 추가된 것을 하위 클래스(subclass)라고 한다.
+- 클래스의 `prototype` 내부에 정의된 메서드들을 프로토타입 메서드라고 하며, 이들은 인스턴스가 마치 자신의 것처럼 호출할 수 있다. 한편 클래스(생성자 함수)에 직접 정의한 메서드들은 스태틱 메서드라고 하며, 이들은 인스턴스가 직접 호출할 수 없고 클래스(생성자 함수)에 의해서만 호출할 수 있다.
