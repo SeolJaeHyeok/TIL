@@ -3,6 +3,8 @@ import ErrorBoundary from "./ErrorBoundary";
 import EventPractice from "./EventPractice";
 import LifeCycleSample from "./LifeCycleSample";
 import Say from "./Say";
+import ScrollBox from "./ScrollBox";
+import ValidationSample from "./ValidationSample";
 
 // 랜덤 색상을 생성
 function getRandomColor() {
@@ -22,7 +24,12 @@ class App extends Component {
 
   render() {
     return (
-      <EventPractice />
+      <div>
+        <ScrollBox ref={(ref) => (this.scrollBox = ref)} />
+        <button onClick={() => this.scrollBox.scrollToBottom()}>
+          맨 밑으로
+        </button>
+      </div>
       // <div>
       //   <button onClick={this.handleClick}>랜덤 색상</button>
       //   <ErrorBoundary>
