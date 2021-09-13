@@ -12,6 +12,9 @@ const EventPractice = () => {
       ...form, // 기존의 form 내용을 이 자리에 복사한 뒤
       [e.target.name]: e.target.value, // 원하는 값을 덮어 씌우기
     };
+    console.log(e);
+    console.log(e.target.name);
+    console.log(e.target.value);
     setForm(nextForm);
   };
   const handleClick = () => {

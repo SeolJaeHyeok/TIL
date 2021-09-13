@@ -29,6 +29,7 @@ class Counter extends Component {
               (prevState) => ({
                 number: prevState.number + 1,
               }),
+              // 콜백 함수 등록해서 this.setState가 끝난 후 특정 작업 실행
               () => {
                 console.log("방금 setState가 호출되었습니다.");
                 console.log(this.state);
