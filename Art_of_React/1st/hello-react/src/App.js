@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ErrorBoundary from "./ErrorBoundary";
 import EventPractice from "./EventPractice";
+import IterationSample from "./IterationSample";
 import LifeCycleSample from "./LifeCycleSample";
 import Say from "./Say";
 import ScrollBox from "./ScrollBox";
@@ -25,17 +26,11 @@ class App extends Component {
   render() {
     return (
       <div>
-        <ScrollBox ref={(ref) => (this.scrollBox = ref)} />
-        <button onClick={() => this.scrollBox.scrollToBottom()}>
-          맨 밑으로
-        </button>
+        <button onClick={this.handleClick}>랜덤 색상</button>
+        <ErrorBoundary>
+          <LifeCycleSample color={this.state.color} />
+        </ErrorBoundary>
       </div>
-      // <div>
-      //   <button onClick={this.handleClick}>랜덤 색상</button>
-      //   <ErrorBoundary>
-      //     <LifeCycleSample color={this.state.color} />
-      //   </ErrorBoundary>
-      // </div>
     );
   }
 }
