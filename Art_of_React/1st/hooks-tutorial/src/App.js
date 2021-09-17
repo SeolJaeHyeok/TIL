@@ -1,9 +1,10 @@
 import "./App.css";
 import Average from "./Average";
+import Counter from "./Counter";
 import Info from "./Info";
 
 const App = () => {
-  return <Info />;
+  return <Average />;
 };
 
 export default App;
