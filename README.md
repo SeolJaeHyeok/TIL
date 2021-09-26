@@ -54,7 +54,3 @@
 - Python을 공부하며 사용한 코드 및 내용 정리 
   - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 핵심 개념 정리
 
-#### MyBlog Project
-
-- 현재 작업 중인 프로젝트 -> [Click](https://github.com/SeolJaeHyeok/MyBlog)
-
