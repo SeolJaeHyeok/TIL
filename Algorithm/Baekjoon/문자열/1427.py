@@ -1,10 +1,13 @@
 # 1427, 삽입 정렬 이용
+# 데이터를 역순으로 정렬하는 것이기 때문에 일반적인 오름차순 정렬과는 값의 비교가 반대
 n = list(input())
 
 for i in range(1, len(n)):
     for j in range(i, 0, -1):
-        if int(n[j]) > int(n[j - 1]):
+        if int(n[j]) > int(n[j - 1]):  # 자신의 왼쪽에 있는 데이터보다 크다면 스왑
             n[j], n[j-1] = n[j-1], n[j]
+        else:  # 자기보다 작은 데이터를 만나면 반복문 탈출 why? 특정 데이터의 왼쪽에 있는 데이터들은 이미 정렬이 된 상태이기 때문에
+            break
 
 for i in n:
     print(i, end='')
