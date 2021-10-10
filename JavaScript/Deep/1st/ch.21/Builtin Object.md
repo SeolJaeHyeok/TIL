@@ -157,5 +157,186 @@ ES6에서 새롭게 도입된 원시값인 심벌도 래퍼 객체를 생성한�
 
 이처럼 문자열, 숫자, 불리언, 심벌은 암묵적으로 생성되는 래퍼 객체에 의해 마치 객체처럼 사용할 수 있으며, 표준 빌트인 객체인 `String`, `Number`, `Booelean`, `Symbol` 의 프로토타입 메서드 또는 프로퍼티를 참조할 수 있다. 따라서 `String`, `Number`, `Booelean` 생성자 함수를 `new` 연산자와 함께 호출하여 문자열, 숫자, 불리언 인스턴스를 생성할 필요가 없으며 권장되지도 않는 방법이다. 
 
-문자열, 숫자, 불리언, 심벌 이외의 원시값, 즉 `null` 과 `undefined` 는 래퍼 객체를 생성하지 않는다. 따라서 `null` 과 `undefined` 값을 객체처럼 사용하면 에러가 발생한다. 
+문자열, 숫자, 불리언, 심벌 이외의 원시값, 즉 `null` 과 `undefined` 는 래퍼 객체를 생성하지 않는다. 따라서 `null` 과 `undefined` 값을 객체처럼 사용하면 에러가 발생한다.
+
+## 21.4 전역 객체
+
+전역 객체는 코드가 실행되기 이전 단계에 자바스크립트 엔진에 의해 어떤 객체보다도 먼저 생성되는 특수한 객체이며, 어떤 객체에도 속하지 않은 최상위 객체다.
+
+전역 객체는 자바스크립트 환경에 따라 지칭하는 이름이 제각각이다. 브라우저에서 환경에서는 `window` 가 전역 객체를 가리키지만 Node.js 환경에서는 `global` 이 전역 객체를 가리킨다.
+
+전역 객체는 표준 빌트인 객체(`Object`, `String`, `Number`, `Function`, `Array` 등)와 환경에 따른 호스트 객체(클라이언트 Web API 또는 Node.js의 호스트 API), 그리고 `var` 키워드로 선역한 전역 변수와 전역 함수를 프로퍼티로 갖는다.
+
+즉, 전역 객체는 계층적 구조상 어떤 객체에도 속하지 않은 모든 빌트인 객체(표준 빌트인 객체와 호스트 객체)의 최상위 객체다. 전역 객체가 최상위 객체라는 것은 프로토타입 상속 관계상에서 최상위 객체라는 의미가 아니다. 전역 객체 자신은 어떤 객체의 프로퍼티도 아니며 객체의 계층적 구조상 표준 빌트인 객체와 호스트 객체를 프로퍼티로 소유한다는 것을 말한다. 
+
+전역 객체의 특징은 다음과 같다.
+
+- 전역 객체는 개발자가 의도적으로 생성할 수 없다. 즉, 전역 객체를 생성할 수 있는 생성자 함수가 제공되지 않는다.
+- 전역 객체의 프로퍼티를 참조할 때 `window` 또는 `global` 을 생략할 수 있다.
+
+```javascript
+// 문자열 'F'를 16진수로 해석하여 10진수로 변환하여 반환한다.
+window.parseInt('F', 16); // -> 15
+// window.parseInt는 parseInt로 호출할 수 있다.
+parseInt('F', 16); // -> 15
+
+window.parseInt === parseInt; // -> true
+```
+
+- 전역 객체는 `Object`, `String`, `Number`, `Boolean`, `Function`, `Array`, `RegExp`, `Date`, `Math`, `Promise` 같은 모든 표준 빌트인 객체를 프로퍼티로 가지고 있다.
+- 자바스크립트 실행 환경에 따라 추가적으로 프로퍼티와 메서드를 갖는다. 브라우저 환경에서는 DOM, BOM, Canvas, XMLHttpReqeust, fetch, requestAnimationFrame, SVG, Web storage, Web Component, Web Worker와 같은 클라이언스 사이드 Webl API를 호스트 객체로 제공하고, Node.js 환경에서는 Node.js 고유의 API를 호스트 객체로 제공한다.
+- `var` 키워드로 선언한 전역 변수와 선언하지 않은 변수에 값을 할당한 암묵적 전역, 그리고 전역 함수는 전역 객체의 프로퍼티가 된다.
+
+```javascript
+// var 키워드로 선언한 전역 변수
+var foo = 1;
+console.log(window.foo); // 1
+
+// 선언하지 않은 변수에 값을 암묵적 전역. bar는 전역 변수가 아니라 전역 객체의 프로퍼티다.
+bar = 2; // window.bar = 2
+console.log(window.bar); // 2
+
+// 전역 함수
+function baz() { return 3; }
+console.log(window.baz()); // 3
+```
+
+- `let` 이나 `const` 키워드로 선언한 전역 변수는 전역 객체의 프로퍼티가 아니다. 즉, `window.foo` 와 같이 접근할 수 없다. `let` 이나 `const` 키워드로 선언한 전역 변수는 보이지 않는 개념적인 블록(전역 렉시컬 환경의 선언적 환경 레코드) 내에 존재하게 된다.
+
+```javascript
+let foo = 123;
+console.log(window.foo); // undefined
+```
+
+- 브라우저 환경의 모든 자바스크립트 코드는 하나의 전역 객체 `window` 를 공유한다. 여러 개의 `script` 태그를 통해 자바스크립트 코드를 분리해도 하나의 전역 객체  `window` 를 공유한다는 것은 같다. 이는 분리되어 있는 자바스크립트 코드가 하나의 전역을 공유한다는 의미다.
+
+전역 객체는 몇 가지 프로퍼티와 메서드를 가지고 있다. 전역 객체의 프로퍼티와 메서드는 전역 객체를 가리키는 식별자, 즉 `window` 나 `global` 을 생략하여 참조/호출할 수 있으므로 전역 변수와 전역 함수처럼 사용할 수 있다.
+
+#### 21.4.1 빌트인 전역 프로퍼티
+
+빌트인 전역 프로퍼티는 전역 객체의 프로퍼티를 말한다. 주로 애플리케이션 전역에서 사용하는 값을 제공한다.
+
+**1. Infinity**
+
+`Infinity` 프로퍼티는 무한대를 나타내는 숫자값 `Infinity` 를 갖는다.
+
+```javascript
+// 전역 프로퍼티는 window를 생략하고 참조할 수 있다.
+console.log(window.Infinity === Infinity); // true
+
+// 양의 무한대
+console.log(3/0);  // Infinity
+// 음의 무한대
+console.log(-3/0); // -Infinity
+// Infinity는 숫자값이다.
+console.log(typeof Infinity); // number
+```
+
+**2. NaN**
+
+`NaN`  프로퍼티는 숫자가 아님(Not-a-Number)을 나타내는 숫자값 `NaN` 을 갖는다. `NaN` 프로퍼티는 `Number.NaN` 프로퍼티와 같다.
+
+```javascript
+console.log(window.NaN); // NaN
+
+console.log(Number('xyz')); // NaN
+console.log(1 * 'string');  // NaN
+console.log(typeof NaN);    // number
+```
+
+**3. undefined**
+
+`undefined` 프로퍼티는 원시 타입인 `undefined` 을 값으로 갖는다.
+
+```javascript
+console.log(window.undefined); // undefined
+
+var foo;
+console.log(foo); // undefined
+console.log(typeof undefined); // undefined
+```
+
+#### 21.4.2 빌트인 전역 함수
+
+빌트인 전역 함수는 애플리케이션 전역에서 호출할 수 있는 빌트인 함수로서 전역 객체의 메서드다.
+
+**1. eval**
+
+`eval` 함수는 자바스크립트 코드를 나타내는 문자열을 인수로 전달받는다. 전달받은 문자열 코드가 표현식이라면 `eval` 함수는 문자열 코드를 런타임에 평가하여 값을 생성하고, 전달받은 인수가 표현식이 아닌 문이라면 `eval` 함수는 문자열 코드를 런타임에 실행한다. 문자열 코드가 여러 개의 문으로 이루어져 있다면 모든 문을 실행한다. 
+
+```javascript
+// 표현식인 문
+eval('1 + 2;'); // -> 3
+// 표현식이 아닌 문
+eval('var x = 5;'); // -> undefined
+
+// eval 함수에 의해 런타임에 변수 선언문이 실행되어 x 변수가 선언되었다.
+console.log(x); // 5
+
+// 객체 리터럴은 반드시 괄호로 둘러싼다.
+const o = eval('({ a: 1 })');
+console.log(o); // {a: 1}
+
+// 함수 리터럴은 반드시 괄호로 둘러싼다.
+const f = eval('(function() { return 1; })');
+console.log(f()); // 1
+```
+
+인수로 전달받은 문자열 코드가 여러 개의 문으로 이루어져 있다면 모든 문을 실행한 다음, 마지막 결과값을 반환한다.
+
+```javascript
+console.log(eval('1 + 2; 3 + 4;')); // 7
+```
+
+`eval` 함수는 자신이 호출된 위치에 해당하는 기존의 스코프를 런타임에 동적으로 수정한다. 
+
+```javascript
+const x = 1;
+
+function foo() {
+  // eval 함수는 런타임에 foo 함수의 스코프를 동적으로 수정한다.
+  eval('var x = 2;');
+  console.log(x); // 2
+}
+
+foo();
+console.log(x); // 1
+```
+
+위 예제의 `eval` 함수는 새로운 `x` 변수를 선언하면서 `foo` 함수의 스코프에 선언된 `x` 변수를 동적으로 추가한다. 함수가 호출되면 런타임 이전에 먼저 함수 몸체 내부의 모든 선언문을 먼저 실행하고 그 결과를 스코프에 등록한다. 따라서 위 예제의 `eval` 함수가 호출되는 시점에는 이미 `foo` 함수의 스코프가 존재한다. **하지만 `eval` 함수는 기존의 스코프를 런타임에 동적으로 수정한다.** 그리고 `eval` 함수에 전달된 코드는 이미 그 위치에 존재하던 코드처럼 동작한다. 즉, `eval` 함수가 호출된 `foo` 함수의 스코프에서 실행된다.
+
+단, strict mode에서 `eval` 함수는 기존의 스코프를 수정하지 않고 `eval` 함수 자신의 자체적인 스코프를 생성한다. 
+
+```javascript
+const x = 1;
+
+function foo() {
+  'use strict';
+
+  // strict mode에서 eval 함수는 기존의 스코프를 수정하지 않고 eval 함수 자신의 자체적인 스코프를 생성한다.
+  eval('var x = 2; console.log(x);'); // 2
+  console.log(x); // 1
+}
+
+foo();
+console.log(x); // 1
+```
+
+또한 인수로 전달받은 문자열 코드가 `let`, `const` 키워드를 사용한 변수 선언문이라면 암묵적으로 strict mode가 적용된다.
+
+```javascript
+const x = 1;
+
+function foo() {
+  eval('var x = 2; console.log(x);'); // 2
+  // let, const 키워드를 사용한 변수 선언문은 strict mode가 적용된다.
+  eval('const x = 3; console.log(x);'); // 3
+  console.log(x); // 2
+}
+
+foo();
+console.log(x); // 1
+```
+
+`eval` 함수를 통해 사용자로부터 입력받은 콘텐츠를 실행하는 것은 보안에 매우 취약하다. 또한 `eval` 함수를 통해 실행되는 코드는 자바스크립트 엔진에 의해 최적화가 수행되지 않으므로 일반적인 코드 실행에 비해 처리 속도가 느리다. 따라서 **`eval` 함수의 사용은 금지해야 한다.**
 
