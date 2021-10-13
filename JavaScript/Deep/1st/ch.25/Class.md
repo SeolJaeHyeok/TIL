@@ -190,3 +190,165 @@ const you = new MyClass(); // ReferenceError: MyClass is not defined
 ```
 
 이는 기명 함수 표현식과 마찬가지로 클래스 표현식에서 사용한 클래스 이름은 외부 코드에서 접근 불가능하기 때문이다.
+
+## 25.5 메서드
+
+클래스 몸체에는 0개 이상의 메서드만 선언할 수 있다. 클래스 몸체에서 정의할 수 있는 메서드는 `constructor` , 프로토타입 메서드, 정적 메서드의 세 가지가 있다.
+
+#### 25.5.1 constructor
+
+`constructor` 는 인스턴스를 생성하고 초기화하기 위한 특수한 메서드다. `constructor` 는 이름을 변경할 수 없다.
+
+```javascript
+class Person {
+  // 생성자
+  constructor(name) {
+    // 인스턴스 생성 및 초기화
+    this.name = name;
+  }
+}
+```
+
+앞에서 살펴보았듯이 클래스는 인스턴스를 생성하기 위한 생성자 함수다. 다음 이미지은 클래스 내부의 구성을 보여주는 이미지다.
+
+<img src="../images/25-2.png" />
+
+위 이미지처럼 클래스는 평가되어 함수 객체가 된다. "함수 객체의 프로퍼티"에서 살펴보았듯이 클래스도 함수 객체 고유의 프로퍼티를 모두 갖고 있다. 함수와 동일하게 프로토타입과 연결되어 있으며 자신의 스코프 체인을 구성한다.
+
+모든 함수 객체가 가지고 있는 `prototype` 프로퍼티가 가리키는 프로토타입 객체의 `constrcutor` 프로퍼티는 클래스 자신을 가리키고 있다. 이는 클래스가 인스턴스를 생성하는 생성자 함수라는 것을 의미한다. 즉, `new` 연산자와 함께 클래스를 호출하면 클래스는 인스턴스를 생성한다.
+
+이번에는 클래스가 생성한 인스턴스의 내부를 들여다 보자.
+
+<img src="../images/25-3.png" height=600/>
+
+`Person` 클래스의 `constructor` 내부에서 `this` 에 추가한 `name` 프로퍼티가 클래스가 생성한 인스턴스의 프로퍼티로 추가된 것을 확인할 수 있다.
+
+즉, 생성자 함수와 마찬가지로 `constrcutor` 내부에서 `this` 에 추가한 프로퍼티는 인스턴스 프로퍼티가 된다. `constrcutor` 내부의 `this` 는 생성자 함수와 마찬가지로 클래스가 생성한 인스턴스를 가리킨다.
+
+```javascript
+// 클래스
+class Person {
+  // 생성자
+  constructor(name) {
+    // 인스턴스 생성 및 초기화
+    this.name = name;
+  }
+}
+
+// 생성자 함수
+function Person(name) {
+  // 인스턴스 생성 및 초기화
+  this.name = name;
+}
+```
+
+그런데 여기서 클래스가 평가되어 생성된 함수 객체나 클래스나 생성한 인스턴스 어디에도 `constrcutor` 메서드가 보이지 않는다는 것을 확인할 수 있다. 이는 클래스 몸체에 정의한 `constrcutor` 가 단순한 메서드가 아니라는 것을 의미한다.
+
+`constrcutor` 는 메서드로 해석되는 것이 아니라 클래스가 평가되어 생성한 함수 객체 코드의 일부가 된다. 다시 말해, 클래스 정의가 평가되면 `constrcutor` 의 기술된 동작을 하는 함수 객체가 생성된다.
+
+> ❗️
+>
+> 클래스의 `constrcutor` 메서드와 프로토타입의 `constrcutor` 프로퍼티는 이름이 같아  혼동하기 쉽지만 직접적인 관련이 없다. 프로토타입의 `constrcutor` 프로퍼티는 모든 프로토타입이 가지고 있는 프로퍼티이며, 생성자 함수를 가리킨다.
+
+`constrcutor` 는 생성자 함수와 유사하지만 몇 가지 차이가 있다.
+
+`constrcutor` 는 클래스 내에 최대 한 개만 존재할 수 있다. 만약 클래스가 2개 이상의 `constrcutor` 를 포함하면 문법 에러가 발생한다.
+
+```javascript
+class Person {
+  constructor() {}
+  constructor() {}
+}
+// SyntaxError: A class may only have one constructor
+```
+
+`constrcutor` 는 생략할 수 있다.
+
+```javascript
+class Person {}
+```
+
+`constrcutor` 를 생략하면 클래스에 다음과 같이 빈 `constrcutor` 가 암묵적으로 정의된다. `constrcutor` 를 생략한 클래스는 빈 `constrcutor`에 의해 빈 객체를 생성한다.
+
+```javascript
+class Person {
+  // constructor를 생략하면 다음과 같이 빈 constructor가 암묵적으로 정의된다.
+  constructor() {}
+}
+
+// 빈 객체가 생성된다.
+const me = new Person();
+console.log(me); // Person {}
+```
+
+프로퍼티가 추가되어 초기화된 인스턴스를 생성하려면 `constrcutor` 내부에서 `this` 에 인스턴스 프로퍼티를 추가한다.
+
+```javascript
+class Person {
+  constructor() {
+    // 고정값으로 인스턴스 초기화
+    this.name = 'Lee';
+    this.address = 'Seoul';
+  }
+}
+
+// 인스턴스 프로퍼티가 추가된다.
+const me = new Person();
+console.log(me); // Person {name: "Lee", address: "Seoul"}
+```
+
+인스턴스를 생성할 때 클래스 외부에서 인스턴스 프로퍼티의 초기값을 전달하려면 다음과 같이 `constrcutor` 에 매개변수를 선언하고 인스턴스를 생성할 때 초기값을 전달한다. 이때 초기값은 `constrcutor` 의 매개변수에게 전달된다.
+
+```javascript
+class Person {
+  constructor(name, address) {
+    // 인수로 인스턴스 초기화
+    this.name = name;
+    this.address = address;
+  }
+}
+
+// 인수로 초기값을 전달한다. 초기값은 constructor에 전달된다.
+const me = new Person('Lee', 'Seoul');
+console.log(me); // Person {name: "Lee", address: "Seoul"}
+```
+
+이처럼 `constrcutor` 내에서는 인스턴스의 생성과 동시에 인스턴스 프로퍼티 추가를 통해 인스턴스의 초기화를 실행한다. 따라서 인스턴스를 초기화하려면 `constrcutor` 를 생략해서는 안된다. 
+
+`constrcutor` 는 별도의 반환문을 갖지 않아야 한다. `new` 연산자와 함께 클래스가 호출되면 생성자 함수와 동일하게 암묵적으로 `this`, 즉 인스턴스를 반환하기 때문이다.
+
+만약 `this` 가 아닌 다른 객체를 명시적으로 반환하면 `this`, 즉 인스턴스가 반환되지 못하고 `return` 문에 명시한 객체가 반환된다.
+
+```javascript
+class Person {
+  constructor(name) {
+    this.name = name;
+
+    // 명시적으로 객체를 반환하면 암묵적인 this 반환이 무시된다.
+    return {};
+  }
+}
+
+// constructor에서 명시적으로 반환한 빈 객체가 반환된다.
+const me = new Person('Lee');
+console.log(me); // {}
+```
+
+하지만 명시적으로 원시값을 반환하면 원시값 반환은 무시되고 암묵적으로 `this` 가 반환된다.
+
+```javascript
+class Person {
+  constructor(name) {
+    this.name = name;
+
+    // 명시적으로 원시값을 반환하면 원시값 반환은 무시되고 암묵적으로 this가 반환된다.
+    return 100;
+  }
+}
+
+const me = new Person('Lee');
+console.log(me); // Person { name: "Lee" }
+```
+
+이처럼 `constrcutor` 내부에서 명시적으로 `this` 가 아닌 다른 값을 반환하는 것은 클래스의 기본 동작을 훼손한다. 따라서 `constrcutor` 내부에서는 `return` 문을 반드시 생략해야 한다.
+
