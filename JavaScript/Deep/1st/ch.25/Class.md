@@ -538,3 +538,438 @@ Reflect.has({ a: 1 }, 'a'); // -> true
 3. 암묵적으로 strict mode로 실행된다.
 4. `for...in` 문이나 `Object.keys` 메서드 등으로 열거할 수 없다. 즉, 프로퍼티 열거 가능 여부를 나타내며, 불리언 값을 갖는 프로퍼티 어트리뷰트 `[[Enumerable]]` 의 값이 `false` 다.
 5. 내부 메서드 `[[Construct]]` 를 갖지 않는 non-constructor다. 따라서 `new` 연산자와 함께 호출할 수 없다.
+
+## 25.6 클래스의 인스턴스 생성 과정
+
+`new` 연산자와 함께 클래스를 호출하면 생성자 함수와 마찬가지로 클래스 내부 메서드 `[[Construct]]` 가 호출된다. 클래스는 `new` 연산자 없이 호출할 수 없다. 이때 클래스는 생성자 함수와 비슷한 과정을 거쳐 인스턴스를 생성한다.
+
+**1. 인스턴스 생성과 this 바인딩**
+
+`new` 연산자와 함께 클래스를 호출하면 `constructor` 내부 코드가 실행되기에 앞서 암묵적으로 빈 객체가 생성된다. 이 빈 객체가 바로(아직 완성되지 않은) 클래스가 생성한 인스턴스다. 이때 클래스가 생성한 인스턴스의 프로토타입으로 클래스의 `prototype` 프로퍼티가 가리키는 객체가 설정된다. 그리고 암묵적으로 생성된 빈 객체, 즉 인스턴스는 `this` 에 바인딩된다. 따라서 `constructor` 내부의 `this` 에는 클래스가 생성한 인스턴스를 가리킨다.
+
+**2. 인스턴스 초기화**
+
+`constructor` 내부의 코드가 실행되어 `this` 에 바인딩되어 있는 인스턴스를 초기화한다. 즉, `this` 에 바인딩되어 있는 인스턴스에 프로퍼티를 추가하고 `constructor` 가 인수로 전달받은 초기값으로 인스턴스의 프로퍼티 값을 초기화한다. 만약 `constructor` 가 생략되었다면 이 과정도 생략된다.
+
+**3. 인스턴스 반환**
+
+클래스의 모든 처리가 끝나면 완성된 인스턴스가 바인딩된 `this` 가 암묵적으로 반환된다.
+
+```javascript
+class Person {
+  // 생성자
+  constructor(name) {
+    // 1. 암묵적으로 인스턴스가 생성되고 this에 바인딩된다.
+    console.log(this); // Person {}
+    console.log(Object.getPrototypeOf(this) === Person.prototype); // true
+
+    // 2. this에 바인딩되어 있는 인스턴스를 초기화한다.
+    this.name = name;
+
+    // 3. 완성된 인스턴스가 바인딩된 this가 암묵적으로 반환된다.
+  }
+}
+```
+
+## 25.7 프로퍼티
+
+#### 25.7.1 인스턴스 프로퍼티
+
+인스턴스 프로퍼티는 `constructor` 내부에서 정의해야 한다.
+
+```javascript
+class Person {
+  constructor(name) {
+    // 인스턴스 프로퍼티
+    this.name = name;
+  }
+}
+
+const me = new Person('Lee');
+console.log(me); // Person {name: "Lee"}
+```
+
+앞서 말했듯이 `constructor` 내부 코드가 실행되기 이전에 `constructor` 내부의 `this` 에는 이미 클래스가 암묵적으로 생성한 인스턴스인 빈 객체가 바인딩되어 있다.
+
+생성자 함수에서 생성자 함수가 생성할 인스턴스의 프로퍼티를 정의하는 것과 마찬가지로 `constructor` 내부에서 `this` 에 인스턴스 프로퍼티를 추가한다. 이로써 클래스가 암묵적으로 생성한 빈 객체, 즉 인스턴스에 프로퍼티가 추가되어 인스턴스가 초기화된다.
+
+```javascript
+class Person {
+  constructor(name) {
+    // 인스턴스 프로퍼티
+    this.name = name; // name 프로퍼티는 public하다.
+  }
+}
+
+const me = new Person('Lee');
+
+// name은 public하다.
+console.log(me.name); // Lee
+```
+
+`constructor` 내부에서 `this` 에 추가한 프로퍼티는 언제나 클래스가 생성한 인스턴스의 프로퍼티가 된다. ES6의 클래스는 다른 객체지향 언어처럼 `private,` `public`, `protected` 키워드와 같은 접근 제한자를 지원하지 않는다. 따라서 인스턴스 프로퍼티는 언제나 `public` 하다. 다행히도 `private` 한 프로퍼티를 정의할 수 있는 사양이 현재 제안 중에 있다.
+
+#### 25.7.2 접근자 프로퍼티
+
+접근자 프로퍼티는 자체적으로는 값(`[[Value]]` 내부 슬롯) 을 갖지 않고 다른 데이터 프로퍼티의 값을 읽거나 저장할 때 사용하는 접근자 함수로 구성된 프로퍼티다.
+
+```javascript
+const person = {
+  // 데이터 프로퍼티
+  firstName: 'Ungmo',
+  lastName: 'Lee',
+
+  // fullName은 접근자 함수로 구성된 접근자 프로퍼티다.
+  // getter 함수
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  },
+  // setter 함수
+  set fullName(name) {
+    // 배열 디스트럭처링 할당: "36.1. 배열 디스트럭처링 할당" 참고
+    [this.firstName, this.lastName] = name.split(' ');
+  }
+};
+
+// 데이터 프로퍼티를 통한 프로퍼티 값의 참조.
+console.log(`${person.firstName} ${person.lastName}`); // Ungmo Lee
+
+// 접근자 프로퍼티를 통한 프로퍼티 값의 저장
+// 접근자 프로퍼티 fullName에 값을 저장하면 setter 함수가 호출된다.
+person.fullName = 'Heegun Lee';
+console.log(person); // {firstName: "Heegun", lastName: "Lee"}
+
+// 접근자 프로퍼티를 통한 프로퍼티 값의 참조
+// 접근자 프로퍼티 fullName에 접근하면 getter 함수가 호출된다.
+console.log(person.fullName); // Heegun Lee
+
+// fullName은 접근자 프로퍼티다.
+// 접근자 프로퍼티는 get, set, enumerable, configurable 프로퍼티 어트리뷰트를 갖는다.
+console.log(Object.getOwnPropertyDescriptor(person, 'fullName'));
+// {get: ƒ, set: ƒ, enumerable: true, configurable: true}
+```
+
+접근자 프로퍼티는 클래스에서도 사용할 수 있다. 위 예제의 객체 리터럴을 클래스로 표현하면 다음과 같다.
+
+```javascript
+class Person {
+  constructor(firstName, lastName) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+  }
+
+  // fullName은 접근자 함수로 구성된 접근자 프로퍼티다.
+  // getter 함수
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+
+  // setter 함수
+  set fullName(name) {
+    [this.firstName, this.lastName] = name.split(' ');
+  }
+}
+
+const me = new Person('Ungmo', 'Lee');
+
+// 데이터 프로퍼티를 통한 프로퍼티 값의 참조.
+console.log(`${me.firstName} ${me.lastName}`); // Ungmo Lee
+
+// 접근자 프로퍼티를 통한 프로퍼티 값의 저장
+// 접근자 프로퍼티 fullName에 값을 저장하면 setter 함수가 호출된다.
+me.fullName = 'Heegun Lee';
+console.log(me); // {firstName: "Heegun", lastName: "Lee"}
+
+// 접근자 프로퍼티를 통한 프로퍼티 값의 참조
+// 접근자 프로퍼티 fullName에 접근하면 getter 함수가 호출된다.
+console.log(me.fullName); // Heegun Lee
+
+// fullName은 접근자 프로퍼티다.
+// 접근자 프로퍼티는 get, set, enumerable, configurable 프로퍼티 어트리뷰트를 갖는다.
+console.log(Object.getOwnPropertyDescriptor(Person.prototype, 'fullName'));
+// {get: ƒ, set: ƒ, enumerable: false, configurable: true}
+```
+
+접근자 프로퍼티는 자체적으로는 값을 갖지 않고 다른 데이터 프로퍼티의 값을 읽거나 저장할 때 사용하는 접근자 함수, 즉 `getter` 함수나 `setter` 함수로 구성되어 있다.
+
+`getter` 는 인스턴스 프로퍼티에 접근할 때마다 프로퍼티 값을 조작하거나 별도의 행위가 필요할 때 사용한다. `getter` 는 메서드 이름 앞에 `get` 키워드를 사용해 정의한다. `setter` 는 인스턴스 프로퍼티에 값을 할당할 때마다 프로퍼티 값을 조작하거나 별도의 행위가 필요할 때 사용한다. `setter` 는 메서드 앞에 `set` 키워드를 사용해 정의한다.
+
+이때 `getter` 와 `setter` 이름은 인스턴스 프로퍼티처럼 사용된다. 다시 말해 `getter` 는 호출하는 것이 아니라 프로퍼티를 참조하는 형식으로 사용되며, 참조 시에 내부적으로 `getter` 가 호출된다. `setter` 도 호출하는 것이 아니라 프로퍼티처럼 값을 할당하는 형식으로 사용하며, 할당 시에 내부적으로 `setter` 가 호출된다.
+
+`getter` 는 이름 그대로 무언가를 취득할 때 사용하므로 반드시 무언가를 반환해야 하고 `setter` 는 무언가를 프로퍼티에 할당해야 할 때 사용하므로 반드시 매개변수가 있어야 한다. `setter` 는 단 하나의 값만 할당받기 때문에 단 하나의 매개변수만 선언할 수 있다.
+
+클래스의 메서드는 기본적으로 프로토타입 메서드가 된다. 따라서 클래스의 접근자 프로퍼티 또한 인스턴스 프로퍼티가 아닌 프로토타입 프로퍼티가 된다.
+
+```javascript
+// Object.getOwnPropertyNames는 비열거형(non-enumerable)을 포함한 모든 프로퍼티의 이름을 반환한다.(상속 제외)
+Object.getOwnPropertyNames(me); // -> ["firstName", "lastName"]
+Object.getOwnPropertyNames(Object.getPrototypeOf(me)); // -> ["constructor", "fullName"]
+```
+
+<img src="../images/25-4.png" />
+
+#### 25.7.3 클래스 필드 정의 제안
+
+먼저 클래스 필드(필드 또는 멤버)는 클래스 기반 객체지향 언어에서 클래스가 생성할 인스턴스의 프로퍼티를 가리키는 용어다. 클래스 기반 객체지향 언어인 자바의 클래스 정의를 살펴보자. 자바의 클래스 필드는 마치 클래스 내부에서 변수처럼 사용된다.
+
+```java
+// 자바의 클래스 정의
+public class Person {
+  // ① 클래스 필드 정의
+  // 클래스 필드는 클래스 몸체에 this 없이 선언해야 한다.
+  private String firstName = "";
+  private String lastName = "";
+
+  // 생성자
+  Person(String firstName, String lastName) {
+    // ③ this는 언제나 클래스가 생성할 인스턴스를 가리킨다.
+    this.firstName = firstName;
+    this.lastName = lastName;
+  }
+
+  public String getFullName() {
+    // ② 클래스 필드 참조
+    // this 없이도 클래스 필드를 참조할 수 있다.
+    return firstName + " " + lastName;
+  }
+}
+```
+
+자바스크립트의 클래스에서 인스턴스 프로퍼티를 선언하고 초기화하려면 반드시 `constructor` 내부에서 `this` 에 프로퍼티를 추가해야 한다. 하지만 자바의 클래스에서는 위 예제의 (1)과 같이 클래스 필드를 마치 변수처럼 클래스 몸체에 `this` 없이 선언한다.
+
+또한 자바스크립트의 클래스에서 인스턴스 프로퍼티를 참조하려면 반드시 `this` 를 사용하여 참조해야 한다. 하지만 자바의 클래스에서는 (2)와 같이 `this` 를 생략해도 클래스 필드를 참조할 수 있다.
+
+클래스 기반 객체지향 언어의 `this` 는 언제나 클래스가 생성할 인스턴스를 가리킨다. 위 예제의 (3)과 같이 `this` 는 주로 클래스 필드가 생성자 또는 메서드의 매개변수 이름과 동일할 때 클래스 필드임을 명확히 하기 위해 사용한다.
+
+자바스크립트의 클래스 몸체에는 메서드만 선언할 수 있다. 따라서 클래스 몸체에 자바와 유사하게 클래스 필드를 선언하면 문법 에러가 발생한다.
+
+```javascript
+class Person {
+  // 클래스 필드 정의
+  name = 'Lee';
+}
+
+const me = new Person('Lee');
+```
+
+하지만 위 예제를 최신 브라우저(Chrome 72 이상) 또는 최신 Node.js(버전 12이상)에서 실행하면 문법 에러가 발생하지 않고 정상 동작한다.
+
+자바스크립트에서도 인스턴스 프로퍼티를 마치 클래스 기반 객체지향 언어의 클래스 필드처럼 정의할 수 있는 표준 사양인 "Class field declarations"가 TC39 프로세스의 stage 3에 제안되어 있다.
+
+클래스 몸체에서 클래스 필드를 정의할 수 있는 클래스 필드 정의 제안은 아직 ECMAScript 표준 사양으로 승급되지는 않았지만 최신 브라우저와 최신 Node.js는 표준 사양으로 승급이 확실시되는 이 제안을 선제적으로 미리 구현해 놓았다. 따라서 최신 브라우저와 최신 Node.js에서는 다음과 같이 클래스 필드를 클래스 몸체에 정의할 수 있다.
+
+```javascript
+class Person {
+  // 클래스 필드 정의
+  name = 'Lee';
+}
+
+const me = new Person();
+console.log(me); // Person {name: "Lee"}
+```
+
+클래스 몸체에서 클래스 필드를 정의하는 경우 `this` 에 클래스 필드를 바인딩해서는 안된다. `this` 는 클래스의 `constructor` 와 메서드 내에서만 유효하다.
+
+```javascript
+class Person {
+  // this에 클래스 필드를 바인딩해서는 안된다.
+  this.name = ''; // SyntaxError: Unexpected token '.'
+}
+```
+
+클래스 필드를 참조하는 경우 자바와 같은 클래스 기반 객체지향 언어에서는 `this` 를 생략할 수 있으나 자바스크립트에서는 `this` 를 반드시 사용해야 한다.
+
+```javascript
+class Person {
+  // 클래스 필드
+  name = 'Lee';
+
+  constructor() {
+    console.log(name); // ReferenceError: name is not defined
+  }
+}
+
+new Person();
+```
+
+클래스 필드에 초기값을 할당하지 않으면 `undefined` 를 갖는다.
+
+```javascript
+class Person {
+  // 클래스 필드를 초기화하지 않으면 undefined를 갖는다.
+  name;
+}
+
+const me = new Person();
+console.log(me); // Person {name: undefined}
+```
+
+인스턴스를 생성할 때 외부의 초기값으로 클래스 필드를 초기화해야 할 필요가 있다면 `constructor` 에서 클래스 필드를 초기화해야 한다.
+
+```javascript
+class Person {
+  name;
+
+  constructor(name) {
+    // 클래스 필드 초기화.
+    this.name = name;
+  }
+}
+
+const me = new Person('Lee');
+console.log(me); // Person {name: "Lee"}
+```
+
+이처럼 인스턴스를 생성할 때 클래스 필드를 초기화해야 할 필요가 있다면 `constructor` 밖에서 클래스 필드를 정의할 필요가 없다. 클래스 필드를 초기화할 필요가 있다면 어차피 `constructor` 내부에서 클래스 필드를 참조하여 초기값을 할당해야 한다.  이때  `this`, 즉 클래스가 생성한 인스턴스에 클래스 필드에 해당하는 프로퍼티가 없다면 자동 추가되기 때문이다. 
+
+```javascript
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+}
+
+const me = new Person('Lee');
+console.log(me); // Person {name: "Lee"}
+```
+
+함수는 일급 객체이므로 함수를 클래스 필드에 할당할 수 없다. 따라서 클래스 필드를 통해 메서드를 정의할 수도 있다.
+
+```javascript
+class Person {
+  // 클래스 필드에 문자열을 할당
+  name = 'Lee';
+
+  // 클래스 필드에 함수를 할당
+  getName = function () {
+    return this.name;
+  }
+  // 화살표 함수로 정의할 수도 있다.
+  // getName = () => this.name;
+}
+
+const me = new Person();
+console.log(me); // Person {name: "Lee", getName: ƒ}
+console.log(me.getName()); // Lee
+```
+
+이처럼 클래스 필드에 함수를 할당하는 경우, 이 함수는 프로토타입 메서드가 아닌 인스턴스 메서드가 된다. 모든 클래스 필드는 인스턴스 프로퍼티가 되기 때문이다. 따라서 클래스 필드에 함수를 할당하는 것은 권장하지 않는다.
+
+클래스 필드 정의 제안으로 인해 인스턴스 프로퍼티를 정의하는 방식은 두 가지가 되었다. 인스턴스를 생성할 때 외부 초기값으로 클래스 필드를 초기화할 필요가 있다면 `constructor` 에서 인스턴스 프로퍼티를 정의하는 기존 방식을 사용하고, 인스턴스를 생성할 때 외부 초기값으로 클래스 필드를 초기화할 필요가 없다면 기존의 `constructor` 에서 인스턴스 프로퍼티를 정의하는 방식과 클래스 필드 정의 제안을 모두 사용할 수 있다.
+
+#### 25.7.4 private 필드 정의 제안
+
+"캡슐화와 정보 은닉"에서 살펴보았듯이 자바스크립트는 캡슐화를 완전하게 지원하지 않는다. ES6의 클래스도 생성자 함수와 마찬가지로 다른 클래스 기반 객체지향 언어에서는 지원하는 `private`, `public`, `protected` 키워드와 같은 접근 제한자를 지원하지 않는다. 따라서 인스턴스 프로퍼티는 인스턴스를 통해 클래스 외부에서 언제나 참조할 수 있다. 즉, 언제나 `public` 이다.
+
+```javascript
+class Person {
+  constructor(name) {
+    this.name = name; // 인스턴스 프로퍼티는 기본적으로 public하다.
+  }
+}
+
+// 인스턴스 생성
+const me = new Person('Lee');
+console.log(me.name); // Lee
+```
+
+클래스 필드의 정의 제안을 사용하더라도 클래스 필드는 기본적으로 `public` 하기 때문에 외부에 그대로 노출된다.
+
+```javascript
+class Person {
+  name = 'Lee'; // 클래스 필드도 기본적으로 public하다.
+}
+
+// 인스턴스 생성
+const me = new Person();
+console.log(me.name); // Lee
+```
+
+다행히도 클래스 필드 정의 제안과 마찬가지로 TC39 프로세스의 stage 3에는 `private` 필드를 정의할 수 있는 새로운 표준 사양이 제안되어 있다. 표준 사양으로 승급이 확실시되는 이 제안도 최신 브라우저와 최신 Node.js에 이미 구현되어 있다.
+
+`private` 필드의 선두에는 `#` 을 붙여준다. `private` 필드를 참조할 때도 `#` 을 붙여주어야 한다.
+
+```javascript
+class Person {
+  // private 필드 정의
+  #name = '';
+
+  constructor(name) {
+    // private 필드 참조
+    this.#name = name;
+  }
+}
+
+const me = new Person('Lee');
+
+// private 필드 #name은 클래스 외부에서 참조할 수 없다.
+console.log(me.#name);
+// SyntaxError: Private field '#name' must be declared in an enclosing class
+```
+
+`public` 필드는 어디서든 참조할 수 있지만 `private` 필드는 클래스 내부에서만 참조할 수 있다.
+
+|         접근 가능성         | public | private |
+| :-------------------------: | :----: | :-----: |
+|         클래스 내부         |   O    |    O    |
+|      자식 클래스 내부       |   O    |    X    |
+| 클래스 인스턴스를 통한 접근 |   O    |    X    |
+
+이처럼 클래스 외부에서 `private` 필드에 직접 접근할 수 있는 방법은 없다. 다만 접근자 프로퍼티를 통해 간접적으로 접근하는 방법은 유효하다.
+
+```javascript
+class Person {
+  // private 필드 정의
+  #name = '';
+
+  constructor(name) {
+    this.#name = name;
+  }
+
+  // name은 접근자 프로퍼티다.
+  get name() {
+    // private 필드를 참조하여 trim한 다음 반환한다.
+    return this.#name.trim();
+  }
+}
+
+const me = new Person(' Lee ');
+console.log(me.name); // Lee
+```
+
+`private` 필드는 반드시 클래스 몸체에 정의해야 한다. `private` 필드를 직접 `constructor` 에 정의하면 에러가 발생한다.
+
+```javascript
+class Person {
+  constructor(name) {
+    // private 필드는 클래스 몸체에서 정의해야 한다.
+    this.#name = name;
+    // SyntaxError: Private field '#name' must be declared in an enclosing class
+  }
+}
+```
+
+#### 25.7.5 static 필드 정의 제안
+
+클래스에는 `static` 키워드를 사용하여 정적 메서드를 정의할 수 있다. 하지만 `static` 키워드를 사용하여 정적 필드를 정의할 수는 없었다. 하지만 `static public` 필드, `static private` 필드, `static private` 메서드를 정의할 수 있는 새로운 표준 사양인 "Static class features"가 TC39 프로세스의 stage 3에 제안되어 있다. 이 제안도 마찬가지로 최신 브라우저와 최신 Node.js에서는 이미 구현이 되어 있다.
+
+```javascript
+class MyMath {
+  // static public 필드 정의
+  static PI = 22 / 7;
+
+  // static private 필드 정의
+  static #num = 10;
+
+  // static 메서드
+  static increment() {
+    return ++MyMath.#num;
+  }
+}
+
+console.log(MyMath.PI); // 3.142857142857143
+console.log(MyMath.increment()); // 11
+```
+
+
+
