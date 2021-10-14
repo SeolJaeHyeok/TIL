@@ -1407,3 +1407,173 @@ console.log(derived.sayHi()); // Hi! Lee. how are you doing?
    console.log(Derived.sayHi()); // Hi! how are you doing?
    ```
 
+#### 25.8.6 상속 클래스의 인스턴스 생성 과정
+
+상속 관계에 있는 두 클래스가 어떻게 협력하며 인스턴스를 생성하는지 살펴보도록 하자.
+
+당연히 클래스가 단독으로 인스턴스를 생성하는 과정보다 상속 관계에 있는 두 클래스가 협력하며 생성하는 과정이 좀 더 복잡하다.
+
+직사각형을 추상화한 `Rectangle` 클래스와 상속을 통해 `Rectangle` 클래스를 확장한 `ColorRectangle`  클래스를 정의해 보자.
+
+```javascript
+// 수퍼클래스
+class Rectangle {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  getArea() {
+    return this.width * this.height;
+  }
+
+  toString() {
+    return `width = ${this.width}, height = ${this.height}`;
+  }
+}
+
+// 서브클래스
+class ColorRectangle extends Rectangle {
+  constructor(width, height, color) {
+    super(width, height);
+    this.color = color;
+  }
+
+  // 메서드 오버라이딩
+  toString() {
+    return super.toString() + `, color = ${this.color}`;
+  }
+}
+
+const colorRectangle = new ColorRectangle(2, 4, 'red');
+console.log(colorRectangle); // ColorRectangle {width: 2, height: 4, color: "red"}
+
+// 상속을 통해 getArea 메서드를 호출
+console.log(colorRectangle.getArea()); // 8
+// 오버라이딩된 toString 메서드를 호출
+console.log(colorRectangle.toString()); // width = 2, height = 4, color = red
+```
+
+`ColorRectangle` 클래스에 의해 생성된 인스턴스의 프로토타입 체인은 다음과 같다.
+
+<img src="../images/25-8.png" height=600/>
+
+서브 클래스 `ColorRectangle`이 `new` 연산자와 함께 호출되면 다음 과정을 통해 인스턴스를 생성한다.
+
+**1. 서브클래스의 super 호출**
+
+자바스크립트 엔진은 클래스를 평가할 때 수퍼클래스와 서브 클래스를 구분하기 위해 "base" 또는 "derived"를 값으로 갖는 내부 슬롯 `[[ConstructorKind]]` 를 갖는다. 다른 클래스를 상속받지 않는 클래스(그리고 생성자 함수)는 내부 슬롯 `[[ConstructorKind]]` 의 값이 "base"로 설정되지만 다른 클래스를 상속받는 서브클래스는 내부 슬롯 `[[ConstructorKind]]` 의 값이 "derived"로 설정된다. 이를 통해 수퍼클래스와 서브클래스는 `new` 연산자와 함께 호출되었을 때의 동작이 구분된다.
+
+다른 클래스를 상속받지 않는 클래스(그리고 생성자 함수)는 `new` 연산자와 함께 호출되었을 때 암묵적으로 빈 객체, 즉 인스턴스를 생성하고 이를 `this` 에 바인딩한다.
+
+하지만 **서브클래스는 자신이 직접 인스턴스를 생성하지 않고 수퍼클래스에게 인스턴스 생성을 위임한다. 이것이 바로 서브클래스의 `constructor` 에서 반드시 `super` 를 호출해야 하는 이유다.**
+
+서브클래스가 `new` 연산자와 함께 호출되면 서브클래스 `constructor` 내부의 `super` 키워드가 함수처럼 호출된다. `super` 클래스가 호출되면 수퍼클래스의 `constructor`(super-constructor)가 호출된다. 좀 더 정확히 말하자면 수퍼클래스가 평가되어 생성된 함수 객체의 코드가 실행되기 시작한다.
+
+만약 서브클래스 `constructor` 내부에 `super` 호출이 없으면 에러가 발생한다. 실제로 인스턴스를 생성하는 주체는 수퍼클래스이므로 수퍼클래스의 `constructor` 를 호출하는 `super` 가 호출되지 않으면 인스턴스를 생성할 수 없기 때문이다.
+
+**2. 수퍼클래스의 인스턴스 생성과 this 바인딩**
+
+수퍼클래스의 `constructor` 내부의 코드가 실행되기 이전에 암묵적으로 빈 객체를 생성한다. 이 빈 객체가 바로 클래스가 생성한 아직 완성되지 않은 인스턴스다. 그리고 암묵적으로 생성된 빈 객체, 즉 인스턴스는 `this` 에 바인딩된다. 따라서 수퍼클래스의 `constructor` 내부의 `this` 는 생성된 인스턴스를 가리킨다.
+
+```javascript
+// 수퍼클래스
+class Rectangle {
+  constructor(width, height) {
+    // 암묵적으로 빈 객체, 즉 인스턴스가 생성되고 this에 바인딩된다.
+    console.log(this); // ColorRectangle {}
+    // new 연산자와 함께 호출된 함수, 즉 new.target은 ColorRectangle이다.
+    console.log(new.target); // ColorRectangle
+...
+```
+
+이때 인스턴스는 슈퍼클래스가 생성한 것이다. 하지만 `new` 연산자와 함께 호출된 클래스가 서브클래스라는 것이 중요하다. 즉, `new` 연산자와 함께 호출된 함수를 가리키는 `new.target` 은 서브 클래스를 가리킨다. 따라서 **인스턴스는 `new.target` 이 가리키는 서브클래스가 생성한 것으로 처리된다.**
+
+따라서 생성된 인스턴스의 프로토타입은 수퍼클래스의 `prototype` 프로퍼티가 가리키는 객체(`Rectangle.prototype`)가 아니라 `new.target`, 즉 서브 클래스의 `prototype` 프로퍼티가 가리키는 객체(`ColorRectangle.prototype`)다.
+
+```javascript
+// 수퍼클래스
+class Rectangle {
+  constructor(width, height) {
+    // 암묵적으로 빈 객체, 즉 인스턴스가 생성되고 this에 바인딩된다.
+    console.log(this); // ColorRectangle {}
+    // new 연산자와 함께 호출된 함수, 즉 new.target은 ColorRectangle이다.
+    console.log(new.target); // ColorRectangle
+
+    // 생성된 인스턴스의 프로토타입으로 ColorRectangle.prototype이 설정된다.
+    console.log(Object.getPrototypeOf(this) === ColorRectangle.prototype); // true
+    console.log(this instanceof ColorRectangle); // true
+    console.log(this instanceof Rectangle); // true
+...
+```
+
+**3. 수퍼클래스의 인스턴스 초기화**
+
+수퍼클래스의 `constructor`가 실행되어 `this` 에 바인딩되어 있는 인스턴스를 초기화한다. 즉, `this` 에 바인딩되어 있는 인스턴스에 프로퍼티를 추가하고 `constructor` 가 인수로 전달받은 초기값으로 인스턴스의 프로퍼티를 초기화한다.
+
+```javascript
+// 수퍼클래스
+class Rectangle {
+  constructor(width, height) {
+    // 암묵적으로 빈 객체, 즉 인스턴스가 생성되고 this에 바인딩된다.
+    console.log(this); // ColorRectangle {}
+    // new 연산자와 함께 호출된 함수, 즉 new.target은 ColorRectangle이다.
+    console.log(new.target); // ColorRectangle
+
+    // 생성된 인스턴스의 프로토타입으로 ColorRectangle.prototype이 설정된다.
+    console.log(Object.getPrototypeOf(this) === ColorRectangle.prototype); // true
+    console.log(this instanceof ColorRectangle); // true
+    console.log(this instanceof Rectangle); // true
+
+    // 인스턴스 초기화
+    this.width = width;
+    this.height = height;
+
+    console.log(this); // ColorRectangle {width: 2, height: 4}
+  }
+...
+```
+
+**4. 서브클래스 constructor로의 복귀와 this 바인딩**
+
+`super` 의 호출이 종료되고 제어 흐름이 서브클래스 `constructor`로 돌아온다. **이때 `super` 가 반환한 인스턴스가 `this` 에 바인딩된다. 서브클래스는 별도의 인스턴스를 생성하지 않고 `super` 가 반환한 인스턴스를 `this`에 바인딩하여 그대로 사용한다.**
+
+```javascript
+// 서브클래스
+class ColorRectangle extends Rectangle {
+  constructor(width, height, color) {
+    super(width, height);
+
+    // super가 반환한 인스턴스가 this에 바인딩된다.
+    console.log(this); // ColorRectangle {width: 2, height: 4}
+...
+```
+
+이처럼 `super` 가 호출되지 않으면 인스턴스가 생성되지 않으며, `this` 바인딩도 할 수 없다. 서브클래스의 `constructor` 에서 `super` 를 호출하기 전에는 `this` 를 참조할 수 없는 이유가 바로 이 때문이다. 따라서 서브클래스 `constructor` 내부의 인스턴스 초기화는 반드시 `super` 호출 이후에 처리되어야 한다.
+
+**5. 서브클래스의 인스턴스 초기화**
+
+`super` 호출 이후, 서브클래스의 `constructor`에 기술되어 있는 인스턴스 초기화가 실행된다. 즉, `this` 에 바인딩되어 있는 인스턴스에 프로퍼티를 추가하고 `constructor` 가 인수로 전달받은 초기값으로 인스턴스의 프로퍼티를 초기화한다.
+
+**6. 인스턴스 반환**
+
+클래스의 모든 처리가 끝나면 완성된 인스턴스가 바인딩된 `this` 가 암묵적으로 반환된다.
+
+```javascript
+// 서브클래스
+class ColorRectangle extends Rectangle {
+  constructor(width, height, color) {
+    super(width, height);
+
+    // super가 반환한 인스턴스가 this에 바인딩된다.
+    console.log(this); // ColorRectangle {width: 2, height: 4}
+
+    // 인스턴스 초기화
+    this.color = color;
+
+    // 완성된 인스턴스가 바인딩된 this가 암묵적으로 반환된다.
+    console.log(this); // ColorRectangle {width: 2, height: 4, color: "red"}
+  }
+...
+```
+
