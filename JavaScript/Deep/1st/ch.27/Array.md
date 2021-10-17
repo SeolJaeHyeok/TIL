@@ -417,3 +417,371 @@ Array.from({ length: 3 }, (_, i) => i); // -> [0, 1, 2]
 > ```
 >
 > 이터러블 객체는 `Symbol.iterator` 메서드를 구현하여 `for...of` 문으로 순회할 수 있으며, 스프레드 문법과 배열 디스트럭처링 할당의 대상으로 사용할 수 있는 객체를 말한다.
+
+## 27.5 배열 요소의 참조
+
+배열의 요소를 참조할 때에는 대괄호 표기법을 사용한다. 대괄호 안에는 인덱스가 와야 한다. 정수로 평가되는 표현식이라면 인덱스 대신 사용할 수 있다. 인덱스는 값을 참조할 수 있다는 의미에서 객체의 프로퍼티 키와 같은 역할을 한다.
+
+```javascript
+const arr = [1, 2];
+
+// 인덱스가 0인 요소를 참조
+console.log(arr[0]); // 1
+// 인덱스가 1인 요소를 참조
+console.log(arr[1]); // 2
+```
+
+존재하지 않는 요소에 접근하면 에러가 발생하는 것이 아닌  `undefined` 가 반환된다.
+
+```javascript
+const arr = [1, 2];
+
+// 인덱스가 2인 요소를 참조, 배열 arr에는 인덱스가 2인 요소가 존재하지 않는다.
+console.log(arr[2]); // undefined
+```
+
+배열은 사실 인덱스를 나타내는 문자열을 프로퍼티 키로 갖는 객체다. 따라서 존재하지 않는 프로퍼티 키로 객체의 프로퍼티에 접근했을 때 `undefined` 를 반환하는 것처럼 배열도 존재하지 않는 요소를 참조하면 `undefined` 를 반환한다.
+
+같은 이유로 희소 배열의 존재하지 않는 요소를 참조해도 `undefined` 가 반환된다.
+
+```javascript
+// 희소 배열
+const arr = [1, , 3];
+
+// 배열 arr에는 인덱스가 1인 요소가 존재하지 않는다.
+console.log(Object.getOwnPropertyDescriptors(arr));
+/*
+{
+  '0': {value: 1, writable: true, enumerable: true, configurable: true},
+  '2': {value: 3, writable: true, enumerable: true, configurable: true},
+  length: {value: 3, writable: true, enumerable: false, configurable: false}
+*/
+
+// 존재하지 않는 요소를 참조하면 undefined가 반환된다.
+console.log(arr[1]); // undefined
+console.log(arr[3]); // undefined
+```
+
+## 27.6 배열 요소의 추가와 갱신
+
+객체의 프로퍼티를 동적으로 추가할 수 있는 것처럼 배열에도 요소를 동적으로 추가할 수 있다. 존재하지 않는 인덱스를 사용해 값을 할당하면 새로운 요소가 추가된다. 이때 `length` 프로퍼티 값은 자동 갱신된다.
+
+```javascript
+const arr = [0];
+
+// 배열 요소의 추가
+arr[1] = 1;
+
+console.log(arr); // [0, 1]
+console.log(arr.length) // 2
+```
+
+만약 현재 배열의 `length` 프로퍼티 값보다 큰 인덱스로 새로운 요소를 추가하면 희소 배열이 된다.
+
+```javascript
+arr[100] = 100;
+
+console.log(arr); // [0, 1, empty x 98, 100]
+console.log(arr.length) // 101
+```
+
+이때 인덱스로 요소에 접근하여 명시적으로 값을 할당하지 않은 요소는 생성되지 않는다는 것에 주의하자.
+
+```javascript
+// 명시적으로 값을 할당하지 않은 요소는 생성되지 않는다.
+console.log(Object.getOwnPropertyDescriptors(arr));
+/*
+{
+  '0': {value: 0, writable: true, enumerable: true, configurable: true},
+  '1': {value: 1, writable: true, enumerable: true, configurable: true},
+  '100': {value: 100, writable: true, enumerable: true, configurable: true},
+  length: {value: 101, writable: true, enumerable: false, configurable: false}
+*/
+```
+
+이미 요소가 존재하는 요소에 값을 재할당하면 요소값이 갱신된다.
+
+```javascript
+// 요쇼값의 갱싱
+arr[1] = 10;
+
+console.log(arr); // [0, 10, empty x 98, 100]
+```
+
+인덱스는 요소의 위치를 나타내므로 반드시 0 이상의 정수(또는 정수 형태의 문자열)를 사용해야 한다. 만약 정수 이외의 값을 인덱스처럼 사용하면 요소가 생성되는 것이 아니라 프로퍼티가 생성된다. 이때 추가된 프로퍼티는 `length` 프로퍼티 값에 영향을 주지 않는다.
+
+```javascript
+const arr = [];
+
+// 배열 요소의 추가
+arr[0] = 1;
+arr['1'] = 2;
+
+// 프로퍼티 추가
+arr['foo'] = 3;
+arr.bar = 4;
+arr[1.1] = 5;
+arr[-1] = 6;
+
+console.log(arr); // [1, 2, foo: 3, bar: 4, '1.1': 5, '-1': 6]
+
+// 프로퍼티는 length에 영향을 주지 않는다.
+console.log(arr.length); // 2
+```
+
+## 27.7 배열 요소의 삭제
+
+배열은 사실 객체이기 때문에 배열의 특정 요소를 삭제하기 위해 `delete` 연산자를 사용할 수 있다.
+
+```javascript
+const arr = [1, 2, 3];
+
+// 배열 요소의 삭제
+delete arr[1];
+console.log(arr); // [1, empty, 3]
+
+// length 프로퍼티에 영향을 주지 않는다. 즉, 희소 배열이 된다.
+console.log(arr.length); // 3
+```
+
+`delete` 연산자는 객체의 프로퍼티를 삭제한다. 따라서 위 예제의 `delete a[1]` 은 `arr` 에서 프로퍼티 키가 '1'인 프로퍼티를 삭제한다. 이때 배열은 희소 배열이 되며 `length` 프로퍼티의 값은 변하지 않는다. 따라서 희소 배열을 만드는 `delete` 연산자는 사용하지 않는 것이 좋다.
+
+희소 배열을 만들지 않으면서 배열의 특정 요소를 완전히 삭제하려면 `Array.prototype.splice` 메서드를 사용한다.
+
+```javascript
+const arr = [1, 2, 3];
+
+// Array.prototype.splice(삭제를 시작할 인덱스, 삭제할 요소 수)
+// arr[1]부터 1개의 요소를 제거
+arr.splice(1, 1);
+console.log(arr); // [1, 3]
+
+// length 프로퍼티가 자동 갱신된다.
+console.log(arr.length); // 2
+```
+
+## 27.8 배열 메서드
+
+자바스크립트는 배열을 다룰 때 유용한 다양한 빌트인 메서드를 제공한다. `Array` 생성자 함수는 정적 메서드를 제공하며, 배열 객체의 프로토타입인 `Array.prototype` 은 프로토타입 메서드를 제공한다. 배열은 사용 빈도가 높은 자료구조이므로 배열 메서드의 사용법은 꼭 숙지해두어야 한다.
+
+배열 메서드는 결과물을 반환하는 패턴이 두 가지이므로 주의가 필요하다. **배열에는 원본 배열(배열 메서드를 호출한 배열, 즉 배열 메서드의 구현체 내부에서 `this` 가 가리키는 객체)을 직접 변경하는 메서드<sup>mutator method</sup> 와 원본 배열을 직접 변경하지 않고 새로운 배열을 생성하여 반환하는 메서드<sup>accessor method</sup> 가 있다.**
+
+```javascript
+const arr = [1];
+
+// push 메서드는 원본 배열(arr)을 직접 변경한다.
+arr.push(2);
+console.log(arr); // [1, 2]
+
+// concat 메서드는 원본 배열(arr)을 직접 변경하지 않고 새로운 배열을 생성하여 반환한다.
+const result = arr.concat(3);
+console.log(arr);    // [1, 2]
+console.log(result); // [1, 2, 3]
+```
+
+ES5부터 도입된 배열 메서드는 대부분 원본 배열을 직접 변경하지 않지만 초창기 배열 메서드는 원본 배열을 직접 변경하는 경우가 많다. 원본 배열을 직접 변경하는 메서드는 외부 상태를 직접 변경하는 부수효과가 있으므로 사용할 때 주의해야 한다. 따라서 가급적 원본 배열을 직접 변경하지 않는 메서드를 사용하는 편이 좋다.
+
+#### 27.8.1 Array.isArray
+
+`Array.isArray` 는 `Array` 생성자 함수의 정적 메서드다. 앞서 살펴본 `Array.of` 와 `Array.from` 의 경우에도 생성자 함수의 정적 메서드다.
+
+**`Array.isArray` 메서드는 전달된 이수가 배열이면 `true` 아니면 `false` 를 반환한다.**
+
+```javascript
+// true
+Array.isArray([]);
+Array.isArray([1, 2]);
+Array.isArray(new Array());
+
+// false
+Array.isArray();
+Array.isArray({});
+Array.isArray(null);
+Array.isArray(undefined);
+Array.isArray(1);
+Array.isArray('Array');
+Array.isArray(true);
+Array.isArray(false);
+Array.isArray({ 0: 1, length: 1 })
+```
+
+#### 27.8.2 Array.prototype.indexOf
+
+**`Array.prototype.indexOf` 메서드는 원본 배열에서 인수로 전달된 요소를 검색하여 인덱스를 반환한다.**
+
+- 원본 배열에 인수로 전달한 요소와 중복되는 요소가 여러 개 있다면 첫 번째로 검색된 요소의 인덱스를 반환한다.
+- 원본 배열에 인수로 전달한 요소가 존재하지 않으면 -1을 반환한다.
+
+```javascript
+const arr = [1, 2, 2, 3];
+
+// 배열 arr에서 요소 2를 검색하여 첫 번째로 검색된 요소의 인덱스를 반환한다.
+arr.indexOf(2);    // -> 1
+// 배열 arr에 요소 4가 없으므로 -1을 반환한다.
+arr.indexOf(4);    // -> -1
+// 두 번째 인수는 검색을 시작할 인덱스다. 두 번째 인수를 생략하면 처음부터 검색한다.
+arr.indexOf(2, 2); // -> 2
+```
+
+`indexOf` 메서드는 배열에 특정 요소가 존재하는지 확인할 때 유용하다.
+
+```javascript
+const foods = ['apple', 'banana', 'orange'];
+
+// foods 배열에 'orange' 요소가 존재하는지 확인한다.
+if (foods.indexOf('orange') === -1) {
+  // foods 배열에 'orange' 요소가 존재하지 않으면 'orange' 요소를 추가한다.
+  foods.push('orange');
+}
+
+console.log(foods); // ["apple", "banana", "orange"]
+```
+
+`indexOf` 메서드 대신 ES7에서 도입된 `Array.prototype.includes` 메서드를 사용하면 가독성이 더 좋다.
+
+```javascript
+const foods = ['apple', 'banana'];
+
+// foods 배열에 'orange' 요소가 존재하는지 확인한다.
+if (!foods.includes('orange')) {
+  // foods 배열에 'orange' 요소가 존재하지 않으면 'orange' 요소를 추가한다.
+  foods.push('orange');
+}
+
+console.log(foods); // ["apple", "banana", "orange"]
+```
+
+#### 27.8.3 Array.prototype.push
+
+**`push` 메서드는 인수로 전달받은 모든 값을 원본 배열의 마지막 요소로 추가하고 변경된 `length` 프로퍼티 값을 반환한다. `push` 메서드는 원본 배열을 직접 변경한다.**
+
+```javascript
+const arr = [1, 2];
+
+// 인수로 전달받은 모든 값을 원본 배열 arr의 마지막 요소로 추가하고 변경된 length 값을 반환한다.
+let result = arr.push(3, 4);
+console.log(result); // 4
+
+// push 메서드는 원본 배열을 직접 변경한다.
+console.log(arr); // [1, 2, 3, 4]
+```
+
+`push` 메서드는 성능 면에서 좋지 않다. 마지막 요소로 추가할 요소가 하나뿐이라면 `push` 메서드를 사용하는 대신 `length` 프로퍼티를 사용하여 배열의 마지막 요소를 직접 추가할 수도 있다. 이 방법이 `push` 메서드를 사용하는 방법보다 빠르게 동작한다.
+
+```javascript
+const arr = [1, 2];
+
+// arr.push(3)과 동일한 처리를 한다. 이 방법이 push 메서드보다 빠르다.
+arr[arr.length] = 3;
+console.log(arr); // [1, 2, 3]
+```
+
+`push` 메서드는 원본 배열을 직접 변경하는 부수 효과가 있다. 따라서 `push` 메서드보다는 ES6의 스프레트 분법을 사용하는 편이 좋다. 스프레트 문법을 사용하면 함수 호출 없이 표현식으로 마지막에 요소를 추가할 수 있으며 부수효과도 없다.
+
+```javascript
+const arr = [1, 2];
+
+// ES6 스프레드 문법
+const newArr = [...arr, 3];
+console.log(newArr);
+```
+
+#### 27.8.4 Array.prototype.pop
+
+**`pop` 메서드는 원본 배열에서 마지막 요소를 제거하고 제거한 요소를 반환한다. 원본 배열이 빈 배열이면 `undefined` 를 반환한다. `pop` 메서드는 원본 배열을 직접 변경한다.**
+
+```javascript
+const arr = [1, 2];
+
+// 원본 배열에서 마지막 요소를 제거하고 제거한 요소를 반환한다
+let result = arr.pop();
+console.log(result); // 2
+
+// pop 메서드는 원본 배열을 직접 변경한다.
+console.log(arr); // [1]
+```
+
+`pop` 메서드와 `push` 메서드를 사용하면 스택을 쉽게 구현할 수 있다.
+
+스택은 데이터를 마지막에 넣고, 마지막에 밀어 넣은 데이터를 먼저 꺼내느 후입 선충(LIFO) 방식의 자료구조다. 스택은 언제나 가장 마지막에 밀어 넣은 최신 데이터를 먼저 취득한다. 스택에 데이터를 밀어 넣는 것을 푸시라 하고 스택에서 데이터를 꺼내는 것을 팝이라 한다.
+
+스택을 생성자 함수로 구현해보면 다음과 같다.
+
+```javascript
+const Stack = (function () {
+  function Stack(array = []) {
+    if (!Array.isArray(array)) {
+      // "47. 에러 처리" 참고
+      throw new TypeError(`${array} is not an array.`);
+    }
+    this.array = array;
+  }
+
+  Stack.prototype = {
+    // "19.10.1. 생성자 함수에 의한 프로토타입의 교체" 참고
+    constructor: Stack,
+    // 스택의 가장 마지막에 데이터를 밀어 넣는다.
+    push(value) {
+      return this.array.push(value);
+    },
+    // 스택의 가장 마지막 데이터, 즉 가장 나중에 밀어 넣은 최신 데이터를 꺼낸다.
+    pop() {
+      return this.array.pop();
+    },
+    // 스택의 복사본 배열을 반환한다.
+    entries() {
+      return [...this.array];
+    }
+  };
+
+  return Stack;
+}());
+
+const stack = new Stack([1, 2]);
+console.log(stack.entries()); // [1, 2]
+
+stack.push(3);
+console.log(stack.entries()); // [1, 2, 3]
+
+stack.pop();
+console.log(stack.entries()); // [1, 2]
+```
+
+스택을 클래스로 구현해보면 다음과 같다.
+
+```javascript
+class Stack {
+  #array; // private class member
+
+  constructor(array = []) {
+    if (!Array.isArray(array)) {
+      throw new TypeError(`${array} is not an array.`);
+    }
+    this.#array = array;
+  }
+
+  // 스택의 가장 마지막에 데이터를 밀어 넣는다.
+  push(value) {
+    return this.#array.push(value);
+  }
+
+  // 스택의 가장 마지막 데이터, 즉 가장 나중에 밀어 넣은 최신 데이터를 꺼낸다.
+  pop() {
+    return this.#array.pop();
+  }
+
+  // 스택의 복사본 배열을 반환한다.
+  entries() {
+    return [...this.#array];
+  }
+}
+
+const stack = new Stack([1, 2]);
+console.log(stack.entries()); // [1, 2]
+
+stack.push(3);
+console.log(stack.entries()); // [1, 2, 3]
+
+stack.pop();
+console.log(stack.entries()); // [1, 2]
+```
