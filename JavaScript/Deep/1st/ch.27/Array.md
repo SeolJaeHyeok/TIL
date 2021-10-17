@@ -172,3 +172,248 @@ console.timeEnd('Object Performance Test');
 // 약 600ms
 ```
 
+## 27.3 length 프로퍼티와 희소 배열
+
+`length` 프로퍼티는 요소의 개수, 즉 배열의 길이를 나타내는 0 이상의 정수를 값으로 갖는다. `length` 프로퍼티의 값은 빈 배열일 경우 0이며, 빈 배열이 아닐 경우 가장 큰 인덱스에 1을 더한 것과 같다.
+
+```javascript
+[].length        // -> 0
+[1, 2, 3].length // -> 3
+```
+
+`length` 프로퍼티의 값은 0부터 2<sup>32</sup> - 1미만의 양의 정수다. 즉, 배열은 요소를 최대 2<sup>32</sup> - 1개 가질 수 있다. 따라서 배열에서 사용할 수 있는 가장 작은 인덱스는 0이며, 가장 큰 인덱스는 2<sup>32</sup> - 2다.
+
+`length` 프로퍼티의 값은 배열에 요소를 추가하거나 삭제하면 자동 갱신된다.
+
+```javascript
+const arr = [1, 2, 3];
+console.log(arr.length); // 3
+
+// 요소 추가
+arr.push(4);
+// 요소를 추가하면 length 프로퍼티의 값이 자동 갱신된다.
+console.log(arr.length); // 4
+
+// 요소 삭제
+arr.pop();
+// 요소를 삭제하면 length 프로퍼티의 값이 자동 갱신된다.
+console.log(arr.length); // 3
+```
+
+`length` 프로퍼티 값은 요소의 개수, 즉 배열의 길이를 바탕으로 결정되지만 임의의 숫자 값을 명시적으로 할당할 수도 있다.
+
+현재 `length` 프로퍼티 값보다 작은 숫자 값을 할당하면 배열의 길이가 줄어든다.
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+
+// 현재 length 프로퍼티 값인 5보다 작은 숫자 값 3을 length 프로퍼티에 할당
+arr.length = 3;
+
+// 배열의 길이가 5에서 3으로 줄어든다.
+console.log(arr); // [1, 2, 3]
+```
+
+주의할 것은 현재 `length` 프로퍼티 값보다 큰 숫자 값을 할당하는 경우다. 이때 `length` 프로퍼티 값은 변경되지만 실제로 배열의 길이가 늘어나지는 않는다.
+
+```javascript
+const arr = [1];
+
+// 현재 length 프로퍼티 값인 1보다 큰 숫자 값 3을 length 프로퍼티에 할당
+arr.length = 3;
+
+// length 프로퍼티 값은 변경되지만 실제로 배열의 길이가 늘어나지는 않는다.
+console.log(arr.length); // 3
+console.log(arr); // [1, empty × 2]
+```
+
+위 예제의 출력결과 상의 `empty x 2` 는 실제로 추가된 배열의 요소가 아니다. 즉 `arr[1]` 과 `arr[2]` 에는 값이 존재하지 않는다.
+
+이처럼 `length` 프로퍼티 값보다 큰 숫자 값을 `length` 프로퍼티에 할당하는 경우 `length` 프로퍼티 값은 성공적으로 변경되지만 실제 배열에는 아무런 변함이 없다. 값 없이 비어 있는 요소를 위해 메모리 공간을 확보하지 않으면 빈 요소를 생성하지도 않는다.
+
+```javascript
+console.log(Object.getOwnPropertyDescriptors(arr));
+/*
+{
+  '0': {value: 1, writable: true, enumerable: true, configurable: true},
+  length: {value: 3, writable: true, enumerable: false, configurable: false}
+}
+*/
+```
+
+이처럼 배열의 요소가 연속적으로 위치하지 않고 일부가 비어 있는 배열을 희소 배열이라 한다. 자바스크립트는 희소 배열을 문법적으로 허용한다. 위 예제는 배열의 뒷부분만 비어 있어서 요소가 연속적으로 위치하는 것처럼 보일 수 있으나 중간이나 앞부분이 비어 있을 수도 있다.
+
+```javascript
+// 희소 배열
+const sparse = [, 2, , 4];
+
+// 희소 배열의 length 프로퍼티 값은 요소의 개수와 일치하지 않는다.
+console.log(sparse.length); // 4
+console.log(sparse); // [empty, 2, empty, 4]
+
+// 배열 sparse에는 인덱스가 0, 2인 요소가 존재하지 않는다.
+console.log(Object.getOwnPropertyDescriptors(sparse));
+/*
+{
+  '1': { value: 2, writable: true, enumerable: true, configurable: true },
+  '3': { value: 4, writable: true, enumerable: true, configurable: true },
+  length: { value: 4, writable: true, enumerable: false, configurable: false }
+}
+*/
+```
+
+일반적인 배열의 `length` 는 배열 요소의 개수, 즉 배열의 길이와 언제나 일치한다. 하지만 **희소 배열은 `length` 와 배열 요소의 개수가 일치하지 않는다. 희소 배열의 `length` 는 희소 배열의 실제 요소 개수보다 언제나 크다.**
+
+자바스크립트는 문법적으로 희소 배열을 허용하지만 희소 배열은 사용하지 않는 것이 좋다. 의도적으로 희소 배열을 만들어야 하는 상황은 발생하지 ㅇ낳는다. 희소 배열은 연속적인 값의 집합이라는 배열의 기본적인 개념과 맞지 않으며, 성능에도 좋지 않은 영향을 준다. 최적화가 잘 되어 있는 모던 자바스크립트 엔진은 요소의 타입이 일치하는 배열을 생성할 때 일반적인 의미의 배열처럼 연속된 메모리 공간을 확보하는 것으로 알려져 있다.
+
+배열을 생성할 경우에는 희소 배열을 생성하지 않도록 주의하자. **배열에는 같은 타입의 요소를 연속적으로 위치시키는 것이 최선이다.**
+
+## 27.4 배열 생성
+
+#### 27.4.1 배열 리터럴
+
+객체와 마찬가지로 배열에도 다양한 생성 방식이 있다. 가장 일반적이고 간편한 배열 생성 방식은 배열 리터럴을 사용하는 것이다.
+
+배열 리터럴은 0개 이상의 요소를 쉼표로 구분하여 대괄호로 묶는다. 배열 리터럴은 객체 리터럴과 달리 프로퍼티 키가 없고 값만 존재한다.
+
+```javascript
+const arr = [1, 2, 3];
+console.log(arr.length); // 3
+```
+
+배열 리터럴에 요소를 하나도 추가하지 않으면 배열의 길이, 즉 `length` 프로퍼티 값이 0인 빈 배열이 된다.
+
+```javascript
+const arr = [];
+console.log(arr.length); // 0
+```
+
+배열 리터럴에 요소를 생략하면 희소 배열이 생성된다.
+
+```javascript
+const arrr = [1, , 3]; // 희소 배열
+
+// 희소 배열의 length는 배열의 실제 요소 개수보다 언제나 크다.
+console.log(arr.length); // 3
+console.log(arr);				 // [1, empty, 3]
+console.log(arr[1]);		 // undefined
+```
+
+위 예제의 `arr` 은 인덱스가 1인 요소를 갖지 않는 희소 배열이다. `arr[1]` 이 `undefined` 인 이유는 사실은 객체인 `arr` 에 프로퍼티 키가 '1'인 프로퍼티가 존재하지 않기 때문이다.
+
+#### 27.4.2 Array 생성자 함수
+
+`Object` 생성자 함수를 통해 객체를 생성할 수 있듯이 `Array` 생성자 함수를 통해 배열을 생성할 수도 있다. `Array` 생성자 함수는 전달된 인수의 개수에 따라 다르게 동작하므로 주의할 필요가 있다.
+
+- 전달된 인수가 1개이고 숫자인 경우 `length` 프로퍼티 값이 인수인 배열을 생성한다.
+
+  ```javascript
+  const arr = new Array(10);
+  
+  console.log(arr); // [empty × 10]
+  console.log(arr.length); // 10
+  ```
+
+  이때 생성된 배열은 희소 배열이다. `length` 프로퍼티 값은 0이 아니지만 실제 배열의 요소는 존재하지 않는다.
+
+  ```javascript
+  console.log(Object.getOwnPropertyDescriptors(arr));
+  /*
+  {
+    length: {value: 10, writable: true, enumerable: false, configurable: false}
+  }
+  */
+  ```
+
+  배열은 요소를 최대 2<sup>32</sup> - 1(4,294,967,295)개 가질 수 있다. 따라서 `Array` 생성자 함수에 전달한 인수는 0 또는 2<sup>32</sup> - 1 이하인 양의 정수이어야 한다. 전달된 인수가 범위를 벗어나면 `RangeError` 가 발생한다.
+
+  ```javascript
+  // 배열은 요소를 최대 4,294,967,295개 가질 수 있다.
+  new Array(4294967295);
+  
+  // 전달된 인수가 0 ~ 4,294,967,295를 벗어나면 RangeError가 발생한다.
+  new Array(4294967296); // RangeError: Invalid array length
+  
+  // 전달된 인수가 음수이면 에러가 발생한다.
+  new Array(-1); // RangeError: Invalid array length
+  ```
+
+- 전달된 인수가 없는 경우 빈 배열을 생성한다. 즉, 배열 리터럴 `[]` 과 같다.
+
+  ```javascript
+  new Array(); // -> []
+  ```
+
+- 전달된 인수가 2개 이상이거나 숫자가 아닌 경우 인수를 요소로 갖는 배열을 생성한다.
+
+  ```javascript
+  // 전달된 인수가 2개 이상이면 인수를 요소로 갖는 배열을 생성한다.
+  new Array(1, 2, 3); // -> [1, 2, 3]
+  
+  // 전달된 인수가 1개지만 숫자가 아니면 인수를 요소로 갖는 배열을 생성한다.
+  new Array({}); // -> [{}]
+  ```
+
+  `Array` 생성자 함수는 `new` 연산자와 함께 호출하지 않더라도, 즉 일반 함수로서 호출해도 배열을 생성하는 생성자 함수로 동작한다. 이는 `Array` 생성자 함수 내부에서 `new.target` 을 확인하기 때문이다.
+
+  ```javascript
+  Array(1, 2, 3); // -> [1, 2, 3]
+  ```
+
+#### 27.4.3 Array.of
+
+ES6에서 도입된 `Array.of` 메서드는 전달된 인수를 요소로 갖는 배열을 생성한다. `Array.of` 는 `Array` 생성자 함수와 다르게 전달된 인수가 1개이고 숫자이더라도 인수를 요소로 갖는 배열을 생성한다.
+
+```javascript
+// 전달된 인수가 1개이고 숫자이더라도 인수를 요소로 갖는 배열을 생성한다.
+Array.of(1); // -> [1]
+
+Array.of(1, 2, 3); // -> [1, 2, 3]
+
+Array.of('string'); // -> ['string']
+```
+
+#### 27.4.4 Array.from
+
+ES6에서 도입된 `Array.from` 메서드는 유사 배열 객체 또는 이터러블 객체를 인수로 전달받아 배열로 변환하여 반환한다.
+
+```javascript
+// 유사 배열 객체를 변환하여 배열을 생성한다.
+Array.from({ length: 2, 0: 'a', 1: 'b' }); // -> ['a', 'b']
+
+// 이터러블을 변환하여 배열을 생성한다. 문자열은 이터러블이다.
+Array.from('Hello'); // -> ['H', 'e', 'l', 'l', 'o']
+```
+
+`Array.from` 을 사용하면 두 번째 인수로 전달한 콜백 함수를 통해 값을 만들면서 요소를 채울 수 있다. `Array.from` 메서드는 두 번째 인수로 전달한 콜백 함수에 첫 번째 인수에 의해 생성된 배열의 요소값과 인덱스를 순차적으로 전달하면서 호출하고, 콜백 함수의 반환값으로 구성된 배열을 반환한다.
+
+```javascript
+// Array.from에 length만 존재하는 유사 배열 객체를 전달하면 undefined를 요소로 채운다.
+Array.from({ length: 3 }); // -> [undefined, undefined, undefined]
+
+// Array.from은 두 번째 인수로 전달한 콜백 함수의 반환값으로 구성된 배열을 반환한다.
+Array.from({ length: 3 }, (_, i) => i); // -> [0, 1, 2]
+```
+
+> ❗️
+>
+> 유사 배열 객체와 이터러블 객체
+>
+> 유사 배열 객체는 마치 배열처럼 인덱스로 프로퍼티 값에 접근할 수 있고 `length` 프로퍼티를 갖는 객체를 말한다. 유사 배열 객체는 배열처럼 `for` 문으로 순회할 수도 있다.
+>
+> ```javascript
+> // 유사 배열 객체
+> const arrayLike = {
+>   '0': 'apple',
+>   '1': 'banana',
+>   '2': 'orange',
+>   length: 3
+> };
+> 
+> // 유사 배열 객체는 마치 배열처럼 for 문으로 순회할 수도 있다.
+> for (let i = 0; i < arrayLike.length; i++) {
+>   console.log(arrayLike[i]); // apple banana orange
+> }
+> ```
+>
+> 이터러블 객체는 `Symbol.iterator` 메서드를 구현하여 `for...of` 문으로 순회할 수 있으며, 스프레드 문법과 배열 디스트럭처링 할당의 대상으로 사용할 수 있는 객체를 말한다.
