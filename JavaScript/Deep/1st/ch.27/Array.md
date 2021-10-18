@@ -1377,3 +1377,319 @@ ES10에서 도입된 `flat` 메서드는 인수로 전달한 깊이만큼 재귀
 [1, [2, [3, [4]]]].flat(Infinity); // -> [1, 2, 3, 4]
 ```
 
+## 27.9 배열 고차 함수
+
+고차 함수는 함수를 인수로 전달받거나 함수를 반환하는 함수를 말한다. 자바스크립트의 함수는 일급 객체이므로 함수를 값처럼 인수로 전달할 수 있으며 반환할 수도 있다. 고차 함수는 외부 상태의 변경이나 가변 데이터를 피하고 **불변성을 지향**하는 함수형 프로그래밍에 기반을 두고 있다.
+
+함수형 프로그래밍은 순수 함수와 보조 함수의 조합을 통해 로직 내에 **존재하는 조건문과 반복문을 제거하여** 복잡성을 해결하고 **변수의 사용을 억제**하여 상태 변경을 피하려는 프로그래밍 패러다임이다. 조건문이나 반복문은 로직의 흐름을 이해하기 어렵게 하여 가독성을 해치고, 변수는 누군가에 의해 언제든지 변경될 수 있어 오류 발생의 근본적 원인이 될 수 있기 때문이다. 함수형 프로그래밍은 결국 **순수 함수를 통해 부수 효과를 최대한 억제**하여 오류를 피하고 프로그램의 안정성을 높이려는 노력의 일확이라고 할 수 있다.
+
+자바스크립트는 고차 함수를 다수 지원한다. 특히 배열은 매우 유용한 고차 함수를 지원한다.
+
+#### 27.9.1 Array.prototype.sort
+
+**`sort` 메서드는 배열의 요소를 정렬한다. 원본 배열을 직접 변경하여 정렬된 배열을 반환한다.**
+
+`sort` 메서드는 기본적으로 오름차순으로 요소를 정렬한다.
+
+```javascript
+const fruits = ['Banana', 'Orange', 'Apple'];
+
+// 오름차순(ascending) 정렬
+fruits.sort();
+
+// sort 메서드는 원본 배열을 직접 변경한다.
+console.log(fruits); // ['Apple', 'Banana', 'Orange']
+```
+
+한글 문자열인 요소도 오름차순으로 정렬된다.
+
+```javascript
+const fruits = ['바나나', '오렌지', '사과'];
+
+// 오름차순(ascending) 정렬
+fruits.sort();
+
+// sort 메서드는 원본 배열을 직접 변경한다.
+console.log(fruits); // ['바나나', '사과', '오렌지']
+```
+
+`sort` 메서드는 기본적으로 오름차순으로 정렬하기 때문에 내림차순으로 정렬하려면 `sort` 메서드를 사용하여 오름차순으로 정렬한 후 `reverse` 메서드를 사용하여 요소의 순서를 뒤집는다.
+
+```javascript
+const fruits = ['Banana', 'Orange', 'Apple'];
+
+// 오름차순(ascending) 정렬
+fruits.sort();
+
+// sort 메서드는 원본 배열을 직접 변경한다.
+console.log(fruits); // ['Apple', 'Banana', 'Orange']
+
+// 내림차순(descending) 정렬
+fruits.reverse();
+
+// reverse 메서드도 원본 배열을 직접 변경한다.
+console.log(fruits); // ['Orange', 'Banana', 'Apple']
+```
+
+문자열 요소로 이루어진 배열의 정렬은 아무런 문제가 없다. 하지만 숫자 요소로 이루어진 배열을 정렬할 때는 주의가 필요하다.
+
+```javascript
+const points = [40, 100, 1, 5, 2, 25, 10];
+
+points.sort();
+
+// 숫자 요소들로 이루어진 배열은 의도한 대로 정렬되지 않는다.
+console.log(points); // [1, 10, 100, 2, 25, 40, 5]
+```
+
+`sort` 메서드의 기본 정렬 순서는 유니코드 코드 포인트의 순서를 따른다. 배열의 요소가 숫자 타입이라 할지라도 배열의 요소를 일시적으로 문자열로 변환한 후 유니코드 포인트의 순서를 기준으로 정렬한다.
+
+예를 들어, 문자열 '1'의 유니코드 코드 포인트는 `U+0031` 문자열 '2'의 유니코드 코드 포인트는 `U+0032` 다. 이처럼 문자열 '1'의 유니코드 코드 포인트가 문자열 '2'의 유니코드 코드 포인트 순서보다 앞서므로 문자열 배열 `['2', '1']` 을 `sort` 메서드로 정렬하면 `['1', '2']` 로 정렬된다. `sort` 메서드는 배열의 요소를 일시적으로 문자열로 변환한 후 정렬하므로 숫자 배열 `[2, 1]` 을 `sort` 메서드로 정렬해도 `[1, 2]` 로 정렬된다.
+
+```javascript
+['2', '1'].sort(); // -> ["1", "2"]
+[2, 1].sort();     // -> [1, 2]
+```
+
+하지만 문자열 '10'의 유니코드 코드 포인트는 `U+0031U+0030` 이다. 따라서 문자열 배열 `['2', '10']` 을 `sort` 메서드로 정렬하면 문자열 '10'의 유니코드 코드 포인트 `U+0031U+0030` 이 문자열 '2'의 유니코드 코드 포인트 `U+0032` 보다 앞서므로 `['10', '2']` 로 정렬된다. **`sort` 메서드는 배열의 요소를 일시적으로 문자열로 변환한 후 정렬**하므로 숫자 배열 `[2, 10]` 을 `sort` 메서드로 정렬해도 `[10, 2]` 로 정렬된다.
+
+```javascript
+['2', '10'].sort(); // -> ["10", "2"]
+[2, 10].sort();     // -> [10, 2]
+```
+
+따라서 숫자 요소를 정렬할 때는 `sort` 메서드에 **정렬 순서를 정의하는 비교 함수를 인수로 전달**해야 한다. 비교 함수는 양수나 음수 또는 0을 반환해야 한다. 비교 함수의 반환값이 0보다 작으면 비교 함수의 첫 번째 인수를 우선하여 정렬하고, 0이면 정렬하지 않으며, 0보다 크면 두 번째 인수를 우선하여 정렬한다.
+
+```javascript
+const points = [40, 100, 1, 5, 2, 25, 10];
+
+// 숫자 배열의 오름차순 정렬. 비교 함수의 반환값이 0보다 작으면 a를 우선하여 정렬한다.
+points.sort((a, b) => a - b);
+console.log(points); // [1, 2, 5, 10, 25, 40, 100]
+
+// 숫자 배열에서 최소/최대값 취득
+console.log(points[0], points[points.length]); // 1 100
+
+// 숫자 배열의 내림차순 정렬. 비교 함수의 반환값이 0보다 작으면 b를 우선하여 정렬한다.
+points.sort((a, b) => b - a);
+console.log(points); // [100, 40, 25, 10, 5, 2, 1]
+
+// 숫자 배열에서 최대값 취득
+console.log(points[0]); // 100
+```
+
+객체를 요소로 갖는 배열을 정렬하는 예제는 다음과 같다.
+
+```javascript
+const todos = [
+  { id: 4, content: 'JavaScript' },
+  { id: 1, content: 'HTML' },
+  { id: 2, content: 'CSS' }
+];
+
+// 비교 함수. 매개변수 key는 프로퍼티 키다.
+function compare(key) {
+  // 프로퍼티 값이 문자열인 경우 - 산술 연산으로 비교하면 NaN이 나오므로 비교 연산을 사용한다.
+  // 비교 함수는 양수/음수/0을 반환하면 되므로 - 산술 연산 대신 비교 연산을 사용할 수 있다.
+  return (a, b) => (a[key] > b[key] ? 1 : (a[key] < b[key] ? -1 : 0));
+}
+
+// id를 기준으로 오름차순 정렬
+todos.sort(compare('id'));
+console.log(todos);
+/*
+[
+  { id: 1, content: 'HTML' },
+  { id: 2, content: 'CSS' },
+  { id: 4, content: 'JavaScript' }
+]
+*/
+
+// content를 기준으로 오름차순 정렬
+todos.sort(compare('content'));
+console.log(todos);
+/*
+[
+  { id: 2, content: 'CSS' },
+  { id: 1, content: 'HTML' },
+  { id: 4, content: 'JavaScript' }
+]
+*/
+```
+
+#### 27.9.2 Array.prototype.forEach
+
+앞에서 살펴보았듯이 함수형 프로그래밍은 순수 함수와 보조 함수의 조합을 통해 **로직 내에 존재하는 조건문과 반목문을 제거**하여 복잡성을 해결하고 **변수의 사용을 억제**하여 상태 변경을 피하려는 패러다임이다.
+
+조건문이나 반복문은 로직의 흐름을 이해하기 어렵게 한다. 특히 `for` 문은 반복을 위한 변수를 선언해야 하며, 조건신과 증감식으로 이루어져 있어서 함수형 프로그래밍이 추구하는 바와 맞지 않는다.
+
+```javascript
+const numbers = [1, 2, 3];
+let pows = [];
+
+// for 문으로 배열 순회
+for (let i = 0; i < numbers.length; i++) {
+  pows.push(numbers[i] ** 2);
+}
+console.log(pows); // [1, 4, 9]
+```
+
+`forEach` 메서드는 `for` 문을 대체할 수 있는 고차 함수다. `forEach` 메서드는 자신의 내부에서 반복문을 실행한다. 즉, `forEach` 메서드는 반복문을 추상화한 고차 함수로서 내부에서 반복문을 통해 자신을 호출한 배열을 순회하면서 수행해야 할 처리를 콜백 함수로 전달받아 반복 호출한다. `for` 문으로 구현된 위 예제를 `forEach` 메서드로 구현하면 다음과 같다.
+
+```javascript
+const numbers = [1, 2, 3];
+let pows = [];
+
+// forEach 메서드는 numbers 배열의 모든 요소를 순회하면서 콜백 함수를 반복 호출한다.
+numbers.forEach(item => pows.push(item ** 2));
+console.log(pows); // [1, 4, 9]
+```
+
+위 예제의 경우 `forEach` 메서드는 `numbers` 배열의 모든 요소를 순회하며 콜백 함수를 반복 호출한다. `numbers` 배열의 요소가 3개이므로 콜백 함수도 3번 호출된다. 이때 콜백 함수를 호출하는 `forEach` 메서드는 콜백 함수에 인수를 전달할 수 있다.
+
+`forEach` 메서드의 콜백 함수는 `forEach` 메서드를 호출한 배열의 요소값과 인덱스, `forEach` 메서드를 호출한 배열 자체, 즉 `this` 를 순차적으로 전달받을 수 있다. 다시 말해, `forEach` 메서드는 콜백 함수를 호출할 때 3개의 인수, 즉 `forEach` 메서드를 호출한 배열의 요소값과 인덱스, `forEach` 메서드를 호출한 배열(`this`)을 순차적으로 전달한다.
+
+```javascript
+// forEach 메서드는 콜백 함수를 호출하면서 3개(요소값, 인덱스, this)의 인수를 전달한다.
+[1, 2, 3].forEach((item, index, arr) => {
+  console.log(`요소값: ${item}, 인덱스: ${index}, this: ${JSON.stringify(arr)}`);
+});
+/*
+요소값: 1, 인덱스: 0, this: [1,2,3]
+요소값: 2, 인덱스: 1, this: [1,2,3]
+요소값: 3, 인덱스: 2, this: [1,2,3]
+*/
+```
+
+`forEach` 메서드는 원본 배열(`forEach` 메서드를 호출한 배열, 즉 `this`)을 변경하지 않는다. 하지만 콜백 함수를 통해 원본 배열을 변경할 수는 있다.
+
+```javascript
+const numbers = [1, 2, 3];
+
+// forEach 메서드는 원본 배열을 변경하지 않지만 콜백 함수를 통해 원본 배열을 변경할 수는 있다.
+// 콜백 함수의 세 번째 매개변수 arr은 원본 배열 numbers를 가리킨다.
+// 따라서 콜백 함수의 세 번째 매개변수 arr을 직접 변경하면 원본 배열 numbers가 변경된다.
+numbers.forEach((item, index, arr) => { arr[index] = item ** 2; });
+console.log(numbers); // [1, 4, 9]
+```
+
+`forEach` 메서드의 반환값은 언제나 `undefined` 다.
+
+```javascript
+const result = [1, 2, 3].forEach(console.log);
+console.log(result); // undefined
+```
+
+`forEach` 메서드의 두 번째 인수로 `forEach` 메서드의 콜백 함수 내부에서 `this` 로 사용할 객체를 전달할 수 있다.
+
+```javascript
+class Numbers {
+  numberArray = [];
+
+  multiply(arr) {
+    arr.forEach(function (item) {
+      // TypeError: Cannot read property 'numberArray' of undefined
+      this.numberArray.push(item * item);
+    });
+  }
+}
+
+const numbers = new Numbers();
+numbers.multiply([1, 2, 3]);
+```
+
+`forEach` 메서드의 콜백 함수는 일반 함수로 호출되므로 콜백 함수 내부의 `this` 는 `undefined` 를 가리킨다. `this` 가 전역 객체가 아닌 `undefined` 를 가리키는 이유는 클래스 내부의 모든 코드에는 암묵적으로 strict mode가 적용되기 때문이다.
+
+`forEach` 메서드의 콜백 함수 내부의 `this` 와 `multiply` 메서드 내부의 `this` 를 일치시키려면 `forEach` 메서드의 두 번째 인수로 `forEach` 메서드의 콜백 함수 내부에서 `this` 로 사용할 객체를 전달한다.
+
+```javascript
+class Numbers {
+  numberArray = [];
+
+  multiply(arr) {
+    arr.forEach(function (item) {
+      this.numberArray.push(item * item);
+    }, this); // forEach 메서드의 콜백 함수 내부에서 this로 사용할 객체를 전달
+  }
+}
+
+const numbers = new Numbers();
+numbers.multiply([1, 2, 3]);
+console.log(numbers.numberArray); // [1, 4, 9]
+```
+
+더 나은 방법은 ES6의 화살표 함수를 사용하는 것이다. 화살표 함수는 함수 자체의 `this` 바인딩을 갖지 않는다. 따라서 화살표 함수 내부에서 `this` 를 참조하면 상위 스코프, 즉 `multiply` 메서드 내부의 `this` 를 그대로 참조한다.
+
+```javascript
+class Numbers {
+  numberArray = [];
+
+  multiply(arr) {
+    // 화살표 함수 내부에서 this를 참조하면 상위 스코프의 this를 그대로 참조한다.
+    arr.forEach(item => this.numberArray.push(item * item));
+  }
+}
+
+const numbers = new Numbers();
+numbers.multiply([1, 2, 3]);
+console.log(numbers.numberArray); // [1, 4, 9]
+```
+
+`forEach` 메서드의 동작을 이해하기 위해 `forEach` 메서드의 폴리필을 살펴보자.
+
+```javascript
+// 만약 Array.prototype에 forEach 메서드가 존재하지 않으면 폴리필을 추가한다.
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function (callback, thisArg) {
+    // 첫 번째 인수가 함수가 아니면 TypeError를 발생시킨다.
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // this로 사용할 두 번째 인수를 전달받지 못하면 전역 객체를 this로 사용한다.
+    thisArg = thisArg || window;
+
+    // for 문으로 배열을 순회하면서 콜백 함수를 호출한다.
+    for (var i = 0; i < this.length; i++) {
+      // call 메서드를 통해 thisArg를 전달하면서 콜백 함수를 호출한다.
+      // 이때 콜백 함수의 인수로 배열 요소, 인덱스, 배열 자신을 전달한다.
+      callback.call(thisArg, this[i], i, this);
+    }
+  };
+}
+```
+
+이처럼 `forEach` 메서드도 내부에서는 반복문을 통해 배열을 순회할 수 밖에 없다. 단, 반복문을 메서드 내부로 은닉하여 로직의 흐름을 이해하기 쉽게 하고 복잡성을 해결한다.
+
+`forEach` 메서드는 `for` 문과 달리 `break`, `continue` 문을 사용할 수 없다. 다시 말해, 배열의 모든 요소를 빠짐없이 모두 순회하며 중간에 순회를 중단할 수 없다.
+
+```javascript
+[1, 2, 3].forEach(item => {
+  console.log(item);
+  if (item > 1) break; // SyntaxError: Illegal break statement
+});
+
+[1, 2, 3].forEach(item => {
+  console.log(item);
+  if (item > 1) continue;
+  // SyntaxError: Illegal continue statement: no surrounding iteration statement
+});
+```
+
+희소 배열의 경우 존재하지 않는 요소는 순회 대상에서 제외된다. 이는 앞으로 살펴볼 배열을 순회하는 `map`, `filter`, `reduce` 에서도 마찬가지다.
+
+```javascript
+// 희소 배열
+const arr = [1, , 3];
+
+// for 문으로 희소 배열을 순회
+for (let i = 0; i < arr.length; i++) {
+  console.log(arr[i]); // 1, undefined, 3
+}
+
+// forEach 메서드는 희소 배열의 존재하지 않는 요소를 순회 대상에서 제외한다.
+arr.forEach(v => console.log(v)); // 1, 3
+```
+
+`forEach` 메서드는 `for` 문에 비해 성능은 좋지 않지만 가독성은 더 좋다. 따라서 요소가 대단히 많은 배열을 순회하거나 시간이 많이 걸리는 복잡한 코드 또는 높은 성능이 필요한 경우가 아니라면 `for` 문 대신 `forEach` 메서드를 사용하는 것이 더 좋다.
+
