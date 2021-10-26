@@ -1710,3 +1710,365 @@ DOM에 이미 존재하는 노드를 `appendChild` 또는 `insertBefore` 메서�
 </html>
 ```
 
+## 39.7 어트리뷰트
+
+#### 39.7.1 어트리뷰트 노드와 attributes 프로퍼티
+
+HTML 문서의 구성 요소인 HTML 요소는 여러 개의 어트리뷰트(속성)를 가질 수 있다. HTML 요소의 동작을 제어하기 위한 추가적인 정보를 제공하는 HTML 어트리뷰트는 HTML 요소의 시작 태그에 `어트리뷰트="어트리뷰트 값"` 형식으로 정의한다.
+
+```html
+<input id="user" type="text" value="ungmo2">
+```
+
+글로벌 어트리뷰트(`id`, `class`, `style`, `title`, `lang`, `tabindex`, `draggable`, `hidden` 등)와 이벤트 핸들러 어트리뷰트(`onclick`, `onchange`, `onfocus`, `onblur`, `oninput`, `onkeypress`, `onkeydown`, `onkeyup`, `onmouseover`, `onsubmit`, `onload` 등)는 모든 HTML 요소에서 공통적으로 사용할 수 있지만 특정 HTML 요소에만 한정적으로 사용 가능한 어트리뷰트도 있다. 예를 들어, `id`, `class`, `style` 어트리뷰트는 모든 HTML 요소에 사용할 수 있지만 `type`, `value`, `checked` 어트리뷰트는 `input` 요소에만 사용할 수 있다.
+
+HTML 문서가 파싱될 때 HTML 요소의 어트리뷰트는 어트리뷰트 노드로 변환되어 요소 노드와 연결된다. 이때 어트리뷰트당 하나의 어트리뷰트 노드가 생성된다. 즉, 위 `input` 요소는 3개의 어트리뷰트가 있으므로 3개의 어트리뷰트 노드가 생성된다.
+
+이때 모든 어트리뷰트의 참조는 유사 배열 객체이자 이터러블인 `NamedNodeMap` 객체에 담겨서 요소 노드 `attributes` 프로퍼티에 저장된다.
+
+<img src="../images/39-7.png" />
+
+따라서 요소 노드의 모든 어트리뷰트 노드는 요소 노드의 `Element.prototype.attributes` 프로티로 취득할 수 있다. `attributes` 프로퍼티는 `getter` 만 존재하는 읽기 전용 접근자 프로퍼티이며, 요소 노드의 모든 어트리뷰트 노드의 참조가 담긴 `NamedNodeMap` 객체를 반환한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    // 요소 노드의 attribute 프로퍼티는 요소 노드의 모든 어트리뷰트 노드의 참조가 담긴 NamedNodeMap 객체를 반환한다.
+    const { attributes } = document.getElementById('user');
+    console.log(attributes);
+    // NamedNodeMap {0: id, 1: type, 2: value, id: id, type: type, value: value, length: 3}
+
+    // 어트리뷰트 값 취득
+    console.log(attributes.id.value); // user
+    console.log(attributes.type.value); // text
+    console.log(attributes.value.value); // ungmo2
+  </script>
+</body>
+</html>
+```
+
+#### 39.7.2 HTML 어트리뷰트 조작
+
+앞에서 살펴본 바와 같이 요소 노드의 `attributes` 프로퍼티는 `getter` 만 존재하는 읽기 전용 접근자 프로퍼티이므로 HTML 어트리뷰트 값을 취득할 수 있지만 변경할 수는 없다. 또한 `attributes.id.value` 와 같이 `attributes` 프로퍼티를 통해야만 HTML 어트리뷰트 값을 취득할 수 있기 때문에 불편하다.
+
+`Element.prototype.getAttribute/setAttribute` 메서드를 사용하면 `attributes` 프로퍼티를 통하지 않고 요소 노드에서 메서드를 통해 직접 HTML 어트리뷰트 값을 취득하거나 변경할 수 있어서 편리하다.
+
+HTML 어트리뷰트 값을 참조하려면 `Element.prototype.getAttribute(attributeName)` 메서드를 사용하고, HTML 어트리뷰트 값을 변경하려면 `Element.prototype.setAttribute(attributeName, attributeValue)` 메서드를 사용한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // value 어트리뷰트 값을 취득
+    const inputValue = $input.getAttribute('value');
+    console.log(inputValue); // ungmo2
+
+    // value 어트리뷰트 값을 변경
+    $input.setAttribute('value', 'foo');
+    console.log($input.getAttribute('value')); // foo
+  </script>
+</body>
+</html>
+```
+
+특정 HTML 어트리뷰트가 존재하는지 확인하려면 `Element.prototype.hasAttribute(attributeName)` 메서드를 사용하고, 특정 HTML 어트리뷰트를 삭제하려면 `Element.prototype.removeAttribute(attributeName)` 메서드를 사용한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // value 어트리뷰트의 존재 확인
+    if ($input.hasAttribute('value')) {
+      // value 어트리뷰트 삭제
+      $input.removeAttribute('value');
+    }
+
+    // value 어트리뷰트가 삭제되었다.
+    console.log($input.hasAttribute('value')); // false
+  </script>
+</body>
+</html>
+```
+
+#### 39.7.3 HTML 어트리뷰트 vs DOM 프로퍼티
+
+요소 노드 객체에는 HTML 어트리뷰트에 대응하는 프로퍼티(이하 DOM 프로퍼티)가 존재한다. 이 DOM 프로퍼티들은 HTML 어트리뷰트 값을 초기값으로 가지고 있다.
+
+예를 들어, `<input id="user" type="text" value="milk">` 요소가 파싱되어 생성된 요소 노드 객체에는 `id`, `type`, `value` 어트리뷰트에 대응하는 `id`, `type`, `value` 프로퍼티가 존재하며, 이 DOM 프로퍼티들은 HTML 어트리뷰트의 값을 초기값으로 가지고 있다.
+
+DOM 프로퍼티는 `setter` 와 `getter` 모두 존재하는 접근자 프로퍼티다. 따라서 DOM 프로퍼티는 참조와 변경이 가능하다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // 요소 노드의 value 프로퍼티 값을 변경
+    $input.value = 'foo';
+
+    // 요소 노드의 value 프로퍼티 값을 참조
+    console.log($input.value); // foo
+  </script>
+</body>
+</html>
+```
+
+이처럼 HTML 어트리뷰트는 다음과 같이 DOM에서 중복 관리되고 있는 것처럼 보인다.
+
+1. 요소 노드의 `attributes` 프로퍼티에서 관리하는 어트리뷰트 노드
+2. HTML 어트리뷰트에 대응하는 요소 노드의 프로퍼티(DOM 프로퍼티)
+
+그렇다면 HTML 어트리뷰트는 DOM에서 중복 관리되고 있을까? 그렇지 않다. 우선 HTML 어트리뷰트의 역할을 살펴보자.
+
+**HTML 어트리뷰트의 역할은 HTML 요소의 초기 상태를 지정하는 것이다. 즉, HTML 어트리뷰트 값은 HTML 요소의 초기 상태를 의미하며 이는 변하지 않는다.**
+
+예를 들어, `<input id="user" type="text" value="milk">` 요소의 `value` 어트리뷰트는 `input` 요소가 렌더링될 때 입력 필드에 표시할 초기값을 지정한다. 즉, `input` 요소가 렌더링되면 입력 필드에 초기값으로 지정한 `value` 어트리뷰트 값 "ungmo2"가 표시된다.
+
+이때 `input` 요소의 `value` 어트리뷰트는 어트리뷰트 노드로 변환되어 요소 노드의 `attributes` 프로퍼티에 저장된다. 이와는 별도는 `value` 어트리뷰트의 값은 요소 노드의 `value` 프로퍼티에 할당된다. 따라서 `input` 요소의 요소 노드가 생성되어 첫 렌더링이 끝난 시점까지 어트리뷰트 노드의 어트리뷰트 값과 요소 노드의 `value` 프로퍼티에 할당된 값은 HTML 어트리뷰트 값과 동일하다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // attributes 프로퍼티에 저장된 value 어트리뷰트 값
+    console.log($input.getAttribute('value')); // ungmo2
+
+    // 요소 노드의 value 프로퍼티에 저장된 value 어트리뷰트 값
+    console.log($input.value); // ungmo2
+  </script>
+</body>
+</html>
+```
+
+하지만 첫 렌더링 이후 사용자가 `input` 요소에 무언가를 입력하기 시작하면 상황이 달라진다.
+
+**요소 노드는 상태를 가지고 있다.** 예를 들어, `input` 요소 노드는 사용자가 입력 필드에 입력한 값을 상태로 가지고 있으며, `checkbox` 요소 노드는 사용자가 입력 필드에 입력한 체크 여부를 상태로 가지고 있다. `input` 요소 노드가 `checkbox` 요소 노드가 가지고 있는 상태는 사용자의 입력에 의해 변화하는 살아있는 것이다.
+
+사용자가 `input` 요소의 입력 필드에 "foo"라는 값을 입력한 경우를 생각해보자. 이때 `input` 요소 노드는 사용자의 입력에 의해 변경된 **최신 상태("foo)"** 를 관리해야 하는 것은 물론, HTML 어트리뷰트로 지정한 **초기 상태("ungmo2")** 도 관리해야 한다. 초기 상태 값을 관리하지 않으면 웹페이지를 처음 표시하거나 새로고침하 때 초기 상태를 표시할 수 없다.
+
+이처럼 **요소 노드는 2개의 상태, 즉 초기 상태와 최신 상태를 관리해야 한다. 요소 노드의 초기 상태는 어트리뷰트 노드가 관리하며, 요소 노드의 최신 상태는 DOM 프로퍼티가 관리한다.**
+
+**1. 어트리뷰트 노드**
+
+**HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태는 어트리뷰트 노드에서 관리한다.** 어트리뷰트 노드에서 관리하는 어트리뷰트 값은 사용자의 입력에 의해 상태가 변경되어도 변하지 않고 HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태를 그대로 유지한다.
+
+어트리뷰트 노드가 관리하는 초기 상태 값을 취득하거나 변경하려면 `getAttribute/setAttribute` 메서드를 사용한다. `getAttribute` 메서드로 취득한 값은 어트리뷰트 노드에서 관리하는 HTML 요소에 지정한 어트리뷰트 값, 즉 초기 상태값이다. HTML 요소에 지정한 어트리뷰트 값은 사용자에 입력에 의해 변하지 않으므로 결과는 언제나 동일하다.
+
+```javascript
+// attributes 프로퍼티에 저장된 value 어트리뷰트 값을 취득한다. 결과는 언제나 동일하다.
+document.getElementById('user').getAttribute('value'); // ungmo2
+```
+
+`setAttribute` 메서드는 어트리뷰트 노드에서 관리하는 HTML 요소에 지정한 어트리뷰트 값, 즉 초기 상태 값을 변경한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    // HTML 요소에 지정한 어트리뷰트 값, 즉 초기 상태 값을 변경한다.
+    document.getElementById('user').setAttribute('value', 'foo');
+  </script>
+</body>
+</html>
+```
+
+**2. DOM 프로퍼티**
+
+**사용자가 입력한 최신 상태는 HTML 어트리뷰트에 대응하는 요소 노드의 DOM 프로퍼티가 관리한다. DOM 프로퍼티는 사용자의 입력에 의한 상태 변화에 반응하여 언제나 최신 상태를 유지한다.**
+
+DOM 프로퍼티로 취득한 값은 HTML 요소의 최신 상태 값을 의미한다. 이 최신 상태 값은 사용자의 입력에 의해 언제든지 동적으로 변경되어 최신 상태를 유지한다. 이에 반해, `getAttribute` 메서드로 취득한 HTML 어트리뷰트 값, 즉 초기 상태 값은 변하지 않고 유지된다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // 사용자가 input 요소의 입력 필드에 값을 입력할 때마다 input 요소 노드의
+    // value 프로퍼티 값, 즉 최신 상태 값을 취득한다. value 프로퍼티 값은 사용자의 입력에
+    // 의해 동적으로 변경된다.
+    $input.oninput = () => {
+      console.log('value 프로퍼티 값', $input.value);
+    };
+
+    // getAttribute 메서드로 취득한 HTML 어트리뷰트 값, 즉 초기 상태 값은 변하지 않고 유지된다.
+    console.log('value 어트리뷰트 값', $input.getAttribute('value'));
+  </script>
+</body>
+</html>
+```
+
+DOM 프로퍼티에 값을 할당하는 것은 HTML 요소의 최신 상태 값을 변경하는 것을 의미한다. 즉, 사용자가 상태를 변경하는 행위와 같다. 이때 HTML 요소에 지정한 어트리뷰트 값에는 어떠한 영향도 주지 않는다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // DOM 프로퍼티에 값을 할당하여 HTML 요소의 최신 상태를 변경한다.
+    $input.value = 'foo';
+    console.log($input.value); // foo
+
+    // getAttribute 메서드로 취득한 HTML 어트리뷰트 값, 즉 초기 상태 값은 변하지 않고 유지된다.
+    console.log($input.getAttribute('value')); // ungmo2
+  </script>
+</body>
+</html>
+```
+
+이처럼 HTML 어트리뷰트는 HTML 요소 초기 상태 값을 관리하고 DOM 프로퍼티는 사용자에 입력에 의해 변경되는 최신 상태를 관리한다. 단, 모든 DOM 프로퍼티가 사용자의 입력에 의해 변경된 최신 상태를 관리하는 것은 아니다.
+
+예를 들어, `input` 요소의 사용자 입력에 의한 상태 변화는 `value` 프로퍼티가 관리하고 `checkbox` 요소의 사용자 입력에 의한 상태 변화는 `checked` 프로퍼티가 관리한다. 하지만 `id` 어트리뷰트에 대응하는 `id` 프로퍼티는 사용자의 입력과 아무런 관계가 없다.
+
+따라서 사용자 입력에 의한 상태 변화와 관계없는 `id` 어트리뷰트와 `id` 프로퍼티는 사용자 입력과 관계없이 항상 동일한 값을 유지한다. 즉, `id` 어트리뷰트 값이 변하면 `id` 프로퍼티 값도 변하고 그 반대도 마찬가지다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="user" type="text" value="ungmo2">
+  <script>
+    const $input = document.getElementById('user');
+
+    // id 어트리뷰트와 id 프로퍼티는 사용자 입력과 관계없이 항상 동일한 값으로 연동한다.
+    $input.id = 'foo';
+
+    console.log($input.id); // foo
+    console.log($input.getAttribute('id')); // foo
+  </script>
+</body>
+</html>
+```
+
+이처럼 사용자 입력에 의한 상태 변화와 관계있는 DOM 프로퍼티만 최신 상태 값을 관리한다. 그 외의 사용자 입력에 의한 상태 변화와 관계없는 어트리뷰트와 DOM 프로퍼티는 항상 동일한 값으로 연동된다.
+
+**3. HTML 어트리뷰트와 DOM 프로퍼티의 대응 관계**
+
+대부분의 HTML 어트리뷰트는 HTML 어트리뷰트 이름과 동일한 DOM 프로퍼티와 1:1로 대응한다. 단, 다음과 같이 HTML 어트리뷰트와 DOM 프로퍼티가 언제나 1:1로 대응하는 것은 아니며, HTML 어트리뷰트 이름과 DOM 프로퍼티 키가 반드시 일치하는 것도 아니다.
+
+- `id` 어트리뷰트와 `id` 프로퍼티는 1:1 대응하며, 동일한 값으로 연동한다.
+- `input` 요소의 `value` 어트리뷰트는 `value` 프로퍼티와 1:1 대응한다. 하지만 `value` 어트리뷰트는 초기 상태를, `value` 프로퍼티는 최신 상태를 갖는다.
+- `class` 어트리뷰트는 `className`, `classList` 프로퍼티와 대응한다.
+- `for` 어트리뷰트는 `htmlFor` 프로퍼티와 1:1 대응한다.
+- `td` 요소의 `colspan` 어트리뷰트는 대응하는 프로퍼티가 존재하지 않는다.
+- `textContent` 프로퍼티는 대응하는 어트리뷰트가 존재하지 않는다.
+- 어트리뷰트 이름은 대소문자를 구별하지 않지만 대응하는 프로퍼티 키는 카멜 케이스를 따른다
+
+**4. 프로퍼티 값의 대입**
+
+`getAttribute` 메서드로 취득한 어트리뷰트 값은 언제나 문자열이다. 하지만 DOM 프로퍼티로 취득한 최신 상태 값은 문자열이 아닐 수도 있다. 예를 들어, `checkbox` 요소의 `checked` 어트리뷰트 값은 문자열이지만 `checked` 프로퍼티 값은 불리언 타입이다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <input type="checkbox" checked>
+  <script>
+    const $checkbox = document.querySelector('input[type=checkbox]');
+
+    // getAttribute 메서드로 취득한 어트리뷰트 값은 언제나 문자열이다.
+    console.log($checkbox.getAttribute('checked')); // ''
+
+    // DOM 프로퍼티로 취득한 최신 상태 값은 문자열이 아닐 수도 있다.
+    console.log($checkbox.checked); // true
+  </script>
+</body>
+</html>
+```
+
+#### 39.7.4 data 어트리뷰트와 dataset 프로퍼티
+
+`data` 어트리뷰트와 `dataset` 프로퍼티를 사용하면 HTML 요소에 정의한 사용자 정의 어트리뷰트와 자바스크립트 간에 데이터를 교환할 수 있다. `data` 어트리뷰트는 `data-user0id`, `data-role` 과 같이 `data-` 접두사 다음 임의의 이름을 붙여 사용한다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <ul class="users">
+    <li id="1" data-user-id="7621" data-role="admin">Lee</li>
+    <li id="2" data-user-id="9524" data-role="subscriber">Kim</li>
+  </ul>
+</body>
+</html>
+```
+
+`data` 어트리뷰트의 값은 `HTMLElement.dataset` 프로퍼티로 취득할 수 있다. `dataset` 프로퍼티는 HTML 요소의 모든 `data` 어트리뷰트의 정보를 제공하는 `DOMStringMap` 객체를 반환한다. `DOMStringMap` 객체는 `data` 어트리뷰트의 `data-` 접두사 다음에 붙인 임의의 이름을 카멜 케이스로 변환한 프로퍼티를 가지고 있다. 이 프로퍼티로 `data` 어트리뷰트의 값을 취득하거나 변경할 수 있다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <ul class="users">
+    <li id="1" data-user-id="7621" data-role="admin">Lee</li>
+    <li id="2" data-user-id="9524" data-role="subscriber">Kim</li>
+  </ul>
+  <script>
+    const users = [...document.querySelector('.users').children];
+
+    // user-id가 '7621'인 요소 노드를 취득한다.
+    const user = users.find(user => user.dataset.userId === '7621');
+    // user-id가 '7621'인 요소 노드에서 data-role의 값을 취득한다.
+    console.log(user.dataset.role); // "admin"
+
+    // user-id가 '7621'인 요소 노드의 data-role 값을 변경한다.
+    user.dataset.role = 'subscriber';
+    // dataset 프로퍼티는 DOMStringMap 객체를 반환한다.
+    console.log(user.dataset); // DOMStringMap {userId: "7621", role: "subscriber"}
+  </script>
+</body>
+</html>
+```
+
+`data` 어트리뷰트의 `data-` 접두사 다음에 존재하지 않는 이름을 키로 사용하여 `dataset` 프로퍼티에 값을 할당하면 HTML 요소에 `data` 어트리뷰트가 추가된다. 이때 `dataset` 프로퍼티에 추가한 카멜케이스의 프로퍼티 키는 `data` 어트리뷰트의 `data-` 접두사 다음에 케밥케이스로 자동 변경되어 추가된다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <ul class="users">
+    <li id="1" data-user-id="7621">Lee</li>
+    <li id="2" data-user-id="9524">Kim</li>
+  </ul>
+  <script>
+    const users = [...document.querySelector('.users').children];
+
+    // user-id가 '7621'인 요소 노드를 취득한다.
+    const user = users.find(user => user.dataset.userId === '7621');
+
+    // user-id가 '7621'인 요소 노드에 새로운 data 어트리뷰트를 추가한다.
+    user.dataset.role = 'admin';
+    console.log(user.dataset);
+    /*
+    DOMStringMap {userId: "7621", role: "admin"}
+    -> <li id="1" data-user-id="7621" data-role="admin">Lee</li>
+    */
+  </script>
+</body>
+</html>
+```
+
