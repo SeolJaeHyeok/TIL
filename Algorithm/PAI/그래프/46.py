@@ -2,10 +2,10 @@
 # itertools 모듈 이용
 from itertools import permutations
 
-# def permute(nums:list):
-#     return list(map(list, permutations(nums)))
-#
-# print(permute([1, 2, 3]))
+def permute(nums:list):
+    return list(map(list, permutations(nums)))
+
+print(permute([1, 2, 3]))
 
 # dfs 이용
 def permute(nums:list):

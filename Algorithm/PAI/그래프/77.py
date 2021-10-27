@@ -35,3 +35,22 @@ def combine(n: int, k: int):
     return result
 
 print(combine(4, 2))
+
+
+# 3
+def combine(n: int, k: int):
+    answer = []
+
+    def dfs(index, elements):
+        if len(elements) == k:
+            answer.append(elements[:])
+            return
+
+        for i in range(index, n + 1):
+            dfs(i + 1, elements + [i])
+
+    dfs(1, [])
+
+    return answer
+
+print(combine(4, 2))
