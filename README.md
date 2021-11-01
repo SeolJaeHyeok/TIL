@@ -21,12 +21,15 @@
 
 
 
-#### [Algorithm](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm) - 2021.06.18~
+#### [Algorithm](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm) - 2021.09.01~
 
-- [PAI](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/PAI) - Leet Code 유형별 풀이
+- [PAI](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/PAI) - "파이썬 알고리즘 인터뷰"에 나오는 유형별 문제 풀이
+- [withPython](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/withPython) - "이것이 취업을 위한 코딩테스트다 with 파이썬"에 나오는 유형별 문제 풀이
 
 - [Baekjoon](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/Baekjoon) - 유형별 풀이
-- [withPython](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/withPython) - "이것이 취업을 위한 코딩테스트다 with 파이썬" 학습 디렉터리
+- [Study](https://github.com/SeolJaeHyeok/TIL/tree/master/Algorithm/Study) - 알고리즘 스터디 주차별 문제 풀이
+
+> ❗️두 권의 책을 가지고 Cross-Check하면서 유형 및 필수 알고리즘에 익숙해지기 + 실전 문제 풀이
 
 
 
@@ -46,13 +49,16 @@
 #### [JavaScript](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript)
 
 - JS를 공부하면서 헷갈리거나 중요한 내용들을 정리해놓는 디렉터리
-  - [Core](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Core) - "Core JavaScript" 학습 내용 정리 
+  - [Core](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Core) - "Core JavaScript" 학습 내용 정리 - 2회독 완료
   - [ES6](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/ES6) - 프로젝트를 진행하거나 구글링, 강의를 통해 학습한 ES5+ 내용 중 헷갈리거나 중요한 개념 및 내용들을 정리
+  - [Deep](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Deep) - "모던 자바스크립트 Deep Dive" 학습 내용 정리 디렉터리 - 1회독 완료
+
+> ❗️모던 자바스크립트 Deep Dive 반복 학습 예정
 
 
 
 #### [Python](https://github.com/SeolJaeHyeok/TIL/tree/master/Python)
 
-- Python을 공부하며 사용한 코드 및 내용 정리 
+- Python을 기본 문법을 공부하며 사용한 코드 및 내용 정리 
   - [Python_basic](https://github.com/SeolJaeHyeok/TIL/tree/master/Python/python_basic) - Python 핵심 개념 정리
 
