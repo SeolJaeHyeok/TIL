@@ -51,7 +51,7 @@
 - JS를 공부하면서 헷갈리거나 중요한 내용들을 정리해놓는 디렉터리
   - [Core](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Core) - "Core JavaScript" 학습 내용 정리 - 2회독 완료
   - [ES6](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/ES6) - 프로젝트를 진행하거나 구글링, 강의를 통해 학습한 ES5+ 내용 중 헷갈리거나 중요한 개념 및 내용들을 정리
-  - [Deep](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Deep) - "모던 자바스크립트 Deep Dive" 학습 내용 정리 디렉터리 - 1회독 완료
+  - [Deep](https://github.com/SeolJaeHyeok/TIL/tree/master/JavaScript/Deep) - "모던 자바스크립트 Deep Dive" 학습 내용 정리 디렉터리 - 2회차 진행 중
 
 > ❗️모던 자바스크립트 Deep Dive 반복 학습 예정
 
