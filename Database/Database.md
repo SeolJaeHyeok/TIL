@@ -166,8 +166,6 @@ Database는 Spreadsheet에서는 가능하지 못한 프로그래밍 언어를 �
 
 ### 2.2 READ
 
-아마 대부분의 개발자들은 READ(SQL에서는 SELECT)를 가장 많이 사용할 것이다. 그렇기 때문에 SELECT에 대해서는 정확하게 알아야만 한다.
-
 [Reference](https://dev.mysql.com/doc/refman/8.0/en/select.html)
 
 - 테이블 내의 존재하는 모든 행을 읽어오려면 바로 위에서 봤던 것처럼 `SELECT * FROM [테이블 명];` 명령어를 입력해주면 된다.
@@ -210,5 +208,53 @@ Database는 Spreadsheet에서는 가능하지 못한 프로그래밍 언어를 �
 
 `SELECT` 는 `SQL` 을 사용하면서 가장 많이 사용하게될 문법이기 때문에 정확하고 깊게 이해하는 것이 중요하다. 필요에 따라 많은 종류의 옵션들을 공부해야 한다는 것을 인지하자.
 
-----
+### 2.3 UPDATE
+
+[Reference](https://dev.mysql.com/doc/refman/8.0/en/update.html)
+
+- 만약 테이블 내의 존재하는 row의 어떤 column 값을 바꾸고 싶은 경우 `UPDATE` 문법을 사용하면 된다.
+
+  1) 먼저 현재 테이블 안에 존재하는 모든 데이터를 출력해보자.
+
+  <img src="./images/20.png" />
+
+  2) 위 데이터 중에서 `PostgreSQL Server is ...` 은 원래 `PostgreSQL is ...` 이 되어야 한다. 잘못 입력된 것이다. 이를 고치기 위해서는 `UPDATE` 문법을 통해 테이블 내의 컬럼 값을 수정해주어야 한다.
+
+  값을 수정하기에 앞서 아주 아주 중요한 점이 있다. 아래 예제를 보자.
+
+  <img src="./images/21.png" />
+
+  여기서 `SET` 옵션 뒤에는 수정하기 위한 `col_name=value`으로 이루어진 값이 들어온다. 하나만 하기 아쉬우니 `title` 컬럼의 값도 모두 대문자로 바꿔줬다. 그리고 중요한 것이 바로 `WHERE` 문을 통해 바꾸어줄 row를 특정해주는 것이다. 
+
+  여기서 `WHERE id=4;` 를 통해 `id` 값이 4인 row의 `description` 과 `title` 컬럼을 바꾸어 주겠다고 말해주는 것이다.
+
+  그렇게 바꾼 결과를 보게 되면
+
+  <img src="./images/22.png" />
+
+  의도한대로 `id` 값이 4인 row의 `PostgreSQL Server is ...` 값을 `PostgreSQL is ...`로 변경해주었고 `title` 컬럼의 값도 대문자로 변경이 된 것을 확인할 수 있다.
+
+  만약 `WHERE` 옵션의 값을 설정해주지 않았다면 모든 row의 `description` 값이 `PostgreSQL is ...` 이 되고 `title` 의 값이 `POSTGRESQL` 이 되었을 것이다. 
+
+  이게 만약 엄청난 양의 데이터를 저장하고 있는 데이터베이스에서 발생한 일이라면 그야말로 파국이다. 그런 불상사가 발생하지 않기 위해서라도 **`UPDATE` 문법을 사용할 때는 꼭 `WHERE` 옵션을 사용하여 수정할 row를 정해주는 것이 필요하다.**
+
+### 2.4 DELETE
+
+[Reference](https://dev.mysql.com/doc/refman/8.0/en/delete.html)
+
+`DELETE` 문법은 간단하다 `DELETE FROM [테이블명]` 을 해주면 된다.
+
+하지만 여기서도 가장 중요한 점이 있다. `UPDATE` 와 마찬가지로  `WHERE` 옵션을 통해 삭제해야할 row를 정해주어야 한다는 것이다. 만약 `WHERE` 옵션을 사용하지 않는다면 모든 행이 삭제되기 때문에 무조건 `WHERE` 옵션을 사용해서 삭제할 row를 특정해주어야 한다.
+
+> ❗️❗️❗️❗️
+>
+> 이고잉님께서 `DELETE` 옵션을 사용할 일이 아마 없을테지만 만약 사용하게되었는데 `WHERE` 옵션을 사용하지 않는다면 인생이 바뀔 수도 있다고 하셨다,,, 제발 나한테는 그럴 일이 없길
+
+1) id값이 2인 row를 삭제하는 경우
+
+<img src="./images/23.png" />
+
+2) 삭제하고 난 후
+
+<img src="./images/24.png" />
 
