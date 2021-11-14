@@ -24,3 +24,23 @@ Database는 Spreadsheet에서는 가능하지 못한 프로그래밍 언어를 �
 
 # MySQL
 
+테이블(Table): 데이터들이 저장되어 있는 표. 엑셀의 스트레트시트와 비슷한 구조를 지니고 있음
+
+스키마(Schema) == 데이터베이스(Databse): 테이블들을 그룹핑(Grouping)하기 위한 일종의 디렉터리. 즉, 서로 연관된 데이터들을 그룹핑하기 위한 용도
+
+데이터베이스 서버(Database Server): 그룹핑된 데이터들로 나누어진 여러 스키마들이 저장되어 있는 공간. Ex)MySQL, Oracel, MongoDB 등
+
+<img src="./images/01.png" />
+
+### 터미널을 통해 MySQL 서버에 접속하는 방법
+
+1. Terminal에 `/usr/local/mysql/bin` 을 입력한다.
+
+   <img src="./images/02.png" />
+
+2. `./mysql -u[사용자명] -p` 명령어를 입력하고 비밀번호를 입력한 다음 접속을 한다.
+
+   <img src="./images/03.png" />
+
+<img src="./images/04.png" />
+
