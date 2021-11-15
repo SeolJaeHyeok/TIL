@@ -41,7 +41,8 @@
 
 #### [Database]()
 
-- DB 개념 정리
+- Database Basic
+- MySQL를 사용한 SQL 문법 학습 
 
 
 
