@@ -292,3 +292,31 @@ Database는 Spreadsheet에서는 가능하지 못한 프로그래밍 언어를 �
 
 결과를 보면 위와 같이 준비가 완료된 것을 확인할 수 있다.
 
+# 4. JOIN
+
+`JOIN` 을 이용하게 되면 테이블을 결합할 수 있게 된다. 위에서 정의한 `topic` 테이블과 `author` 테이블을 결합하기 위해 `topic` 테이블의 `author_id` 컬럼이 `author` 테이블의 `id` 컬럼을 참조하게끔 정의하게 된다면 `topic` 테이블과 `author` 테이블이 결합이 되어 나타나게 된다.
+
+<img src="./images/30.png" />
+
+위와 같이 `JOIN` 을 사용해 `topic` 테이블과 `author` 테이블을 결합하려고 하면 에러가 발생한다. 에러가 발생하는 이유는 우리가 MySQL에게 **기준**을 알려주지 않았기 때문이다. 기준이란 결합의 고리가 되는 컬럼을 의미하고 이 고리를 데이터베이스 서버에 알려주어야 데이터베이스 서버가 결합을 한 결과를 우리에게 보여준다. MySQL에서는 기준을 알려줄 때 `ON` 을 사용한다.
+
+<img src="./images/31.png" />
+
+위 명령 `SELECT * FROM topic JOIN author ON topic.author_id = author.id;` 는 `topic` 테이블의 `author_id` 컬럼이 `author` 테이블의 `id` 컬럼을 참조하는 것을 의미한다.
+
+위 결과에서 `author_id` 와 `id` 는 필요하지 않은 컬럼이기 때문에 제거를 해보자.
+
+<img src="./images/32.png" />
+
+원하는 컬럼만 가져오기 위해 `id`, `title`, `description`, `created`, `name`, `profile` 컬럼만 보여주는 명령을 치게 되면 위와 같이 `Column 'id' in field list is ambiguous` 라는 에러 메세지가 출력된다. 이는 '`id` 값이 모호하다' 라는 의미인데 무슨 말이냐면 현재 결합된 테이블에는 `id` 값이 두 개 존재한다. 데이터들을 구분하기 위한 `id` 값과 `author` 를 구분하기 위한 `id` 값이다. 우리에게 필요없는 것은 `author_id` 컬럼과 `author` 를 구분하기 위한 `id` 컬럼이다.
+
+이 두 개의 컬럼을 제외하고 보여주기 위해서라면 우리가 원하는 `id` 컬럼이 `topic` 테이블에 있는 `id` 컬럼이라는 것을 MySQL에게 알려줘야 한다. 
+
+<img src="./images/33.png" />
+
+위와 같이 `topic.id` 라고 `topic` 테이블에 존재하는 `id` 를 명시해주면 우리가 원하는 컬럼들만 화면에 나타나게 된다.
+
+또한 `topic` 의 `id` 값의 이름을 원하는 컬럼명으로 바꿔서 출력하고 싶다면 아래와 같이 `AS` 를 사용하면 컬럼명을 정의해주면 된다.
+
+<img src="./images/34.png" />
+
