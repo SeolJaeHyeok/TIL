@@ -1,5 +1,5 @@
-# Chapter #1
-### Simulation
+# Week2
+## Chpater #1 - Simulation 
 1. 격자 안에서 완전 탐색
 2. 격자 안에서 밀고 당기
 3. 격자 안에서 터지고 떨어지는 경우
