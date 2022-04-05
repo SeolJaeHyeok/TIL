@@ -1,16 +1,16 @@
-def run_length_encoding(str_list):
+def run_length_encoding(word):
     encoding = ""
-    seq = 1
-    tmp_char = str_list[0]
-    for idx in range(len(str_list)-1):
-        if str_list[idx] == str_list[idx+1]:
-            seq += 1
+    count = 1
+    tmp_char = word[0]
+    for idx in range(len(word) - 1):
+        if word[idx] == word[idx + 1]:
+            count += 1
         else:
-            encoding += tmp_char + str(seq)
-            seq = 1
-            tmp_char = str_list[idx+1]
+            encoding += tmp_char + str(count)
+            count = 1
+            tmp_char = word[idx+1]
 
-    encoding += tmp_char + str(seq)
+    encoding += tmp_char + str(count)
     return encoding
 
 print(run_length_encoding("aaabbbbcaa"))
