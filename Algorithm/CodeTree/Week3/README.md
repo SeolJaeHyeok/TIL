@@ -1,4 +1,4 @@
-# Week2
+# Week3
 ## Chpater #2 - Backtracking 
 1. K개 중 하나를 N번 선택하기(Simple)
 2. K개 중 하나를 N번 선택하기(Conditional)
