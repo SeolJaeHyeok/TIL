@@ -261,9 +261,303 @@ WHERE author in ('William Shakespeare', 'John Ronald Reuel Tolkien', 'Joanne Kat
 
 # 2. DML
 
+#### SQL 명령어 종류
+
+1. DML: 데이터 조작어
+2. DDL: 데이터 정의어
+3. DCL: 데이터 제어어
+4. TCL: 트랙잭션 제어어
+
+----
+
+### 1. 데이터에서 유사한 값 찾기 - ex) 찾으려는 데이터가 정확하게 기억나지 않을 때
+
+#### Like
+
+- 특정 문자가 포함된 문자열을 찾고 싶을 때 사용하는 명령어
+- WHERE 명령어와 함께 사용
+
+```sql
+SELECT *
+FROM book
+WHERE title LIKE '어린왕자';
+/*
+WHERE + 컬럼명 + LIKE + 검색할 데이터
+=> 테이블에서 '컬럼명'에 해당하는 데이터 중 '검색할 데이터'와 같은 데이터를 검색
+*/
+```
+
+```sql
+SELECT *
+FROM book
+WHERE title LIKE '%왕자';
+
+SELECT *
+FROM book
+WHERE title LIKE '어린%';
+
+SELECT *
+FROM book
+WHERE title LIKE '%린왕%';
+/*
+1. book 테이블에서 제목(title)이 '왕자'로 끝나는 데이터를 검색
+2. book 테이블에서 제목(title)이 '어린'으로 시작하는 데이터를 검색
+3. book 테이블에서 제목(title)이 '린왕'이 포함되는 데이터를 검색
+*/
+```
+
+---
+
+### 2. 데이터 정렬하기
+
+#### ORDER BY
+
+- 데이터를 검색할 때 정렬하여 결과를 출력하는 명령어
+-  `DESC` 를 붙이면 내림차순으로 정렬, `DESC + 테이블명` 과는 다른 `DESC` 이다.
+- `ASC` 를 붙이면 오름차순으로 정렬
+
+```sql
+SELECT *
+FROM score
+ORDER BY math DESC; -- 정렬 조건
+
+/*
+1. score 테이블에서 math 값이 '높은' 데이터부터 정렬하여 검색
+*/
+```
+
+---
+
+### 3. 테이블에 데이터 삽입하기
+
+#### INSERT
+
+- 테이블에 데이터를 추가할 때 사용
+
+```sql
+INSERT INTO book(id, title, author, publisher)
+VALUES('3', '햄릿', '윌리엄 셰익스피어', '위키북스');
+/*
+1. book 테이블에 새로운 데이터(VALUES) 추가
+*/
+```
+
+- 컬럼을 명시하지 않으면 순서대로 값을 삽입
+
+```sql
+INSERT INTO book
+VALUES('3', '햄릿', '윌리엄 셰익스피어', '위키북스');
+/*
+1. book 테이블에 새로운 데이터(VALUES) 추가
+*/
+```
+
+---
+
+### 4. 테이블의 데이터 수정하기
+
+#### UPDATE
+
+- 테이블에서 **이미 저장된 값을 수정**하는 명령어
+
+```sql
+UPDATE book; -- UPDATE + 테이블
+SET title = '돈키호테 1' -- 변경할 값
+WHERE title = '돈키호테'; -- 조건
+/*
+1. title이 '돈키호테'인 데이터의 title을 '돈키호테 1'로 변경
+*/
+```
+
+---
+
+### 5. 테이블의 데이터 삭제하기
+
+- 테이블에서 **이미 저장된 값을 삭제**하는 명령
+
+```sql
+DELETE -- 명령
+FROM book -- 테이블
+WHERE title = '돈키호테'; -- 조건
+```
+
+- `WHERE` 조건문이 없을 시 모든 데이터 삭제
+
+```sql
+DELETE -- 명령
+FROM book -- 테이블
+```
+
+---
+
+# 3. SQL과 함수
+
+1. 데이터 값을 계산하거나 조작 : 행 함수
+2. 행의 그룹을 계산하거나 요약 : 그룹 함수
+3. 열의 데이터 타입을 변환
+
+---
+
+### 1. COUNT
+
+- 데이터의 개수를 파악하고 싶을 때
+- 데이터의 개수를 가져오는 내장 함수
+- 단, NULL인 데이터는 제외
+
+```sql
+SELECT COUNT(id) FROM book;
+
+SELECT COUNT(*) FROM book;
+/*
+SELECT + COUNT(검색할 컬럼) FROM 테이블
+1. book 테이블 안에 있는 id 컬럼의 개수를 검색
+2. book 테이블 안에 있는 모든 컬럼의 데이터 개수를 검색
+*/
+```
+
+---
+
+### 2. LIMIT
+
+- 데이터의 일부만 보고 싶을 경우 사용
+- 테이블에서 출력하고자 하는 데이터의 개수를 제한하는 명령
+- 첫 번째 컬럼의 시작은 0, 즉 `LIMIT 1, 5` 는 2번째 컬럼부터 5개를 가져오라는 의미
+
+```sql
+SELECT * FROM book LIMIT 5;
+
+SELECT * FROM book LIMIT 1, 5;
+
+/*
+1. book 테이블에서 데이터를 5개만 가져오기
+2. book 테이블에서 2번째 데이터부터 5개를 가져오기
+*/
+```
+
+---
+
+### 3. SUM & AVG
+
+**SUM**
+
+- 지정한 컬럼들의 값을 모두 더하여 총점을 구해주는 내장 함수
+
+```sql
+SELECT SUM(math) FROM grade;
+```
+
+**AVG**
+
+- 지정한 컬럼들의 평균값을 구해주는 내장함수
+
+```sql
+SELECT AVG(math), AVG(english), AVG(korean) FROM grade;
+```
+
+---
+
+### 4. MAX & MIN
+
+**MAX**
+
+- 테이블에 존재하는 데이터에서 최대값을 가져오는 내장 함수
+- 숫자형 뿐만 아니라 문자형도 가능
+- 문자열의 우선 순위에 맞춰 내림차순
+
+```sql
+SELECT MAX(korean) FROM grade;
+```
+
+**MIN**
+
+- 테이블에 존재한느 데이터에서 최소값을 가져오는 내장 함수
+- 숫자형 뿐만 아니라 문자형도 가능
+- 문자열의 우선 순위에 맞춰 오름차순
+
+```sql
+SELECT MIN(korean) FROM grade;
+```
+
+---
+
+# 4. 다수의 테이블 제어하기
+
+### 1. 데이터 그룹 짓기
+
+```sql
+SELECT user_id, COUNT(*)
+FROM rental
+GROUP BY user_id;
+```
+
+```sql
+SELECT user_id, SUM(컬럼명) FROM rental GROUP BY user_id;
+-- user_id가 같은 열에서 컬럼의 내용을 다 더한 값을 출력
+
+SELECT user_id, AVG(컬럼명) FROM rental GROUP BY user_id;
+-- user_id가 같은 열의 컬럼의 평균을 출력
+
+SELECT user_id, MAX(컬럼명) FROM rental GROUP BY user_id;
+-- user_id가 같은 열 중에서 해당 컬럼명이 가장 큰 값을 출력
+
+SELECT user_id, MIN(컬럼명) FROM rental GROUP BY user_id;
+-- user_id가 같은 열 중에서 해당 컬럼명이 가장 작은 값을 출력
+```
+
+---
+
+### 2. 데이터 그룹에 조건 적용하기
+
+- `GROUP BY` 절에 조건을 부여하고 싶을 경우
+
+#### GROUP BY / HAVING
+
+```sql
+SELECT user_id, COUNT(*)
+FROM rental
+GROUP BY user_id
+HAVING COUNT(user_id) > 1;
+
+/*
+1. rental 테이블에서 user_id가 같은 2개 이상의 데이터가 몇 개 있는지 검색
+*/
+```
+
+---
+
+### 3. 두개의 테이블에서 조회하기
+
+- 여러 테이블의 정보를 한번에 조회
+
+#### INNER JOIN
+
+```sql
+SELECT * -- 명령 + 검색할 컬럼
+FROM rental -- 테이블
+INNER JOIN user; -- 연결할 테이블
+```
+
+---
+
+### 4. 조건을 적용해 두개의 테이블 조회하기
+
+#### INNER JOIN / ON
+
+```sql
+SELECT * -- 명령 + 검색할 컬럼
+FROM rental -- 테이블
+INNER JOIN user -- 연결할 테이블
+ON user.id = rental.user_id; -- 연결한 조건 컬럼
+```
 
 
 
+---
+
+### 5. LEFT JOIN
 
 
 
+---
+
+### 6. RIGHT JOIN
