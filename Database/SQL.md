@@ -541,7 +541,7 @@ INNER JOIN user; -- 연결할 테이블
 
 ### 4. 조건을 적용해 두개의 테이블 조회하기
 
-#### INNER JOIN / ON
+#### INNER JOIN / ON - 두 데이터 중 겹치는 부분만 출력
 
 ```sql
 SELECT * -- 명령 + 검색할 컬럼
@@ -554,10 +554,35 @@ ON user.id = rental.user_id; -- 연결한 조건 컬럼
 
 ---
 
-### 5. LEFT JOIN
+### 5. LEFT JOIN - 왼쪽 데이터와 겹치는 부분을 모두 출력
 
+```sql
+SELECT *
+FROM user
+LEFT JOIN rental
+ON user.id == rental.user_id
 
+/*
+user 테이블을 모두 출력하되 모든 user 테이블의 id와 rental 테이블의 user_id가 겹치도록 합친다.
+*/
+```
 
 ---
 
-### 6. RIGHT JOIN
+### 6. RIGHT JOIN - 오른쪽 데이터와 겹치는 부분을 모두 출력
+
+```sql
+SELECT *
+FROM user
+RIGHT JOIN rental
+ON user.id == rental.user_id
+
+/*
+rental 테이블을 모두 출력하되 모든 rental 테이블의 user_id와 user 테이블의 id가 겹치도록 합친다.
+*/
+```
+
+---
+
+# 5. 서브 쿼리
+
