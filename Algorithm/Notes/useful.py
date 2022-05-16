@@ -67,10 +67,18 @@ def fib_recursive(n):
         return fib_recursive(n - 1) + fib_recursive(n - 2)
 
 # 유클리드 호제법
-def gcd(a, b):
+def gcd1(a, b):
     if a == 0:
         return b
-    return gcd(b % a, a)
+    return gcd1(b % a, a)
+
+def gcd2(a, b):
+    while b > 0:
+        a, b = b, a % b
+    return a
+
+def lcm(a, b):
+    return a * b // gcd2(a, b)
 
 
 # sqrt(n) 이하의 홀수로 나눠보는 전통적인 소수 판별 함수
