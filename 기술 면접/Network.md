@@ -128,4 +128,5 @@
 
 ### - URL을 입력하면 벌어지는 일
 
-[참고](
+[참고](https://github.com/baeharam/Must-Know-About-Frontend/blob/main/Notes/network/type-url-process.md)
+
