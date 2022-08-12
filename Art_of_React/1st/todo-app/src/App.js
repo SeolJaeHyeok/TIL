@@ -7,7 +7,7 @@ import ToDoTemplate from "./components/ToDoTemplate";
 function createBulkTodos() {
   const array = [];
 
-  for (let i = 1; i <= 2500; i++) {
+  for (let i = 1; i <= 10; i++) {
     array.push({
       id: i,
       text: `할 일 ${i}`,
@@ -18,25 +18,21 @@ function createBulkTodos() {
 }
 
 function todoReducer(todos, action) {
-  switch (action.type) {
-    case "INSERT": // 새로 추가
-      // { type: 'INSERT', todo: { id: 1, text: 'todo' , checked: false } }
-      return todos.concat(action.todo);
-    case "REMOVE": // 제거
-      // { type: 'REMOVE', id: 1 }
-      return todos.filter((todo) => todo.id !== action.id);
-    case "TOGGLE": // 토글
-      // { type: 'TOGGLE', id: 1 }
-      return todos.map((todo) =>
-        todo.id === action.id ? { ...todo, checked: !todo.checked } : todo
-      );
-    default:
+  switch(action.type) {
+    case 'INSERT':
+      return todos.concat(action.todo)
+    case 'REMOVE':
+      return todos.filter(todo => todo.id !== action.id)
+    case 'TOGGLE':
+      return todos.map(todo => todo.id === action.id ? {...todo, checked: !todo.checked} : todo)
+    default: 
       return todos;
   }
 }
 
 const App = () => {
-  const [todos, dispatch] = useReducer(todoReducer, undefined, createBulkTodos);
+  const initialState = createBulkTodos();
+  const [todos, dispatch] = useReducer(todoReducer, initialState);
 
   // 고윳값으로 사용될 id
   // ref를 사용하여 변수 담기
@@ -46,10 +42,10 @@ const App = () => {
     const todo = {
       id: nextId.current,
       text,
-      checked: false,
+      checked: false
     };
-    dispatch({ type: "INSERT", todo });
-    nextId.current += 1; // nextId 1씩 더하기
+    dispatch({type: "INSERT", todo})
+    nextId.current += 1;
   }, []);
 
   const onRemove = useCallback((id) => {
