@@ -19,17 +19,16 @@ print(solution(45, 16))
 print()
 
 # 2018 카카오 블라인드 3차 n진수 변환, 재귀 이용
-# 16진법 이하
-def convert(num, base):
-    temp = "0123456789ABCDEF"
-    q, r = divmod(num, base)
+# 진수 변환
+import string
 
+def convert(num, base):
+    tmp = string.digits + string.ascii_lowercase
+    q, r = divmod(num, base)
     if q == 0:
-        return temp[r]
+        return tmp[r]
     else:
-        # q를 base로 변환
-        # 즉, n진수의 다음 자리를 구함
-        return convert(q, base) + temp[r]
+        return convert(q, base) + tmp[r]
 
 
 print(convert(45, 2))
